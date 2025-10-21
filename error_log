@@ -1,0 +1,1 @@
+[17-Dec-2024 16:26:19 UTC] PHP Fatal error:  Can't use method return value in write context in /home/flexoraw/public_html/database/migrations/2024_11_27_000006_create_transactions_table.php on line 23
