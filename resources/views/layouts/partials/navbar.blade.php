@@ -3,7 +3,7 @@
     <!-- Header desktop -->
     <div class="container-menu-desktop">
         <!-- Topbar -->
-        <div class="top-bar">
+        <!-- <div class="top-bar">
             <div class="content-topbar flex-sb-m h-full container">
                 <div class="left-top-bar">
                     Free shipping for standard order over $100
@@ -27,14 +27,14 @@
                     </a>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <div class="wrap-menu-desktop how-shadow1">
             <nav class="limiter-menu-desktop container">
 
                 <!-- Logo desktop -->
                 <a href="{{ route('user.home') }}" class="logo">
-                    <span style="font-size: 25px; font-weight: bold; color: #000; letter-spacing: 2px;">FLEXORA</span>
+                    <span style="font-size: 25px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
                 </a>
 
 

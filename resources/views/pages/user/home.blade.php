@@ -45,7 +45,7 @@
     <header>
         <!-- Header desktop -->
         <div class="container-menu-desktop">
-            <!-- Topbar -->
+            <!-- Topbar
             <div class="top-bar">
                 <div class="content-topbar flex-sb-m h-full container">
                     <div class="left-top-bar">
@@ -70,15 +70,14 @@
                         </a>
                     </div>
                 </div>
-            </div>
-
+            </div> -->
             <div class="wrap-menu-desktop">
                 <nav class="limiter-menu-desktop container">
 
                     <!-- Logo desktop -->
                     <a href="{{ route('user.home') }}" class="logo">
                         <span
-                            style="font-size: 25px; font-weight: bold; color: #000; letter-spacing: 2px;">FLEXORA</span>
+                            style="font-size: 25px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
                     </a>
 
 

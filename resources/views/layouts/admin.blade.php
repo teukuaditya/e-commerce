@@ -11,7 +11,7 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>FLEXORA-Admin</title>
+    <title>DRVN-Admin</title>
     
     <link rel="icon" type="image/png" href="{{ asset('images/icons/flexora.png') }}" />
 

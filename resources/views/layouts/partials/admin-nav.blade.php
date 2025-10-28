@@ -6,7 +6,7 @@
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-shopping-bag"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">Flexora</div>
+        <div class="sidebar-brand-text mx-3">DRVN</div>
     </a>
 
     <!-- Divider -->

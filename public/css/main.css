@@ -39,6 +39,9 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
 /*//////////////////////////////////////////////////////////////////
 [ FONT ]*/
 
+
+
+
 @font-face {
   font-family: Poppins-Regular;
   src: url('../fonts/Poppins/Poppins-Regular.ttf');
@@ -228,10 +231,10 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
 
 /*==================================================================
 [ Top bar ]*/
-.top-bar {
+/* .top-bar {
   height: 40px;
   background-color: #222;
-}
+} */
 
 /*---------------------------------------------*/
 .left-top-bar {
@@ -277,12 +280,12 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
 .wrap-menu-desktop {
   position: fixed;
   z-index: 1100;
-  background-color: transparent;
+  background-color: transparent; 
   width: 100%;
   height: 84px;
   top: 40px;
   left: 0px;
-
+  
   -webkit-transition: height 0.3s, background-color 0.3s;
   -o-transition: height 0.3s, background-color 0.3s;
   -moz-transition: height 0.3s, background-color 0.3s;

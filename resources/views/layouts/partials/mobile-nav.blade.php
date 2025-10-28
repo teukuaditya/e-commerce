@@ -5,7 +5,7 @@
         @guest
             <!-- Logo moblie -->
             <a href="{{ route('user.home') }}" class="logo-mobile">
-                <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">FLEXORA</span>
+                <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
             </a>
             <!-- Jika user belum login -->
             <a href="{{ route('login') }}"
@@ -20,7 +20,7 @@
             </a> --}}
         @else
             <a href="{{ route('user.home') }}" class="logo-mobile">
-                <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">FLEXORA</span>
+                <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
             </a>
             <!-- Icon header -->
             <div class="wrap-icon-header flex-w flex-r-m">
