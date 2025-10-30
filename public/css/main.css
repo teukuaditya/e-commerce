@@ -214,6 +214,7 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
   -o-transition: all 0.3s;
   -moz-transition: all 0.3s;
   transition: all 0.3s;
+  -ms-transition: all 0.3s;
 }
 
 .header-v2 .container-menu-desktop {
@@ -283,7 +284,7 @@ Input, textarea : 14px/1.6 '', Arial, sans-serif;
   background-color: transparent; 
   width: 100%;
   height: 84px;
-  top: 40px;
+  top: 0; /* changed from 40px -> 0 so navbar always nempel ke atas */
   left: 0px;
   
   -webkit-transition: height 0.3s, background-color 0.3s;
