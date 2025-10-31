@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>FLEXORA</title>
+    <title>DRVN</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!--===============================================================================================-->
@@ -45,32 +45,6 @@
     <header>
         <!-- Header desktop -->
         <div class="container-menu-desktop">
-            <!-- Topbar
-            <div class="top-bar">
-                <div class="content-topbar flex-sb-m h-full container">
-                    <div class="left-top-bar">
-                        Free shipping for standard order over $100
-                    </div>
-
-                    <div class="right-top-bar flex-w h-full">
-                        <a href="#" class="flex-c-m trans-04 p-lr-25">
-                            Help & FAQs
-                        </a>
-
-                        <a href="#" class="flex-c-m trans-04 p-lr-25">
-                            My Account
-                        </a>
-
-                        <a href="#" class="flex-c-m trans-04 p-lr-25">
-                            EN
-                        </a>
-
-                        <a href="#" class="flex-c-m trans-04 p-lr-25">
-                            USD
-                        </a>
-                    </div>
-                </div>
-            </div> -->
             <div class="wrap-menu-desktop">
                 <nav class="limiter-menu-desktop container">
 
@@ -109,7 +83,7 @@
                             </li>
 
                             <li class="{{ Route::currentRouteName() == 'about' ? 'active-menu' : '' }}">
-                                <a href="">About</a>
+                                <a href="{{ route('user.about.index')}}">About</a>
                             </li>
 
                             <li class="{{ Route::currentRouteName() == 'contact' ? 'active-menu' : '' }}">

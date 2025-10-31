@@ -129,7 +129,7 @@
                 Copyright &copy;
                 <script>
                     document.write(new Date().getFullYear());
-                </script> All rights reserved | Fikri Nur Auliya
+                </script> All rights reserved | Teuku Aditya
 
             </p>
         </div>

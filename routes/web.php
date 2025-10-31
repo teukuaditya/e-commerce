@@ -17,6 +17,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\User\AboutController;
 
 // Route untuk halaman utama pengguna
 Route::get('/', [UserHomeController::class, 'index'])->name('user.home');
@@ -40,60 +41,56 @@ Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
 
 // Route untuk pengguna dengan middleware yang tidak terautentikasi
 Route::prefix('user')->name('user.')->group(function () {
-    // Menampilkan semua produk
+    // Public routes - pindahkan semua route public ke sini
+    Route::get('/', [UserHomeController::class, 'index'])->name('home');
+    Route::get('/about', [AboutController::class, 'index'])->name('about.index');
     Route::get('/products', [UserProductController::class, 'index'])->name('products.index');
-
-    // Menampilkan detail produk
     Route::get('/products/{id}', [UserProductController::class, 'show'])->name('products.show');
-
-    // Menampilkan kategori produk
     Route::get('/categories', [UserCategoryController::class, 'index'])->name('categories.index');
     Route::get('/categories/{id}', [UserCategoryController::class, 'show'])->name('categories.products');
 
-    // Menampilkan keranjang belanja (harus login)
-    Route::get('/cart', [UserCartController::class, 'index'])->name('cart.index')->middleware('auth');
+    // Group routes yang membutuhkan autentikasi
+    Route::middleware('auth')->group(function () {
+        // Cart routes
+        Route::prefix('cart')->name('cart.')->group(function () {
+            Route::get('/', [UserCartController::class, 'index'])->name('index');
+            Route::post('/add/{productId}', [UserCartController::class, 'add'])->name('add');
+            Route::put('/{cartId}', [UserCartController::class, 'updateCart'])->name('update');
+            Route::delete('/{cartId}', [UserCartController::class, 'removeFromCart'])->name('remove');
+            Route::post('/bulk-remove', [UserCartController::class, 'removeSelectedItems'])->name('bulkRemove');
+        });
 
-    // Menambahkan produk ke keranjang belanja (harus login)
-    Route::post('/cart/add/{productId}', [UserCartController::class, 'add'])->name('cart.add')->middleware('auth');
+        // Checkout routes  
+        Route::prefix('checkout')->name('checkout.')->group(function () {
+            Route::get('/', [UserCheckoutController::class, 'index'])->name('index');
+            Route::post('/', [UserCheckoutController::class, 'store'])->name('store');
+            Route::post('/createTransaction', [UserCheckoutController::class, 'createTransaction']);
+        });
 
-    // Mengupdate jumlah produk dalam keranjang belanja (harus login)
-    Route::put('/cart/{cartId}', [UserCartController::class, 'updateCart'])->name('cart.update')->middleware('auth');
+        // Order routes
+        Route::prefix('orders')->name('order.')->group(function () {
+            Route::get('/', [UserOrderController::class, 'index'])->name('index');
+            Route::get('/snap-token', [UserOrderController::class, 'SnapToken']);
+            Route::post('/payment-success', [UserOrderController::class, 'handlePaymentSuccess']);
+        });
 
-    // Menghapus produk dari keranjang belanja (harus login)
-    Route::delete('/cart/{cartId}', [UserCartController::class, 'removeFromCart'])->name('cart.remove')->middleware('auth');
+        // Profile routes
+        Route::prefix('profile')->name('profile.')->group(function () {
+            Route::get('/edit', [UserUserController::class, 'showEditForm'])->name('edit');
+            Route::put('/update', [UserUserController::class, 'editUser'])->name('update');
+        });
 
-    // Menghapus beberapa produk dari keranjang belanja (harus login)
-    Route::post('/cart/bulk-remove', [UserCartController::class, 'removeSelectedItems'])->name('cart.bulkRemove')->middleware('auth');
-
-    // Route untuk checkout (harus login)
-    Route::get('/checkout', [UserCheckoutController::class, 'index'])->name('checkout.index')->middleware('auth');
-    Route::post('/checkout', [UserCheckoutController::class, 'store'])->name('checkout.store')->middleware('auth');
-    // Route::post('/midtrans/snap', [UserCheckoutController::class, 'getSnapToken'])->name('api.midtrans.snap')->middleware('auth');
-    Route::post('/createTransaction', [UserCheckoutController::class, 'createTransaction'])->middleware('auth');
-    // Route::get('/midtrans/snap-token', [UserCheckoutController::class, 'SnapToken'])->middleware('auth');
-    // Route::post('/midtrans/notification', [UserCheckoutController::class, 'handleMidtransNotification']);
-    // Riwayat pesanan pengguna (harus login)
-    Route::get('/order-history', [UserOrderController::class, 'index'])->middleware('auth')->name('order.index');
-    Route::get('/snap-token', [UserOrderController::class, 'SnapToken'])->middleware('auth');
-    Route::post('/payment-success', [UserOrderController::class, 'handlePaymentSuccess'])->middleware('auth');
-
-    // Edit profil pengguna (harus login)
-    Route::get('/edit-profile', [UserUserController::class, 'showEditForm'])->name('edit')->middleware('auth');
-    Route::put('/update-profile', [UserUserController::class, 'editUser'])->name('profile')->middleware('auth');
-
-    // Menyimpan alamat pengguna (harus login)
-    Route::post('/save-address', [UserUserController::class, 'saveAddress'])->middleware('auth');
-    Route::get('/search-provinces', [UserUserController::class, 'searchProvinces'])->name('searchProvinces')->middleware('auth');
-    Route::get('/search-cities', [UserUserController::class, 'searchCities'])->name('searchCities')->middleware('auth');
-
-    // Edit alamat pengguna (harus login)
-    Route::get('/edit-address', [UserUserController::class, 'showEditAddress'])->name('address.edit')->middleware('auth');
-    Route::post('/update-address', [UserUserController::class, 'updateAddress'])->name('address.update')->middleware('auth');
-
-    // Hapus alamat pengguna (harus login)
-    Route::delete('/delete-address', [UserUserController::class, 'deleteAddress'])->middleware('auth');
+        // Address routes
+        Route::prefix('address')->name('address.')->group(function () {
+            Route::post('/save', [UserUserController::class, 'saveAddress'])->name('save');
+            Route::get('/edit', [UserUserController::class, 'showEditAddress'])->name('edit');
+            Route::post('/update', [UserUserController::class, 'updateAddress'])->name('update');
+            Route::delete('/delete', [UserUserController::class, 'deleteAddress'])->name('delete');
+            Route::get('/provinces', [UserUserController::class, 'searchProvinces'])->name('provinces');
+            Route::get('/cities', [UserUserController::class, 'searchCities'])->name('cities');
+        });
+    });
 });
-
 
 // Route untuk autentikasi (login, register, logout)
 Auth::routes();

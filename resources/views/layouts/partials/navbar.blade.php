@@ -38,8 +38,8 @@
                             <a href="">Blog</a>
                         </li>
 
-                        <li class="{{ Route::currentRouteName() == 'about' ? 'active-menu' : '' }}">
-                            <a href="">About</a>
+                        <li class="{{ Route::currentRouteName() == 'user.about.index' ? 'active-menu' : '' }}">
+                            <a href="{{ route('user.about.index') }}">About</a>
                         </li>
 
                         <li class="{{ Route::currentRouteName() == 'contact' ? 'active-menu' : '' }}">
