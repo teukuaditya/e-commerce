@@ -77,17 +77,8 @@
                                     @endforeach
                                 </ul>
                             </li>
-
-                            <li class="{{ Route::currentRouteName() == 'blog' ? 'active-menu' : '' }}">
-                                <a href="">Blog</a>
-                            </li>
-
                             <li class="{{ Route::currentRouteName() == 'about' ? 'active-menu' : '' }}">
                                 <a href="{{ route('user.about.index')}}">About</a>
-                            </li>
-
-                            <li class="{{ Route::currentRouteName() == 'contact' ? 'active-menu' : '' }}">
-                                <a href="">Contact</a>
                             </li>
                         </ul>
                     </div>

@@ -61,21 +61,16 @@
                 </h4>
 
                 <p class="stext-107 cl7 size-201">
-                    Any questions? Let us know in store at 8th floor, 379 Hudson St, New York, NY 10018 or call us on
-                    (+1) 96 716 6879
+                    Have questions? Contact us at our store on the 8th floor, 379 Hudson St, New York, NY 10018 or call us at (+62) 882-1532-8028.
                 </p>
 
                 <div class="p-t-27">
-                    <a href="#" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
-                        <i class="fa fa-facebook"></i>
-                    </a>
-
-                    <a href="#" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
+                    <a href="https://www.instagram.com/drive.venture/" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
                         <i class="fa fa-instagram"></i>
                     </a>
 
-                    <a href="#" class="fs-18 cl7 hov-cl1 trans-04 m-r-16">
-                        <i class="fa fa-pinterest-p"></i>
+                    <a href="https://www.tiktok.com/@drive.venture" class="fs-18 cl7 hov-cl1 trans-04 m-r-16" target="_blank" rel="noopener">
+                        <i class="fa-brands fa-tiktok"></i>
                     </a>
                 </div>
             </div>

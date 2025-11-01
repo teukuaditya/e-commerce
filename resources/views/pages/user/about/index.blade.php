@@ -17,18 +17,10 @@
 
 <!-- Main Content -->
 <div class="container py-5">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-5">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{{ route('user.home') }}" class="text-decoration-none">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">About</li>
-        </ol>
-    </nav>
-
     <!-- Story Section -->
     <div class="row align-items-center mb-5">
         <div class="col-lg-6">
-            <img src="{{ asset('images/about/atelier.jpg') }}" 
+            <img src="{{ asset('images/drvn-logo.jpeg') }}" 
                  class="img-fluid rounded-3 shadow-lg hover-scale" 
                  alt="DRVN Atelier"
                  loading="lazy">
@@ -112,7 +104,7 @@
                 </div>
             </div>
             <div class="col-lg-4 text-center">
-                <img src="{{ asset('images/logo.png') }}" 
+                <img src="{{ asset('images/drvn-logo.jpeg') }}" 
                      alt="DRVN Logo" 
                      class="img-fluid" 
                      style="max-width: 200px;">
