@@ -50,7 +50,7 @@
 
                         <!-- Form untuk mengedit data user (tersembunyi) -->
                         <div id="edit-form" style="display: none;">
-                            <form action="{{ route('user.profile') }}" method="POST">
+                            <form action="{{ route('user.profile.update') }}" method="POST">
                                 @csrf
                                 @method('PUT')
 

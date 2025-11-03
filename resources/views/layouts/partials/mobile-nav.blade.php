@@ -52,7 +52,7 @@
                             <small class="stext-104 cl4" style="font-size: 12px">{{ Auth::user()->email }}</small>
                         </h6>
                         <div class="dropdown-divider"></div>
-                        <a class="dropdown-item stext-104" href="{{ route('user.edit') }}">
+                        <a class="dropdown-item stext-104" href="{{ route('user.profile.edit') }}">
                             <i class="fas fa-user fa-fw mr-2 mb-2"></i>
                             My Profile
                         </a>

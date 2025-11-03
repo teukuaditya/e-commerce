@@ -454,6 +454,7 @@
             });
             // Simpan alamat baru
             $('#save-address-btn').on('click', function() {
+                console.log('Save Address button clicked');
                 const name = $('#recipient-name').val();
                 const phone = $('#recipient-phone').val();
                 const address = $('#new-address').val();
@@ -464,7 +465,7 @@
                     $(this).html('Saving...').attr('disabled', true);
 
                     $.ajax({
-                        url: '/user/update-address',
+                        url: '/user/address/save',
                         type: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}',
@@ -506,7 +507,7 @@
                     $(this).html('Saving...').attr('disabled', true);
 
                     $.ajax({
-                        url: '/user/update-address',
+                        url: '/user/address/update',
                         type: 'POST',
                         data: {
                             _token: '{{ csrf_token() }}',
@@ -656,7 +657,7 @@
             $('#delete-address-btn').on('click', function() {
                 if (confirm('Are you sure you want to delete this address?')) {
                     $.ajax({
-                        url: '/user/delete-address',
+                        url: '/user/address/delete',
                         type: 'DELETE',
                         data: {
                             _token: '{{ csrf_token() }}'
@@ -818,7 +819,7 @@
 
                                 // Kirimkan data status pembayaran ke backend
                                 $.ajax({
-                                    url: '/user/createTransaction', // Ganti dengan endpoint createTransaction
+                                    url: '/user/checkout/createTransaction', // Ganti dengan endpoint createTransaction
                                     type: 'POST',
                                     data: {
                                         order_id: result
@@ -844,7 +845,7 @@
                                     success: function(response) {
                                         // Redirect atau aksi lain setelah transaksi berhasil diproses di backend
                                         window.location.href =
-                                            "/user/order-history"; // Redirect ke halaman checkout setelah pembayaran sukses
+                                            "/user/orders/order-history"; // Redirect ke halaman checkout setelah pembayaran sukses
                                     },
                                     error: function(xhr) {
                                         console.error('Error:', xhr
@@ -861,7 +862,7 @@
 
                                 // Kirimkan data status pembayaran ke backend saat pembayaran dipilih, meskipun belum selesai
                                 $.ajax({
-                                    url: '/user/createTransaction', // Ganti dengan endpoint createTransaction
+                                    url: '/user/checkout/createTransaction', // Ganti dengan endpoint createTransaction
                                     type: 'POST',
                                     data: {
                                         order_id: result
@@ -887,7 +888,7 @@
                                             'Transaction status updated as pending.'
                                         );
                                         window.location.href =
-                                            "/user/order-history"; // Redirect ke halaman checkout setelah pembayaran
+                                            "/user/orders/order-history"; // Redirect ke halaman checkout setelah pembayaran
                                     },
                                     error: function(xhr) {
                                         console.error('Error:', xhr

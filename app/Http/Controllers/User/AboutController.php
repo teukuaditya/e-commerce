@@ -10,10 +10,10 @@ class AboutController extends Controller
     public function index()
     {
         $company = [
-            'name' => 'DRVN',
+            'name' => 'Drive Venture',
             'tagline' => 'all about essentials',
             'email' => 'hello@drvn.store',
-            'address' => 'Jl. Contoh No. 123, Purwokerto',
+            'address' => 'Jl. Farida, Purwokerto, Jawa Tengah, Indonesia',
         ];
 
         return view('pages.user.about.index', compact('company'));

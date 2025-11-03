@@ -88,7 +88,7 @@
                         </div>
 
                         @if (auth()->user()->address)
-                            <form action="/user/delete-address" method="POST" style="margin-top: 15px;">
+                            <form action="/user/address/delete" method="POST" style="margin-top: 15px;">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"

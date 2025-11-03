@@ -34,9 +34,10 @@
                             </ul>
                         </li>
 
-                        <li class="{{ Route::currentRouteName() == 'user.about.index' ? 'active-menu' : '' }}">
+                        <li class="{{ request()->routeIs('user.about.*') ? 'active-menu' : '' }}">
                             <a href="{{ route('user.about.index') }}">About</a>
                         </li>
+
 
                     </ul>
                 </div>
@@ -91,7 +92,7 @@
                                     <small class="stext-104 cl4" style="font-size: 12px">{{ Auth::user()->email }}</small>
                                 </h6>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item stext-104" href="{{ route('user.edit') }}">
+                                <a class="dropdown-item stext-104" href="{{ route('user.profile.edit') }}">
                                     <i class="fas fa-user fa-fw m-r-10 mb-2"></i>
                                     My Profile
                                 </a>

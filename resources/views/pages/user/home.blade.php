@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!--===============================================================================================-->
-    <link rel="icon" type="image/png" href="{{ asset('images/icons/flexora.png') }}" />
+    <link rel="icon" type="image/png" href="{{ asset('images/drvn-logo.png') }}" />
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}">
     <!--===============================================================================================-->
@@ -134,18 +134,27 @@
                                             style="font-size: 12px">{{ Auth::user()->email }}</small>
                                     </h6>
                                     <div class="dropdown-divider"></div>
-                                    <a class="dropdown-item stext-104" href="{{ route('user.edit') }}">
-                                        <i class="fas fa-user fa-fw m-r-10 mb-2"></i>
-                                        My Profile
-                                    </a>
-                                    <a class="dropdown-item stext-104" href="{{ route('user.address.edit') }}">
-                                        <i class="fas fa-map-marker-alt fa-fw m-r-10 mb-2"></i>
-                                        My Address
-                                    </a>
-                                    <a class="dropdown-item stext-104" href="{{ route('user.order.index') }}">
-                                        <i class="fas fa-shopping-bag fa-fw m-r-10"></i>
-                                        Order History
-                                    </a>
+                                    {{-- My Profile --}}
+                                        <a class="dropdown-item stext-104"
+                                        href="{{ route('user.profile.edit') }}">
+                                            <i class="fas fa-user fa-fw m-r-10 mb-2"></i>
+                                            My Profile
+                                        </a>
+
+                                        {{-- My Address (ini sudah benar) --}}
+                                        <a class="dropdown-item stext-104"
+                                        href="{{ route('user.address.edit') }}">
+                                            <i class="fas fa-map-marker-alt fa-fw m-r-10 mb-2"></i>
+                                            My Address
+                                        </a>
+
+                                        {{-- Order History (ini juga benar) --}}
+                                        <a class="dropdown-item stext-104"
+                                        href="{{ route('user.order.index') }}">
+                                            <i class="fas fa-shopping-bag fa-fw m-r-10"></i>
+                                            Order History
+                                        </a>
+
 
                                     <!-- Menambahkan link Admin jika pengguna adalah admin -->
                                     @if (Auth::user()->role == 'admin')
@@ -253,7 +262,7 @@
             @guest
                 <!-- Logo moblie -->
                 <a href="{{ route('user.home') }}" class="logo-mobile">
-                    <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">FLEXORA</span>
+                    <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
                 </a>
                 <!-- Jika user belum login -->
                 <a href="{{ route('login') }}"
@@ -268,7 +277,7 @@
                 </a> --}}
             @else
                 <a href="{{ route('user.home') }}" class="logo-mobile">
-                    <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">FLEXORA</span>
+                    <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
                 </a>
                 <!-- Icon header -->
                 <div class="wrap-icon-header flex-w flex-r-m">
@@ -302,7 +311,7 @@
                                 <small class="stext-104 cl4" style="font-size: 12px">{{ Auth::user()->email }}</small>
                             </h6>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item stext-104" href="{{ route('user.edit') }}">
+                            <a class="dropdown-item stext-104" href="{{ route('user.profile.edit') }}">
                                 <i class="fas fa-user fa-fw m-r-10 mb-2"></i>
                                 My Profile
                             </a>

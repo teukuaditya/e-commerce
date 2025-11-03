@@ -8,7 +8,7 @@
     <div class="section-title stext-110 cl2" style="font-weight: bold; font-size: 14px; margin-top: 20px;">My Details
     </div>
     <ul class="list-group">
-        <a href="{{ route('user.edit') }}"
+        <a href="{{ route('user.profile.edit') }}"
             class="list-group-item stext-104 cl2 hover-effect {{ request()->routeIs('user.edit') ? 'active' : '' }}">
             <i class="fas fa-user fa-fw mr-2"></i> My Profile
         </a>

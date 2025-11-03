@@ -105,7 +105,7 @@ $(document).ready(function() {
 
         // Ambil snap_token dari server untuk melanjutkan pembayaran
         $.ajax({
-            url: '/user/snap-token', // Endpoint untuk mendapatkan Snap Token
+            url: '/user/orders/snap-token', // Endpoint untuk mendapatkan Snap Token
             type: 'GET',
             data: { order_id: orderId }, // Kirimkan order_id untuk mengambil snap_token
             success: function(response) {
@@ -120,7 +120,7 @@ $(document).ready(function() {
 
                             // Kirimkan data status pembayaran ke backend
                             $.ajax({
-                                url: '/user/payment-success',
+                                url: '/user/orders/payment-success',
                                 type: 'POST',
                                 data: {
                                     order_id: result.order_id,
@@ -134,7 +134,7 @@ $(document).ready(function() {
                                     _token: '{{ csrf_token() }}'
                                 },
                                 success: function(response) {
-                                    window.location.href = "/user/order-history"; // Redirect setelah pembayaran sukses
+                                    window.location.href = "/user/orders/order-history"; // Redirect setelah pembayaran sukses
                                 },
                                 error: function(xhr) {
                                     alert('Failed to update payment status.');
