@@ -213,7 +213,7 @@
             </div>
             <style>
                 .dropdown-item:active {
-                    background-color: #717fe0;
+                    background-color: #8E5B23;
                     /* Warna yang diinginkan */
                     color: #fff;
                     /* Warna teks jika perlu */

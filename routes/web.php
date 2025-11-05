@@ -31,6 +31,10 @@ use App\Http\Controllers\UserController;
  */
 Route::get('/', fn () => redirect()->route('user.home'));
 
+// Search Products
+Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
+
+
 /**
  * -------------------------------------------------------
  * USER (PUBLIC) — semua orang bisa akses (guest/login/admin)
@@ -50,6 +54,9 @@ Route::prefix('user')->name('user.')->group(function () {
     // Categories (public listing & detail)
     Route::get('/categories', [UserCategoryController::class, 'index'])->name('categories.index');
     Route::get('/categories/{id}', [UserCategoryController::class, 'show'])->name('categories.products');
+
+    // Search Products
+    Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
 
     /**
      * -----------------------------------------------

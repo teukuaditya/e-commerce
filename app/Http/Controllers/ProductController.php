@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    // Menampilkan daftar produk
+    // Menampilkan daftar produk (admin)
     public function index()
     {
-        $categories = Category::all(); // Mengambil data kategori
-        $products = Product::all(); // Mengambil data produk
+        $categories = Category::all();
+        $products = Product::all();
 
         return view('pages.admin.products.index', compact('categories', 'products'));
     }
@@ -21,7 +21,6 @@ class ProductController extends Controller
     // Menyimpan produk baru
     public function store(Request $request)
     {
-        // Validasi inputan
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'brand' => 'nullable|string',
@@ -37,7 +36,6 @@ class ProductController extends Controller
             'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
         ]);
 
-        // Proses gambar
         $images = [];
         foreach (['image1', 'image2', 'image3'] as $index => $imageField) {
             if ($request->hasFile($imageField)) {
@@ -48,15 +46,9 @@ class ProductController extends Controller
             }
         }
 
-        // Simpan nama gambar sebagai JSON
         $validated['image'] = !empty($images) ? json_encode($images) : null;
+        $validated['size'] = $request->has('size') ? json_encode($request->size) : null;
 
-        // Simpan ukuran (jika ada) dalam format JSON
-        if ($request->has('size')) {
-            $validated['size'] = json_encode($request->size);
-        }
-
-        // Simpan produk
         Product::create($validated);
 
         return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
@@ -65,7 +57,6 @@ class ProductController extends Controller
     // Mengupdate produk
     public function update(Request $request, Product $product)
     {
-        // Validasi inputan
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'brand' => 'nullable|string',
@@ -81,13 +72,13 @@ class ProductController extends Controller
             'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
         ]);
 
-        // Proses gambar baru
         $images = [];
-        $oldImages = is_string($product->image) ? json_decode($product->image, true) : $product->image;
+        $oldImages = $product->image
+            ? (is_string($product->image) ? json_decode($product->image, true) : (array) $product->image)
+            : [];
 
         foreach (['image1', 'image2', 'image3'] as $index => $imageField) {
             if ($request->hasFile($imageField)) {
-                // Jika ada gambar baru pada form input, hapus gambar lama yang sesuai
                 if (isset($oldImages[$index]) && Storage::exists('public/products/' . $oldImages[$index])) {
                     Storage::delete('public/products/' . $oldImages[$index]);
                 }
@@ -96,65 +87,96 @@ class ProductController extends Controller
                 $imageName = $this->generateImageName($image, $request->title, $index + 1);
                 $image->storeAs('public/products', $imageName);
                 $images[] = $imageName;
-            } elseif ($request->has('delete_image' . ($index + 1))) {
-                // Hapus gambar lama jika field delete_imageX ada
+            } elseif ($request->filled('delete_image' . ($index + 1))) {
+                // Jika ada permintaan hapus gambar spesifik
                 $imageToDelete = $request->input('delete_image' . ($index + 1));
                 if ($imageToDelete && Storage::exists('public/products/' . $imageToDelete)) {
                     Storage::delete('public/products/' . $imageToDelete);
                 }
+                // jangan masukkan ke $images (dihapus)
             } else {
-                // Jika tidak ada gambar baru dan tidak ada yang terhapus, simpan gambar lama
+                // Simpan gambar lama jika ada
                 if (isset($oldImages[$index])) {
                     $images[] = $oldImages[$index];
                 }
             }
         }
 
-        // Simpan nama gambar sebagai JSON
-        $validated['image'] = !empty($images) ? json_encode($images) : null;
+        $validated['image'] = !empty($images) ? json_encode(array_values($images)) : null;
+        $validated['size'] = $request->has('size') ? json_encode($request->size) : null;
 
-        // Simpan ukuran (jika ada) dalam format JSON
-        if ($request->has('size')) {
-            $validated['size'] = json_encode($request->size);
-        }
-
-        // Update produk
         $product->update($validated);
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
     }
-
 
     // Menghapus produk
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
 
-        // Hapus gambar jika ada
         if ($product->image) {
-            // Cek apakah $product->image sudah berupa array atau string JSON
-            $oldImages = is_string($product->image) ? json_decode($product->image, true) : $product->image;
-
-            // Loop untuk menghapus gambar-gambar lama
+            $oldImages = is_string($product->image) ? json_decode($product->image, true) : (array) $product->image;
             foreach ($oldImages as $oldImage) {
-                // Cek apakah file gambar ada dan dihapus
-                if (Storage::exists('public/products/' . $oldImage)) {
+                if ($oldImage && Storage::exists('public/products/' . $oldImage)) {
                     Storage::delete('public/products/' . $oldImage);
                 }
             }
         }
 
-        // Hapus produk
         $product->delete();
 
         return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
     }
-
 
     // Fungsi untuk membuat nama file gambar unik
     private function generateImageName($image, $title, $index)
     {
         $titleSlug = str_replace(' ', '_', strtolower($title));
         return $titleSlug . '-' . $index . '.' . $image->getClientOriginalExtension();
+    }
+
+    /**
+     * Search products (public)
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('query');
+
+        if (empty($query)) {
+            return redirect()->route('user.home')->with('error', 'Please enter search keyword.');
+        }
+
+        $products = Product::where(function ($q) use ($query) {
+                $q->where('title', 'LIKE', "%{$query}%")
+                  ->orWhere('brand', 'LIKE', "%{$query}%")
+                  ->orWhere('description', 'LIKE', "%{$query}%");
+            })
+            ->when(schemaHasColumn('products', 'status'), function ($q) {
+                // jika kolom status ada, hanya ambil yang aktif
+                $q->where('status', 'active');
+            })
+            ->paginate(12);
+
+        return view('pages.user.products.search', [
+            'products' => $products,
+            'query' => $query,
+            'total' => $products->total()
+        ]);
+    }
+}
+
+/**
+ * Helper kecil: periksa apakah kolom ada (opsional, menghindari error jika migrasi berbeda)
+ * Jika tidak ingin helper ini, hapus penggunaan when(...) di atas dan gunakan ->where('status','active') langsung.
+ */
+if (! function_exists('schemaHasColumn')) {
+    function schemaHasColumn($table, $column)
+    {
+        try {
+            return \Schema::hasColumn($table, $column);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

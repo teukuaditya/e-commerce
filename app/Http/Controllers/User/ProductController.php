@@ -23,3 +23,5 @@ class ProductController extends Controller
         return view('pages.user.products.detail', compact('product'));
     }
 }
+
+
