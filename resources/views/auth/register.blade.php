@@ -1,5 +1,5 @@
 @extends('layouts.home')
-
+ <link rel="icon" type="image/png" href="{{ asset('images/drvn-logo.png') }}" />
 @section('content')
 <div class="container">
 
