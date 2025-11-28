@@ -141,30 +141,46 @@ class ProductController extends Controller
      */
     public function search(Request $request)
     {
-        $query = $request->input('query');
+        $query = trim($request->input('query', ''));
 
-        if (empty($query)) {
-            return redirect()->route('user.home')->with('error', 'Please enter search keyword.');
-        }
-
-        $products = Product::where(function ($q) use ($query) {
+        $productsQuery = Product::where(function ($q) use ($query) {
                 $q->where('title', 'LIKE', "%{$query}%")
-                  ->orWhere('brand', 'LIKE', "%{$query}%")
-                  ->orWhere('description', 'LIKE', "%{$query}%");
+                ->orWhere('brand', 'LIKE', "%{$query}%")
+                ->orWhere('description', 'LIKE', "%{$query}%");
             })
             ->when(schemaHasColumn('products', 'status'), function ($q) {
-                // jika kolom status ada, hanya ambil yang aktif
                 $q->where('status', 'active');
-            })
-            ->paginate(12);
+            });
+
+        // 🔹 Kalau request dari AJAX (live search)
+        if ($request->ajax()) {
+            $products = $productsQuery
+                ->limit(10)
+                ->get(['id', 'title', 'brand', 'price', 'slug']); // sesuaikan kolom & slug punyamu
+
+            return response()->json([
+                'items' => $products,
+            ]);
+        }
+        
+
+        // 🔹 Mode normal (full page hasil search)
+        if ($query === '') {
+            return redirect()->route('user.home')
+                ->with('error', 'Please enter search keyword.');
+        }
+
+        $products = $productsQuery->paginate(12);
 
         return view('pages.user.products.search', [
             'products' => $products,
-            'query' => $query,
-            'total' => $products->total()
+            'query'    => $query,
+            'total'    => $products->total(),
         ]);
     }
-}
+
+
+    }
 
 /**
  * Helper kecil: periksa apakah kolom ada (opsional, menghindari error jika migrasi berbeda)

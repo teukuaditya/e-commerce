@@ -85,17 +85,13 @@
 
                     <!-- Icon header -->
                     <div class="wrap-icon-header flex-w flex-r-m">
-                        <div class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11 js-show-modal-search">
-                            <i class="zmdi zmdi-search"></i>
-                        </div>
-
                         <a href="{{ route('user.cart.index') }}">
                             <div class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11 icon-header-noti js-show-cart"
                                 data-notify="{{ $cartCount }}">
                                 <i class="zmdi zmdi-shopping-cart"></i>
                             </div>
                         </a>
-
+                        
                         <a href="#"
                             class="dis-block icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11 icon-header-noti"
                             data-notify="0">
@@ -176,6 +172,19 @@
                                 </div>
                             </div>
                         @endguest
+
+                        @auth
+                            @php
+                                $fullname = Auth::user()->name;
+                                $firstName = explode(' ',($fullname))[0];
+                            @endphp
+                            <span class="mtext-50 cl2 m-l-10">
+                                Hello {{ $firstName }},
+                            </span>
+                        @endauth
+                                
+
+
                     </div>
             </div>
 
