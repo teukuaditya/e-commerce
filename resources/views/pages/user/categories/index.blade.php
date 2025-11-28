@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-<div class="bg0 p-t-80 p-b-50">
+<div class="bg0 p-t-80 p-b-50 category-hero">
     <div class="container">
         <div class="row">
             @foreach($categories as $category)
@@ -33,3 +33,20 @@
     </div>
 </div>
 @endsection
+@push('styles')
+<style>
+    /* Supaya hero About tidak ketimpa navbar */
+    .category-hero {
+        margin-top: 100px;
+        /* coba 80–120px, silakan disesuaikan */
+    }
+
+    @media (max-width: 991.98px) {
+
+        /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
+        .category-hero {
+            margin-top: 70px;
+        }
+    }
+</style>
+@endpush

@@ -100,39 +100,59 @@ class CheckoutController extends Controller
 
     public function createTransaction(Request $request)
     {
-        // Simpan data transaksi
-        $transaction = new Transaction();
-        $transaction->order_id = $request->order_id;  // ID unik order
-        $transaction->user_id = Auth::id();  // ID user yang login
-        $transaction->gross_amount = $request->gross_amount;  // Total harga
-        $transaction->payment_type = $request->payment_type;  // Payment type yang dipilih pengguna
-        $transaction->transaction_status = $request->transaction_status;
-        $transaction->transaction_time = now();  // Waktu transaksi
-        $transaction->customer_name = $request->customer_name;  // Nama customer
-        $transaction->courier = $request->courier; // Simpan kurir
-        $transaction->courier_service = $request->courier_service; // Simpan layanan pengiriman
-        $transaction->snap_token = $request->snap_token;  // Simpan Snap Token
-        $transaction->save();
+        try {
+            // Ambil items sekali, pakai di semua tempat
+            $items = $request->input('items', []);
 
-        if (isset($request->items) && is_array($request->items)) {
-            $productIds = collect($request->items)->pluck('id')->toArray(); // Ambil semua product_id
-            Cart::where('user_id', Auth::id())
-                ->whereIn('product_id', $productIds)
-                ->delete(); // Hapus produk yang telah di-checkout dari keranjang
-        }
+            // Simpan data transaksi utama
+            $transaction = new Transaction();
+            $transaction->order_id           = $request->order_id;
+            $transaction->user_id           = Auth::id();
+            $transaction->gross_amount      = $request->gross_amount;
+            $transaction->payment_type      = $request->payment_type;
+            $transaction->transaction_status = $request->transaction_status ?? 'pending';
+            $transaction->transaction_time  = now();
+            $transaction->customer_name     = $request->customer_name;
+            $transaction->courier           = $request->courier;
+            $transaction->courier_service   = $request->courier_service;
+            $transaction->snap_token        = $request->snap_token;
+            $transaction->save();
 
-        // Simpan detail transaksi
-        foreach ($request->items as $item) {
-            TransactionDetail::create([
-                'transaction_id' => $transaction->id,
-                'product_id' => $item['id'],
-                'quantity' => $item['quantity'],
-                'price' => $item['price'],
-                'subtotal' => $item['quantity'] * $item['price'],
+            // Hapus item dari cart kalau ada items
+            if (!empty($items) && is_array($items)) {
+                $productIds = collect($items)->pluck('id')->toArray();
+
+                Cart::where('user_id', Auth::id())
+                    ->whereIn('product_id', $productIds)
+                    ->delete();
+
+                // Simpan detail transaksi
+                foreach ($items as $item) {
+                    TransactionDetail::create([
+                        'transaction_id' => $transaction->id,
+                        'product_id'     => $item['id'],
+                        'quantity'       => $item['quantity'],
+                        'price'          => $item['price'],
+                        'subtotal'       => $item['quantity'] * $item['price'],
+                    ]);
+                }
+            }
+
+            return response()->json([
+                'success'  => true,
+                'order_id' => $transaction->order_id,
+                'message'  => 'Transaction created successfully',
             ]);
+        } catch (\Throwable $e) {
+            \Log::error('createTransaction error', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error: ' . $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json(['order_id' => $transaction->order_id, 'message' => 'Transaction created successfully']);
     }
-
 }

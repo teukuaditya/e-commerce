@@ -188,7 +188,7 @@ html, body { margin: 0; padding: 0; }
 }
 
 .header-v4 .container-menu-desktop {
-  height: 124px;
+  height: auto !important;
 }
 
 

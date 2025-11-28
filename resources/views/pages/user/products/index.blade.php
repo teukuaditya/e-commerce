@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-<div class="bg0 m-t-23 p-b-140">
+<div class="bg0 m-t-23 p-b-140 product-hero">
     <div class="container">
         <div class="flex-w flex-sb-m p-b-52">
             <!-- Tombol Filter Kategori -->
@@ -104,4 +104,22 @@
         });
     });
 </script>
+@endpush
+
+@push('styles')
+<style>
+  /* Supaya hero About tidak ketimpa navbar */
+  .product-hero {
+    margin-top: 120px;
+    /* coba 80–120px, silakan disesuaikan */
+  }
+
+  @media (max-width: 991.98px) {
+
+    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
+    .product-hero {
+      margin-top: 70px;
+    }
+  }
+</style>
 @endpush

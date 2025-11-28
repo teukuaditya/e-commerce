@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Hero Section -->
-<div class="bg-light py-5">
+<div class="bg-light py-5 about-hero">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-8 text-center">
@@ -21,9 +21,9 @@
   <div class="row align-items-center mb-5">
     <div class="col-lg-6">
       <img src="{{ asset('images/drvn-logo.png') }}"
-           class="img-fluid rounded-3 shadow-lg hover-scale"
-           alt="DRVN Studio"
-           loading="lazy">
+        class="img-fluid rounded-3 shadow-lg hover-scale"
+        alt="DRVN Studio"
+        loading="lazy">
     </div>
     <div class="col-lg-6 ps-lg-5">
       <h2 class="h3 fw-bold mb-4">Cerita Kami</h2>
@@ -115,35 +115,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+@push('styles')
 <style>
-  :root{
-    --ff-sans: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Supaya hero About tidak ketimpa navbar */
+  .about-hero {
+    margin-top: 80px;
+    /* coba 80–120px, silakan disesuaikan */
   }
 
-  /* Terapkan Poppins ke seluruh halaman */
-  html, body{ font-family: var(--ff-sans) !important; }
+  @media (max-width: 991.98px) {
 
-  /* Paksa komponen umum ikut Poppins */
-  h1,h2,h3,h4,h5,h6,
-  .display-1,.display-2,.display-3,.display-4,
-  .lead, p, a, span, small,
-  .btn, .nav-link, .dropdown-item,
-  .card, .modal, .alert,
-  input, textarea, select, .form-control, .form-select{
-    font-family: var(--ff-sans) !important;
+    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
+    .about-hero {
+      margin-top: 70px;
+    }
   }
-
-  /* Utilitas halaman */
-  .breadcrumb{ background: transparent; padding-left: 0; }
-  .hover-scale{ transition: transform .3s ease; }
-  .hover-scale:hover{ transform: scale(1.02); }
-  .hover-shadow{ transition: box-shadow .3s ease; }
-  .hover-shadow:hover{ box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; }
-  .feature-icon{
-    width:50px;height:50px;display:flex;align-items:center;justify-content:center;
-    border-radius:50%;background-color:rgba(113,127,224,.1);
-  }
-  .bg-light{ background-color:#f8f9fa!important; }
 </style>
 @endpush

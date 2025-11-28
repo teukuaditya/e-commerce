@@ -12,13 +12,13 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>DRVN-Admin</title>
-    
-    <link rel="icon" type="image/png" href="{{ asset('images/icons/flexora.png') }}" />
+
+    <link rel="icon" type="image/png" href="{{ asset('images/drvn-logo.png') }}" />
 
     <!-- Custom fonts for this template-->
     <link rel="stylesheet" href="{{ asset('libs/fontawesome-free/css/all.min.css') }}">
     <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"rel="stylesheet">
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
 
     <!-- Custom styles for this template-->
     <link rel="stylesheet" href="{{ asset('css/sb-admin-2.min.css') }}">
@@ -59,7 +59,7 @@
             <footer class="sticky-footer bg-white mt-4">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright © 2024 All rights reserved | Fikri Nur Auliya</span>
+                        <span>Copyright © 2025 All rights reserved | Teuku Aditya</span>
                     </div>
                 </div>
             </footer>
