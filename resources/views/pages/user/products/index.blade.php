@@ -17,7 +17,7 @@
                 @endforeach
             </div>
 
-            <!-- Tombol Filter dan Search -->
+            <!-- Tombol Search -->
             <div class="flex-w flex-c-m m-tb-10">
                 <form action="{{ route('products.search') }}" method="GET" class="flex-w m-tb-4">
                     <input

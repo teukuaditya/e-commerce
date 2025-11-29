@@ -2,7 +2,7 @@
 
 @section('content')
     <!-- breadcrumb -->
-    <div class="container">
+    <div class="container showCategory-hero">
         <div class="bread-crumb flex-w p-r-15 p-t-30 p-lr-0-lg">
             <a href="{{ route('user.categories.index') }}" class="stext-109 cl8 hov-cl1 trans-04">
                 Category
@@ -32,18 +32,20 @@
 
                 <!-- Tombol Filter dan Search -->
                 <div class="flex-w flex-c-m m-tb-10">
-                    <div class="flex-c-m stext-106 cl6 size-104 bor4 pointer hov-btn3 trans-04 m-r-8 m-tb-4 js-show-filter">
-                        <i class="icon-filter cl2 m-r-6 fs-15 trans-04 zmdi zmdi-filter-list"></i>
-                        <i class="icon-close-filter cl2 m-r-6 fs-15 trans-04 zmdi zmdi-close dis-none"></i>
-                        Filter
-                    </div>
-
-                    <div class="flex-c-m stext-106 cl6 size-105 bor4 pointer hov-btn3 trans-04 m-tb-4 js-show-search">
+                <form action="{{ route('products.search') }}" method="GET" class="flex-w m-tb-4">
+                    <input
+                        class="plh3 stext-106 cl6 size-105 bor4 p-l-20 p-r-20 m-r-8"
+                        type="text"
+                        name="query"
+                        placeholder="Search products..."
+                        value="{{ request('query') }}"
+                        autocomplete="off">
+                    <button class="flex-c-m stext-106 cl6 size-105 bor4 hov-btn3 trans-04" type="submit">
                         <i class="icon-search cl2 m-r-6 fs-15 trans-04 zmdi zmdi-search"></i>
-                        <i class="icon-close-search cl2 m-r-6 fs-15 trans-04 zmdi zmdi-close dis-none"></i>
                         Search
-                    </div>
-                </div>
+                    </button>
+                </form>
+            </div>
             </div>
 
             <!-- Produk -->
@@ -90,3 +92,19 @@
         </div>
     </div>
 @endsection
+
+@push('styles')
+<style>
+  .showCategory-hero {
+    margin-top: 90px;
+  }
+
+  @media (max-width: 991.98px) {
+
+    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
+    .showCategory-hero {
+      margin-top: 70px;
+    }
+  }
+</style>
+@endpush

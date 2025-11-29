@@ -1,7 +1,7 @@
 @extends('layouts.main')
 
 @section('content')
-<section class="bg0 m-t-45 p-b-60">
+<section class="bg0 m-t-45 p-b-60 order-hero">
     <div class="container">
         <div class="row">
             <!-- Sidebar -->
@@ -162,4 +162,20 @@ $(document).ready(function() {
 
 
 </script>
+@endpush
+
+@push('styles')
+<style>
+  .order-hero {
+    margin-top: 120px;
+  }
+
+  @media (max-width: 991.98px) {
+
+    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
+    .order-hero {
+      margin-top: 70px;
+    }
+  }
+</style>
 @endpush
