@@ -13,6 +13,8 @@ use Midtrans\Config;
 use Midtrans\Snap;
 use Illuminate\Http\Request;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
+
 
 
 class CheckoutController extends Controller
@@ -103,15 +105,66 @@ class CheckoutController extends Controller
     public function createTransaction(Request $request)
     {
         try {
-            // Ambil items sekali, pakai di semua tempat
+            // Ambil items dari request
             $items = $request->input('items', []);
 
-            // 1. Simpan data transaksi utama
+            if (empty($items) || !is_array($items)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Items tidak ditemukan di request.',
+                ], 422);
+            }
+
+            // Ambil semua product_id yang terlibat
+            $productIds = collect($items)->pluck('id')->toArray();
+
+            // Ambil data produk sekaligus, lalu keyBy id biar gampang diakses
+            $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
+            // ============================
+            // 1. VALIDASI STOK SEBELUM BIKIN TRANSAKSI
+            // ============================
+            foreach ($items as $item) {
+                $productId = $item['id'] ?? null;
+                $qty       = (int) ($item['quantity'] ?? 0);
+
+                if (!$productId || $qty <= 0) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Data item tidak valid.',
+                    ], 422);
+                }
+
+                /** @var \App\Models\Product|null $product */
+                $product = $products->get($productId);
+
+                if (!$product) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Produk dengan ID {$productId} tidak ditemukan.",
+                    ], 404);
+                }
+
+                if ($product->stock < $qty) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Stok untuk produk '{$product->title}' tidak mencukupi. Sisa stok: {$product->stock}",
+                    ], 422);
+                }
+            }
+
+            // ============================
+            // 2. SIMPAN TRANSAKSI + DETAIL + UPDATE STOK (DALAM DB TRANSACTION)
+            // ============================
+            DB::beginTransaction();
+
+            // Simpan data transaksi utama
             $transaction = new Transaction();
             $transaction->order_id            = $request->order_id;
             $transaction->user_id             = Auth::id();
             $transaction->gross_amount        = $request->gross_amount;
-            $transaction->payment_type        = $request->payment_type ?? 'qris';
+            $transaction->payment_type        = $request->payment_type;
+            // kalau dari JS kadang belum kirim status, default ke "pending"
             $transaction->transaction_status  = $request->transaction_status ?? 'pending';
             $transaction->transaction_time    = now();
             $transaction->customer_name       = $request->customer_name;
@@ -120,43 +173,34 @@ class CheckoutController extends Controller
             $transaction->snap_token          = $request->snap_token;
             $transaction->save();
 
-            // 2. Kalau ada items dan bentuknya array
-            if (!empty($items) && is_array($items)) {
-                $productIds = collect($items)->pluck('id')->toArray();
+            // Hapus produk dari cart user
+            Cart::where('user_id', Auth::id())
+                ->whereIn('product_id', $productIds)
+                ->delete();
 
-                // Hapus dari cart
-                Cart::where('user_id', Auth::id())
-                    ->whereIn('product_id', $productIds)
-                    ->delete();
+            // Simpan detail transaksi + update stok produk
+            foreach ($items as $item) {
+                $productId = $item['id'];
+                $qty       = (int) $item['quantity'];
+                $price     = (int) $item['price'];
 
-                // 3. Simpan detail transaksi + kurangi stok produk
-                foreach ($items as $item) {
-                    // Guard sederhana biar gak error kalau key nggak lengkap
-                    if (!isset($item['id'], $item['quantity'], $item['price'])) {
-                        continue;
-                    }
+                /** @var \App\Models\Product $product */
+                $product = $products->get($productId);
 
-                    // Simpan detail
-                    TransactionDetail::create([
-                        'transaction_id' => $transaction->id,
-                        'product_id'     => $item['id'],
-                        'quantity'       => (int) $item['quantity'],
-                        'price'          => (int) $item['price'],
-                        'subtotal'       => (int) $item['quantity'] * (int) $item['price'],
-                    ]);
+                // Detail transaksi
+                TransactionDetail::create([
+                    'transaction_id' => $transaction->id,
+                    'product_id'     => $productId,
+                    'quantity'       => $qty,
+                    'price'          => $price,
+                    'subtotal'       => $qty * $price,
+                ]);
 
-                    // Kurangi stok produk
-                    $product = Product::find($item['id']);
-                    if ($product) {
-                        // Biar stok nggak minus
-                        $newStock = max(0, (int) $product->stock - (int) $item['quantity']);
-                        $product->stock = $newStock;
-                        $product->save();
-                        // Atau kalau mau simpel:
-                        // $product->decrement('stock', (int) $item['quantity']);
-                    }
-                }
+                // Kurangi stok produk
+                $product->decrement('stock', $qty);
             }
+
+            DB::commit();
 
             return response()->json([
                 'success'  => true,
@@ -164,6 +208,8 @@ class CheckoutController extends Controller
                 'message'  => 'Transaction created successfully',
             ]);
         } catch (\Throwable $e) {
+            DB::rollBack();
+
             \Log::error('createTransaction error', [
                 'message' => $e->getMessage(),
                 'trace'   => $e->getTraceAsString(),

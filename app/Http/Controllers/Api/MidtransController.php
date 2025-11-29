@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Transaction;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
 
@@ -15,7 +16,9 @@ class MidtransController extends Controller
      */
     public function getSnapToken(Request $request)
     {
+        // ===========================
         // Konfigurasi Midtrans
+        // ===========================
         Config::$serverKey    = env('MIDTRANS_SERVER_KEY');
         Config::$clientKey    = env('MIDTRANS_CLIENT_KEY');
         Config::$isProduction = false; // true kalau sudah live/production
@@ -24,13 +27,17 @@ class MidtransController extends Controller
 
         // Cek server key
         if (empty(Config::$serverKey)) {
-            return response()->json(['error' => 'ServerKey is missing or invalid.'], 500);
+            return response()->json([
+                'error' => 'ServerKey is missing or invalid.',
+            ], 500);
         }
 
+        // ===========================
         // Ambil data dasar dari request
+        // ===========================
         $orderId     = $request->input('order_id');
         $grossAmount = (int) $request->input('gross_amount');
-        $customer    = $request->input('customer_details', []);   // <– INI PENTING
+        $customer    = $request->input('customer_details', []);
 
         if (!$orderId || !$grossAmount || empty($customer)) {
             return response()->json([
@@ -105,21 +112,29 @@ class MidtransController extends Controller
 
         try {
             $snapToken = Snap::getSnapToken($params);
-            return response()->json(['token' => $snapToken]);
-        } catch (\Exception $e) {
+
             return response()->json([
-                'error' => $e->getMessage(),
+                'token' => $snapToken,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Midtrans getSnapToken error', [
+                'message' => $e->getMessage(),
+                'params'  => $params,
+            ]);
+
+            return response()->json([
+                'error'  => $e->getMessage(),
                 'params' => $params, // buat debug kalau perlu
             ], 500);
         }
     }
 
     /**
-     * Callback dari Midtrans (notifikasi server to server)
+     * Callback dari Midtrans (notifikasi server-to-server)
      */
     public function handleMidtransCallback(Request $request)
     {
-        \Log::info('Midtrans Callback Received:', ['data' => $request->all()]);
+        Log::info('Midtrans Callback Received:', ['data' => $request->all()]);
 
         $orderId      = $request->input('order_id');
         $statusCode   = $request->input('status_code');
@@ -127,41 +142,92 @@ class MidtransController extends Controller
         $signatureKey = $request->input('signature_key');
         $serverKey    = env('MIDTRANS_SERVER_KEY');
 
-        // Validasi signature
+        // ===========================
+        //  Validasi signature
+        // ===========================
         $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
 
         if ($signatureKey !== $expectedSignature) {
-            \Log::warning('Invalid Signature Key:', ['order_id' => $orderId]);
-            return response()->json(['error' => 'Invalid Signature Key'], 403);
+            Log::warning('Invalid Signature Key:', ['order_id' => $orderId]);
+
+            return response()->json([
+                'error' => 'Invalid Signature Key',
+            ], 403);
         }
 
-        $transaction = Transaction::where('order_id', $orderId)->first();
+        // ===========================
+        //  Ambil transaksi + details + product
+        // ===========================
+        $transaction = Transaction::with(['details.product'])
+            ->where('order_id', $orderId)
+            ->first();
 
         if (!$transaction) {
-            \Log::error('Transaction not found', ['order_id' => $orderId]);
-            return response()->json(['error' => 'Transaction not found'], 404);
+            Log::error('Transaction not found', ['order_id' => $orderId]);
+
+            return response()->json([
+                'error' => 'Transaction not found',
+            ], 404);
         }
 
-        if ($transaction->transaction_status === 'settlement') {
-            \Log::info('Transaction already settled, skipping update.', ['order_id' => $orderId]);
-            return response()->json(['success' => 'Transaction is already settled']);
+        $oldStatus = $transaction->transaction_status;
+
+        // Kalau sudah settlement, tidak usah di-update lagi
+        if ($oldStatus === 'settlement') {
+            Log::info('Transaction already settled, skipping update.', [
+                'order_id' => $orderId,
+            ]);
+
+            return response()->json([
+                'success' => 'Transaction is already settled',
+            ]);
         }
 
+        // ===========================
+        //  Update status
+        // ===========================
         $newStatus = $request->input('transaction_status');
 
-        if ($newStatus === 'pending' && $transaction->transaction_status !== 'settlement') {
+        // Pending: hanya update status kalau belum settlement
+        if ($newStatus === 'pending' && $oldStatus !== 'settlement') {
             $transaction->transaction_status = $newStatus;
         }
 
-        if (in_array($newStatus, ['settlement', 'expire', 'cancel', 'failure'])) {
+        // Jika status baru adalah gagal / expired / cancel → balikin stock (sekali saja)
+        if (in_array($newStatus, ['expire', 'cancel', 'failure'])) {
+            // Cegah double-restock:
+            // cuma restock kalau sebelumnya BUKAN expire/cancel/failure/settlement
+            if (!in_array($oldStatus, ['expire', 'cancel', 'failure', 'settlement'])) {
+                foreach ($transaction->details as $detail) {
+                    if ($detail->product) {
+                        $detail->product->stock += $detail->quantity;
+                        $detail->product->save();
+                    }
+                }
+                Log::info('Stock restored because payment failed/expired.', [
+                    'order_id' => $orderId,
+                ]);
+            }
+
             $transaction->transaction_status = $newStatus;
+        }
+
+        // Jika status baru settlement → tandai lunas
+        if ($newStatus === 'settlement') {
+            $transaction->transaction_status = 'settlement';
         }
 
         $transaction->gross_amount = $grossAmount;
         $transaction->save();
 
-        \Log::info('Transaction updated successfully', ['transaction' => $transaction]);
+        Log::info('Transaction updated successfully', [
+            'order_id'   => $orderId,
+            'old_status' => $oldStatus,
+            'new_status' => $transaction->transaction_status,
+        ]);
 
-        return response()->json(['success' => 'Transaction status updated successfully']);
+        return response()->json([
+            'success' => 'Transaction status updated successfully',
+        ]);
     }
 }
