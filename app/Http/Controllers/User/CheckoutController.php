@@ -12,6 +12,8 @@ use GuzzleHttp\Client;
 use Midtrans\Config;
 use Midtrans\Snap;
 use Illuminate\Http\Request;
+use App\Models\Product;
+
 
 class CheckoutController extends Controller
 {
@@ -104,37 +106,55 @@ class CheckoutController extends Controller
             // Ambil items sekali, pakai di semua tempat
             $items = $request->input('items', []);
 
-            // Simpan data transaksi utama
+            // 1. Simpan data transaksi utama
             $transaction = new Transaction();
-            $transaction->order_id           = $request->order_id;
-            $transaction->user_id           = Auth::id();
-            $transaction->gross_amount      = $request->gross_amount;
-            $transaction->payment_type      = $request->payment_type;
-            $transaction->transaction_status = $request->transaction_status ?? 'pending';
-            $transaction->transaction_time  = now();
-            $transaction->customer_name     = $request->customer_name;
-            $transaction->courier           = $request->courier;
-            $transaction->courier_service   = $request->courier_service;
-            $transaction->snap_token        = $request->snap_token;
+            $transaction->order_id            = $request->order_id;
+            $transaction->user_id             = Auth::id();
+            $transaction->gross_amount        = $request->gross_amount;
+            $transaction->payment_type        = $request->payment_type ?? 'qris';
+            $transaction->transaction_status  = $request->transaction_status ?? 'pending';
+            $transaction->transaction_time    = now();
+            $transaction->customer_name       = $request->customer_name;
+            $transaction->courier             = $request->courier;
+            $transaction->courier_service     = $request->courier_service;
+            $transaction->snap_token          = $request->snap_token;
             $transaction->save();
 
-            // Hapus item dari cart kalau ada items
+            // 2. Kalau ada items dan bentuknya array
             if (!empty($items) && is_array($items)) {
                 $productIds = collect($items)->pluck('id')->toArray();
 
+                // Hapus dari cart
                 Cart::where('user_id', Auth::id())
                     ->whereIn('product_id', $productIds)
                     ->delete();
 
-                // Simpan detail transaksi
+                // 3. Simpan detail transaksi + kurangi stok produk
                 foreach ($items as $item) {
+                    // Guard sederhana biar gak error kalau key nggak lengkap
+                    if (!isset($item['id'], $item['quantity'], $item['price'])) {
+                        continue;
+                    }
+
+                    // Simpan detail
                     TransactionDetail::create([
                         'transaction_id' => $transaction->id,
                         'product_id'     => $item['id'],
-                        'quantity'       => $item['quantity'],
-                        'price'          => $item['price'],
-                        'subtotal'       => $item['quantity'] * $item['price'],
+                        'quantity'       => (int) $item['quantity'],
+                        'price'          => (int) $item['price'],
+                        'subtotal'       => (int) $item['quantity'] * (int) $item['price'],
                     ]);
+
+                    // Kurangi stok produk
+                    $product = Product::find($item['id']);
+                    if ($product) {
+                        // Biar stok nggak minus
+                        $newStock = max(0, (int) $product->stock - (int) $item['quantity']);
+                        $product->stock = $newStock;
+                        $product->save();
+                        // Atau kalau mau simpel:
+                        // $product->decrement('stock', (int) $item['quantity']);
+                    }
                 }
             }
 

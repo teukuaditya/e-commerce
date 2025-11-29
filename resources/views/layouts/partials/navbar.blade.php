@@ -126,7 +126,7 @@
                                 $firstName = explode(' ',($fullname))[0];
                             @endphp
                                 <span class="mtext-50 cl2">
-                                    Hello {{ $firstName }},
+                                    Hi {{ $firstName }},
                                 </span>
                         @endauth
                 </div>

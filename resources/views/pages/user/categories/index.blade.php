@@ -2,6 +2,9 @@
 
 @section('content')
 <div class="bg0 p-t-80 p-b-50 category-hero">
+    <h3 class="ltext-103 cl5 mb-4 text-center">
+                CATEGORIES
+            </h3>  
     <div class="container">
         <div class="row">
             @foreach($categories as $category)

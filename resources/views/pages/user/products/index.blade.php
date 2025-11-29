@@ -108,10 +108,8 @@
 
 @push('styles')
 <style>
-  /* Supaya hero About tidak ketimpa navbar */
   .product-hero {
-    margin-top: 120px;
-    /* coba 80–120px, silakan disesuaikan */
+    margin-top: 100px;
   }
 
   @media (max-width: 991.98px) {

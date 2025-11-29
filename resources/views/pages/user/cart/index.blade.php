@@ -2,7 +2,7 @@
 
 @section('content')
     <!-- breadcrumb -->
-    <div class="container">
+    <div class="container cart-hero">
         <div class="bread-crumb flex-w p-l-25 p-r-15 p-t-30 p-lr-0-lg">
             <a href="{{ route('user.products.index') }}" class="stext-109 cl8 hov-cl1 trans-04">
                 Product
@@ -152,7 +152,7 @@
                                         </div>
                                     </div>
                                     <!-- Remove Button -->
-                                    <div class="cart-item-remove">
+                                    <div class="cart-item-remove"> 
                                         <form action="{{ route('user.cart.remove', $item->id) }}" method="POST"
                                             onsubmit="return confirmDelete(event)">
                                             @csrf
@@ -414,4 +414,22 @@
             }
         }
     </script>
+@endpush
+
+@push('styles')
+<style>
+  /* Supaya hero About tidak ketimpa navbar */
+  .cart-hero {
+    margin-top: 120px;
+    /* coba 80–120px, silakan disesuaikan */
+  }
+
+  @media (max-width: 991.98px) {
+
+    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
+    .product-hero {
+      margin-top: 70px;
+    }
+  }
+</style>
 @endpush
