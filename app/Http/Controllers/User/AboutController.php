@@ -12,7 +12,7 @@ class AboutController extends Controller
         $company = [
             'name' => 'Drive Venture',
             'tagline' => 'all about essentials',
-            'email' => 'hello@drvn.store',
+            'email' => 'driveventure719@gmail.com',
             'address' => 'Jl. Farida, Purwokerto, Jawa Tengah, Indonesia',
         ];
 

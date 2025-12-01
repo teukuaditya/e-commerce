@@ -61,7 +61,7 @@
                 </h4>
 
                 <p class="stext-107 cl7 size-201">
-                    Have questions? Contact us at our store on the 8th floor, 379 Hudson St, New York, NY 10018 or call us at (+62) 882-1532-8028.
+                    Have questions? Visit our store at Jalan Farida RT 2/RW 5, Kutasari, Baturraden, Banyumas, Central Java, or call us at (+62) 882-1532-8028.
                 </p>
 
                 <div class="p-t-27">

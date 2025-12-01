@@ -1988,8 +1988,28 @@ input.num-product::-webkit-inner-spin-button {
 }
 
 /*---------------------------------------------*/
+/* --- CARD CATEGORY BASE --- */
+.block1 {
+  position: relative;
+  overflow: hidden;              /* biar gambar yang di-zoom nggak keluar kotak */
+}
+
+/* gambar kategori */
+.block1 img {
+  display: block;
+  width: 100%;
+  transition: transform 0.6s ease;   /* animasi zoom halus */
+}
+
+/* zoom gambar saat hover card */
+.block1:hover img {
+  transform: scale(1.08);        /* boleh diubah 1.05 / 1.1 sesuai selera */
+}
+
+/* --- OVERLAY & TEXT (kode lama kamu, tapi dibenerin warna) --- */
 .block1-txt:hover {
-  background-color: var(--primary-hover) !important;
+  /* dulu: background-color: var(--primary-hover); */
+  background-color: rgba(0, 0, 0, 0.25) !important; /* overlay tipis, gambar tetap kelihatan */
 }
 
 .block1-txt:hover .block1-txt-child2 {
@@ -2012,6 +2032,7 @@ input.num-product::-webkit-inner-spin-button {
 .block1-txt:hover .block1-info {
   color: #fff;
 }
+
 
 /*//////////////////////////////////////////////////////////////////
 [ Block2 ]*/
@@ -3075,7 +3096,7 @@ input.num-product::-webkit-inner-spin-button {
 /*---------------------------------------------*/
 .hov-btn1:hover {
   border-color: #222;
-  background-color: var(--primary-hover) !important;;
+  background-color: #222;
   color: #fff;
 }
 
