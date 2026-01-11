@@ -1,0 +1,131 @@
+// E-commerce Database Schema
+// Generated from Laravel migrations
+
+Table users {
+  id bigint unsigned [pk, increment]
+  name varchar(255) [not null]
+  email varchar(255) [unique, not null]
+  email_verified_at timestamp
+  password varchar(255) [not null]
+  remember_token varchar(100)
+  phone varchar(255)
+  role enum('user', 'admin') [default: 'user']
+  address text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table categories {
+  id bigint unsigned [pk, increment]
+  category_name varchar(255) [not null]
+  description varchar(255)
+  image text
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table products {
+  id bigint unsigned [pk, increment]
+  category_id bigint unsigned [ref: > categories.id, on delete: cascade]
+  brand varchar(255) [not null]
+  title varchar(255) [not null]
+  description text
+  price decimal(10,2) [not null]
+  size json
+  stock int [not null]
+  weight int [default: 0]
+  image json
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table carts {
+  id bigint unsigned [pk, increment]
+  user_id bigint unsigned [ref: > users.id, on delete: cascade]
+  product_id bigint unsigned [ref: > products.id, on delete: cascade]
+  size varchar(255)
+  quantity int [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table transactions {
+  id bigint unsigned [pk, increment]
+  order_id varchar(255) [unique, not null]
+  user_id bigint unsigned [ref: > users.id, on delete: cascade]
+  customer_name varchar(255) [not null]
+  gross_amount bigint [not null]
+  payment_type enum('credit_card', 'bank_transfer', 'ewallet', 'gopay', 'qris', 'cstore', 'kredivo', 'akulaku') [not null]
+  courier enum('JNE', 'POS', 'SICEPAT')
+  courier_service varchar(255)
+  transaction_status varchar(255)
+  transaction_time timestamp
+  snap_token varchar(255)
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table transaction_details {
+  id bigint unsigned [pk, increment]
+  transaction_id bigint unsigned [ref: > transactions.id, on delete: cascade]
+  product_id bigint unsigned [ref: > products.id, on delete: cascade]
+  quantity int [not null]
+  price decimal(10,2) [not null]
+  subtotal decimal(10,2) [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+// Additional tables from Laravel defaults (if needed)
+Table password_reset_tokens {
+  email varchar(255) [pk]
+  token varchar(255) [not null]
+  created_at timestamp
+}
+
+Table password_resets {
+  email varchar(255) [not null]
+  token varchar(255) [not null]
+  created_at timestamp
+  index (email)
+}
+
+Table failed_jobs {
+  id bigint unsigned [pk, increment]
+  uuid varchar(255) [unique, not null]
+  connection text [not null]
+  queue text [not null]
+  payload longtext [not null]
+  exception longtext [not null]
+  failed_at timestamp [default: CURRENT_TIMESTAMP]
+}
+
+Table personal_access_tokens {
+  id bigint unsigned [pk, increment]
+  tokenable_type varchar(255) [not null]
+  tokenable_id bigint unsigned [not null]
+  name varchar(255) [not null]
+  token varchar(64) [unique, not null]
+  abilities text
+  last_used_at timestamp
+  expires_at timestamp
+  created_at timestamp
+  updated_at timestamp
+  index (tokenable_type, tokenable_id)
+}
+
+// Telescope tables (for debugging)
+Table telescope_entries {
+  sequence bigint unsigned [pk, increment]
+  uuid varchar(255) [unique, not null]
+  batch_id varchar(255) [not null]
+  family_hash varchar(255)
+  should_display_on_index tinyint(1) [default: 1]
+  type varchar(20) [not null]
+  content longtext [not null]
+  created_at timestamp
+  index (batch_id)
+  index (family_hash)
+  index (created_at)
+  index (type, should_display_on_index)
+}

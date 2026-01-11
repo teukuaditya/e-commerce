@@ -2,7 +2,7 @@
 
 @section('content')
     <!-- breadcrumb -->
-    <div class="container checkout-hero">
+    <div class="container">
         <div class="bread-crumb flex-w p-r-15 p-t-30 p-lr-0-lg">
             <a href="{{ route('user.cart.index') }}" class="stext-109 cl8 hov-cl1 trans-04">
                 Cart
@@ -918,19 +918,4 @@
             });
         });
     </script>
-@endpush
-@push('styles')
-<style>
-  .checkout-hero {
-    margin-top: 90px;
-  }
-
-  @media (max-width: 991.98px) {
-
-    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
-    .checkout-hero {
-      margin-top: 70px;
-    }
-  }
-</style>
 @endpush
