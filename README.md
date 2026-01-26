@@ -1,1 +1,1 @@
-SKRIPSI ANJAY
+php artisan serve
