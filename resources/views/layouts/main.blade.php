@@ -34,11 +34,17 @@
 
     <!-- App CSS -->
     <link rel="stylesheet" href="{{ asset('css/util.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/main.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/main.css') }}?v={{ filemtime(public_path('css/main.css')) }}">
 
     <!-- Font Awesome v6 (pilihan) -->
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Theme upgrade (design system global) -->
+    <link rel="stylesheet" href="{{ asset('css/theme-upgrade.css') }}?v={{ filemtime(public_path('css/theme-upgrade.css')) }}">
+
+    <!-- Navbar floating glassmorphism (mudah dicabut: hapus baris ini) -->
+    <link rel="stylesheet" href="{{ asset('css/navbar-floating.css') }}?v={{ filemtime(public_path('css/navbar-floating.css')) }}">
 
     <!-- Global style override (Poppins + utilities) -->
     <style>
@@ -130,12 +136,12 @@
     <!-- Slot CSS per-halaman (harus setelah style global agar bisa override) -->
     @stack('styles')
 
-    <!-- Midtrans (kalau mau di body juga boleh, tapi dibiarkan di sini tidak masalah) -->
-    <script src="https://app.sandbox.midtrans.com/snap/snap.js"
-        data-client-key="{{ env('MIDTRANS_CLIENT_KEY') }}"></script>
+    <!-- Midtrans Snap SDK -->
+    <script src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+        data-client-key="{{ config('midtrans.client_key') }}"></script>
 </head>
 
-<body class="animsition">
+<body class="animsition @yield('body-class')">
 
     <!-- Main Content -->
     <div id="content">

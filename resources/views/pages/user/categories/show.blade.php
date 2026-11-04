@@ -52,7 +52,7 @@
             <div class="row isotope-grid">
                 @foreach ($products as $product)
                     <div
-                        class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item {{ strtolower($product->category->category_name) }}">
+                        class="col-sm-6 col-md-3 p-b-35 isotope-item {{ strtolower($product->category->category_name) }}">
                         <!-- Block2 -->
                         <div class="block2">
                             <div class="block2-pic hov-img0">
@@ -96,15 +96,7 @@
 @push('styles')
 <style>
   .showCategory-hero {
-    margin-top: 90px;
-  }
-
-  @media (max-width: 991.98px) {
-
-    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
-    .showCategory-hero {
-      margin-top: 70px;
-    }
+    margin-top: 24px;
   }
 </style>
 @endpush

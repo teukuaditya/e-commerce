@@ -1,0 +1,235 @@
+/* ============================================================================
+   NAVBAR FLOATING GLASSMORPHISM  (mudah dicabut)
+   ----------------------------------------------------------------------------
+   Cara pakai  : load SETELAH main.css & theme-upgrade.css di layouts/main.blade.php
+   Cara cabut  : hapus <link> navbar-floating.css di layouts/main.blade.php
+   Efek        : navbar pill melayang (fixed, top 16px, max-width 1200px),
+                 glassmorphism transparan → lebih solid saat scroll > 50px.
+                 Versi mobile (.wrap-header-mobile) ikut floating & rounded.
+   ============================================================================ */
+
+:root {
+    --fl-top: 16px;            /* jarak navbar dari atas layar */
+    --fl-height: 68px;         /* tinggi navbar desktop */
+    /* Kaca sedikit lebih pekat + garis tepi gelap halus agar tetap
+       terlihat jelas saat di atas halaman ber-background putih */
+    --fl-glass: rgba(255, 255, 255, 0.72);
+    --fl-glass-scrolled: rgba(255, 255, 255, 0.9);
+    --fl-border: 1px solid rgba(23, 23, 29, 0.08);
+    --fl-shadow: 0 8px 32px rgba(23, 23, 29, 0.13), 0 1px 4px rgba(23, 23, 29, 0.06);
+    --fl-shadow-scrolled: 0 12px 40px rgba(23, 23, 29, 0.2), 0 2px 8px rgba(23, 23, 29, 0.08);
+}
+
+/* ============================================================================
+   1. DESKTOP — header jadi pill glass melayang di SEMUA halaman
+   ============================================================================ */
+header.header-v4,
+body.page-home header.header-v4 {
+    position: fixed !important;
+    top: var(--fl-top) !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 32px) !important;   /* margin kiri-kanan 16px */
+    max-width: 1200px !important;
+    height: var(--fl-height) !important;
+
+    /* glassmorphism */
+    background: var(--fl-glass) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    backdrop-filter: blur(12px) !important;
+    border: var(--fl-border) !important;
+    border-radius: 999px !important;        /* pill penuh */
+    box-shadow: var(--fl-shadow) !important;
+
+    /* PENTING: overflow visible agar dropdown user tidak terpotong */
+    overflow: visible !important;
+    z-index: 1100 !important;
+
+    transition: background 0.3s ease, box-shadow 0.3s ease,
+                border-color 0.3s ease, top 0.3s ease;
+}
+
+/* State scrolled (>50px): lebih solid + shadow lebih tegas */
+header.header-v4.scrolled,
+body.page-home header.header-v4.scrolled {
+    background: var(--fl-glass-scrolled) !important;
+    box-shadow: var(--fl-shadow-scrolled) !important;
+    border-color: rgba(23, 23, 29, 0.1) !important;
+}
+
+/* ----------------------------------------------------------------------------
+   1b. Netralkan wrapper bawaan Cozastore (.wrap-menu-desktop dkk.)
+       agar tidak menimpa glass pill (background/shadow/transform mereka sendiri)
+   ---------------------------------------------------------------------------- */
+header.header-v4 .container-menu-desktop,
+header.header-v4.fix-menu-desktop.container-menu-desktop {
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transition: none !important;
+}
+
+header.header-v4 .wrap-menu-desktop,
+header.header-v4 .fix-menu-desktop .wrap-menu-desktop,
+header.header-v4.fix-menu-desktop .wrap-menu-desktop,
+.fix-menu-desktop .wrap-menu-desktop {
+    position: static !important;
+    top: auto !important;
+    height: var(--fl-height) !important;
+    max-width: none !important;
+    width: auto !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* ----------------------------------------------------------------------------
+   1b+. BENTENG vs state .fix-menu-desktop (class ditambah JS template saat scroll):
+   main.css memberi wrapper background putih kotak + tinggi 70/110px.
+   Selector dibuat sama/lebih tinggi specificity-nya (termasuk varian home)
+   supaya kotak putih itu tak pernah muncul menimpa pill kaca.
+   ---------------------------------------------------------------------------- */
+header.header-v4 .container-menu-desktop,
+header.header-v4.fix-menu-desktop.container-menu-desktop,
+body.page-home .header-v4 .fix-menu-desktop.container-menu-desktop {
+    position: static !important;
+    top: auto !important;
+    height: auto !important;
+    width: auto !important;
+    max-width: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+header.header-v4 .fix-menu-desktop .wrap-menu-desktop,
+body.page-home .header-v4 .fix-menu-desktop .wrap-menu-desktop {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
+    width: auto !important;
+    height: var(--fl-height) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    transform: none !important;
+    transition: none !important;
+}
+
+/* ----------------------------------------------------------------------------
+   1c. Warna teks: navbar kaca putih di semua halaman → teks gelap.
+       (Meng-override rule lama khusus home yang memaksa teks putih)
+   ---------------------------------------------------------------------------- */
+body.page-home header.header-v4 .main-menu > li > a,
+body.page-home header.header-v4 .logo > span,
+body.page-home header.header-v4 .icon-header-item,
+body.page-home header.header-v4 .nav-greeting {
+    color: var(--tu-ink-2) !important;
+    text-shadow: none !important;
+}
+
+/* Logo ikut var tema (wordmark DRVN.) */
+header.header-v4 .logo > span {
+    color: var(--tu-ink, #222) !important;
+}
+
+/* Dropdown user: muncul tepat di bawah ikon, DI ATAS semua konten.
+   Catatan: backdrop-filter pada header membuat stacking context baru,
+   tapi dropdown tetap di dalam header sehingga ikut z-index 1100. */
+header.header-v4 .tu-dd,
+.wrap-header-mobile .tu-dd {
+    position: relative !important;
+}
+header.header-v4 .tu-dd .dropdown-menu,
+.wrap-header-mobile .tu-dd .dropdown-menu {
+    z-index: 1200 !important;
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+}
+
+/* Hover & active menu (underline) tetap berfungsi — dipertahankan dari
+   theme-upgrade.css; di sini hanya dipastikan tidak tertimpa warna template */
+
+/* ============================================================================
+   2. OFFSET KONTEN — navbar fixed, jadi konten harus turun.
+      Home dikecualikan (slider memang ingin lewat di bawah navbar kaca).
+   ============================================================================ */
+body:not(.page-home) main {
+    padding-top: calc(var(--fl-top) + var(--fl-height) + 16px); /* 100px */
+}
+
+/* ============================================================================
+   3. MOBILE (<992px) — hamburger bar bawaan template ikut floating rounded
+   ============================================================================ */
+@media (max-width: 991.98px) {
+    /* Header desktop disembunyikan oleh theme-upgrade.css (tetap) */
+
+    .wrap-header-mobile {
+        position: fixed !important;
+        top: 12px !important;
+        left: 12px !important;
+        right: 12px !important;
+        height: 60px !important;
+        background: var(--fl-glass) !important;
+        -webkit-backdrop-filter: blur(12px) !important;
+        backdrop-filter: blur(12px) !important;
+        border: var(--fl-border) !important;
+        border-radius: 999px !important;
+        box-shadow: var(--fl-shadow) !important;
+        padding: 0 18px !important;
+        z-index: 1100 !important;
+        transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .wrap-header-mobile.scrolled {
+        background: var(--fl-glass-scrolled) !important;
+        box-shadow: var(--fl-shadow-scrolled) !important;
+    }
+
+    .wrap-header-mobile .logo-mobile span {
+        color: var(--tu-ink, #222) !important;
+    }
+
+    /* Panel menu hamburger: melayang tepat di bawah bar pill */
+    .menu-mobile {
+        position: fixed !important;
+        top: 80px !important;               /* 12 + 60 + 8 */
+        left: 12px !important;
+        right: 12px !important;
+        z-index: 1099 !important;
+        border-radius: 20px !important;
+        overflow: hidden !important;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18) !important;
+        border: 1px solid rgba(23, 23, 29, 0.08) !important;
+    }
+
+    .menu-mobile .main-menu-m {
+        border-radius: 20px !important;
+    }
+
+    /* Konten halaman tidak tertutup bar mobile */
+    main {
+        padding-top: 86px !important;
+    }
+}
+
+/* Aksesibilitas: hormati preferensi tanpa blur */
+@media (prefers-reduced-motion: reduce) {
+    header.header-v4,
+    .wrap-header-mobile {
+        transition: none !important;
+    }
+}

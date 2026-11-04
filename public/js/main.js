@@ -42,7 +42,11 @@
 
 
     /*==================================================================
-    [ Fixed Header ]*/
+    [ Fixed Header ] — DINONAKTIFKAN
+    Navbar sekarang floating glassmorphism (public/css/navbar-floating.css):
+    state scroll ditangani toggle class "scrolled" di navbar.blade.php.
+    Blok lama menambah class .fix-menu-desktop + inline top saat scroll,
+    yang membuat wrapper memunculkan kotak putih menimpa pill. */
     var headerDesktop = $('.container-menu-desktop');
     var wrapMenu = $('.wrap-menu-desktop');
 
@@ -52,27 +56,26 @@
     else {
         var posWrapHeader = 0;
     }
-    
 
-    if($(window).scrollTop() > posWrapHeader) {
+    /* if($(window).scrollTop() > posWrapHeader) {
         $(headerDesktop).addClass('fix-menu-desktop');
-        $(wrapMenu).css('top',0); 
-    }  
+        $(wrapMenu).css('top',0);
+    }
     else {
         $(headerDesktop).removeClass('fix-menu-desktop');
-        $(wrapMenu).css('top',posWrapHeader - $(this).scrollTop()); 
+        $(wrapMenu).css('top',posWrapHeader - $(this).scrollTop());
     }
 
     $(window).on('scroll',function(){
         if($(this).scrollTop() > posWrapHeader) {
             $(headerDesktop).addClass('fix-menu-desktop');
-            $(wrapMenu).css('top',0); 
-        }  
+            $(wrapMenu).css('top',0);
+        }
         else {
             $(headerDesktop).removeClass('fix-menu-desktop');
-            $(wrapMenu).css('top',posWrapHeader - $(this).scrollTop()); 
-        } 
-    });
+            $(wrapMenu).css('top',posWrapHeader - $(this).scrollTop());
+        }
+    }); */
 
 
     /*==================================================================
@@ -147,10 +150,7 @@
                 itemSelector: '.isotope-item',
                 layoutMode: 'fitRows',
                 percentPosition: true,
-                animationEngine : 'best-available',
-                masonry: {
-                    columnWidth: '.isotope-item'
-                }
+                animationEngine : 'best-available'
             });
         });
     });

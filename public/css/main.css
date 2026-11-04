@@ -1,7 +1,7 @@
 html, body { margin: 0; padding: 0; }
 :root{
-  --primary: #A66B2B;        /* copper/caramel – warna utama */
-  --primary-hover: #8E5B23;  /* lebih gelap untuk hover */
+  --primary: #4F46E5;        /* indigo — satu aksen bersama dengan theme-upgrade */
+  --primary-hover: #4338CA;  /* hover lebih gelap */
   --secondary: #5A636B;      /* abu-abu elegan untuk teks/ikon sekunder */
   --bg-soft: #F6F3EF;        /* latar lembut opsional */
 }
@@ -594,6 +594,41 @@ html, body { margin: 0; padding: 0; }
   -o-box-shadow: 0 0px 3px 0px rgba(0,0,0,0.2);
   -ms-box-shadow: 0 0px 3px 0px rgba(0,0,0,0.2);
 }
+
+/* ---- Navbar floating transparan khusus halaman home ---- */
+body.page-home .header-v4 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+body.page-home .header-v4 .container-menu-desktop,
+body.page-home .header-v4 .wrap-menu-desktop {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  -webkit-box-shadow: none !important;
+  transition: background 0.35s ease, box-shadow 0.35s ease;
+}
+
+body.page-home .header-v4 .fix-menu-desktop.container-menu-desktop {
+  background: rgba(255,255,255,0.88) !important;
+  background-color: rgba(255,255,255,0.88) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.09) !important;
+  -webkit-box-shadow: 0 4px 24px rgba(0,0,0,0.09) !important;
+}
+
+body.page-home .header-v4 .fix-menu-desktop .wrap-menu-desktop {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+body.page-home .section-slide { margin-top: 0 !important; }
 
 .header-v2 .fix-menu-desktop.container-menu-desktop {
   height: 70px;

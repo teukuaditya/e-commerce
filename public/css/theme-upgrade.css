@@ -1,0 +1,787 @@
+/* ==========================================================================
+   THEME UPGRADE — design system global (user + auth pages)
+   Dimuat SETELAH css util/main agar bisa override. Semuanya non-destructive:
+   fokus ke konsistensi visual, tipografi, komponen & polish.
+   ========================================================================== */
+
+:root {
+    /* Palet brand */
+    --tu-ink: #17171d;
+    --tu-ink-2: #55555f;
+    --tu-ink-3: #8a8a94;
+    --tu-line: #e9e9ef;
+    --tu-bg: #fbfbfd;
+    --tu-white: #ffffff;
+
+    --tu-accent: #4f46e5;
+    --tu-accent-2: #6d28d9;
+    --tu-accent-soft: #eef2ff;
+    --tu-gold: #f8b64b;
+    --tu-danger: #e11d48;
+    --tu-success: #10b981;
+    --tu-warning: #f59e0b;
+
+    --tu-radius: 14px;
+    --tu-radius-sm: 10px;
+    --tu-radius-pill: 999px;
+
+    --tu-shadow-sm: 0 2px 10px rgba(23, 23, 29, .06);
+    --tu-shadow-md: 0 10px 30px rgba(23, 23, 29, .10);
+    --tu-shadow-lg: 0 24px 60px rgba(23, 23, 29, .16);
+
+    --tu-ring: 0 0 0 3px rgba(79, 70, 229, .18);
+}
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 92px; /* offset navbar sticky saat anchor navigation */
+}
+
+/*
+::selection */
+::selection {
+    background: var(--tu-accent);
+    color: #fff;
+}
+
+/* Scrollbar halus (webkit) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: #cccbd6;
+    border-radius: 10px;
+    border: 2px solid var(--tu-bg);
+}
+::-webkit-scrollbar-thumb:hover { background: #9f9eae; }
+
+/* ==========================================================================
+   LINKS & FOCUS
+   ========================================================================== */
+a {
+    text-underline-offset: 3px;
+    transition: color .18s ease, opacity .18s ease;
+}
+
+:focus-visible {
+    outline: 2px solid var(--tu-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   BUTTONS — seragamkan bentuk & motion (jangan mengubah warna semantik
+   bawaan theme agar tidak merusak blade lama)
+   ========================================================================== */
+button, .btn,
+input[type="submit"],
+input[type="button"] {
+    transition: transform .18s ease, box-shadow .18s ease, background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+
+button:active, .btn:active { transform: translateY(1px); }
+
+.hov-btn1:hover, .hov-btn2:hover, .hov-btn3:hover,
+.hov-btn4:hover, .hov-btn5:hover { box-shadow: 0 8px 18px rgba(23, 23, 29, .18); }
+
+.btn, button {
+    text-underline-offset: 3px;
+}
+
+/* Override Bootstrap-style buttons bila dipakai di halaman user */
+.btn-primary {
+    background-color: var(--tu-accent);
+    border-color: var(--tu-accent);
+}
+.btn-primary:hover, .btn-primary:focus {
+    background-color: #4338ca;
+    border-color: #4338ca;
+    box-shadow: 0 8px 18px rgba(79, 70, 229, .30);
+}
+.btn-outline-primary {
+    color: var(--tu-accent);
+    border-color: rgba(79, 70, 229, .55);
+}
+.btn-outline-primary:hover {
+    background-color: var(--tu-accent);
+    border-color: var(--tu-accent);
+    color: #fff;
+}
+
+/* Tombol secondary-outline (navbar Register, dsb.) — pasangan dari .bg1 */
+.tu-btn-outline {
+    background: transparent !important;
+    color: var(--tu-accent) !important;
+    border: 1px solid rgba(79, 70, 229, .5) !important;
+}
+.tu-btn-outline:hover {
+    background: var(--tu-accent) !important;
+    color: #fff !important;
+    border-color: var(--tu-accent) !important;
+}
+
+/* State tombol utama template (.bg1) diberi elevasi konsisten */
+.bg1 { box-shadow: 0 4px 12px rgba(79, 70, 229, .22); }
+.bg1:hover, .bg1:focus { box-shadow: 0 8px 18px rgba(79, 70, 229, .32); }
+
+/* ==========================================================================
+   FORM CONTROLS — masih fokus ring aksen & permukaan yang lebih hangat
+   ========================================================================== */
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="search"], input[type="tel"],
+input[type="date"], textarea, select {
+    border-radius: var(--tu-radius-sm);
+    transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: var(--tu-accent) !important;
+    box-shadow: var(--tu-ring) !important;
+    background-color: #fff !important;
+}
+
+.is-invalid, .invalid-feedback {
+    border-radius: 6px;
+}
+.invalid-feedback { font-size: 12.5px; font-weight: 500; }
+
+/* ==========================================================================
+   CARDS, ALERTS, BADGES
+   ========================================================================== */
+.card, .bor10 {
+    border-radius: var(--tu-radius) !important;
+}
+
+.card {
+    box-shadow: var(--tu-shadow-sm);
+    border: 1px solid var(--tu-line);
+    transition: box-shadow .25s ease, transform .25s ease;
+}
+.card:hover { box-shadow: var(--tu-shadow-md); }
+
+.alert {
+    border-radius: var(--tu-radius-sm);
+    border-left: 4px solid var(--tu-accent);
+    box-shadow: var(--tu-shadow-sm);
+}
+.alert-success { border-left-color: var(--tu-success); }
+.alert-danger, .alert-error { border-left-color: var(--tu-danger); }
+.alert-info, .alert-warning { border-left-color: var(--tu-warning); }
+
+.badge {
+    border-radius: var(--tu-radius-pill);
+    padding: 5px 12px;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   TABS & DROPDOWN (menu admin/user)
+   ========================================================================== */
+.nav-tabs .nav-link.active {
+    border-bottom: 2px solid var(--tu-accent);
+    color: var(--tu-accent);
+}
+
+.dropdown-menu {
+    border-radius: var(--tu-radius-sm);
+    border: 1px solid var(--tu-line);
+    box-shadow: var(--tu-shadow-md);
+    overflow: hidden;
+    animation: tuFade .16s ease-out;
+}
+@keyframes tuFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+.dropdown-item:hover { background: var(--tu-accent-soft); color: var(--tu-accent); }
+.dropdown-item:active, .dropdown-item:focus { background: var(--tu-accent); color: #fff; outline: none; }
+
+/* Dropdown akun (navbar) — posisi rapi di bawah ikon, JQuery/Popper-free.
+   Toggle memakai data-tu-dropdown + class .show (padanan Bootstrap 4). */
+.tu-dd { position: relative; }
+.tu-dd .dropdown-menu.show {
+    display: block;
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    left: auto;
+    min-width: 250px;
+    padding: 6px 0;
+    background: #fff;
+    z-index: 1300;
+    text-align: left;
+}
+.tu-dd .dropdown-header {
+    padding: 10px 18px 8px;
+    border-bottom: 1px solid var(--tu-line);
+    margin-bottom: 4px;
+}
+.tu-dd .dropdown-divider {
+    margin: 4px 0;
+}
+.tu-dd .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--tu-ink-2);
+    border-radius: 0;
+    transition: background .15s ease, color .15s ease;
+}
+.tu-dd .dropdown-item i { font-size: 14px; width: 18px; text-align: center; }
+.tu-dd .dropdown-item:last-child { color: var(--tu-danger); }
+.tu-dd .dropdown-item:last-child:hover { background: rgba(225, 29, 72, .08); color: var(--tu-danger); }
+
+/* ==========================================================================
+   NETRALKAN ANIMSITION (plugin page-transition jQuery).
+   Plugin ini menyetel opacity/transform INLINE di <body>; style yang
+   nyangkut membuat navbar fixed/sticky ikut ke-scroll (bug "ikut ke bawah,
+   ada space kosong di atas navbar"). Body tidak butuh animasi apapun.
+   ========================================================================== */
+body.animsition,
+body.animsition-overlay {
+    opacity: 1 !important;
+    position: relative;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+}
+
+/* ==========================================================================
+   PAGINATION
+   ========================================================================== */
+.pagination .page-link,
+nav ul.pagination a {
+    border-radius: var(--tu-radius-sm) !important;
+    border: 1px solid var(--tu-line) !important;
+    box-shadow: none !important;
+}
+
+nav .pagination li,
+.pagination li { margin: 0 3px; }
+
+.pagination .active .page-link,
+nav .pagination li.active a {
+    background: var(--tu-accent) !important;
+    border-color: var(--tu-accent) !important;
+    color: #fff !important;
+}
+.pagination .page-link:hover {
+    border-color: var(--tu-accent) !important;
+    color: var(--tu-accent) !important;
+}
+
+/* Pagination versi tailwind (span/li tanpa class page) */
+nav .pagination span .page-link,
+nav .pagination a { padding: 6px 12px; }
+
+/* ==========================================================================
+   NAVBAR (user) — default: sticky putih solid (semua halaman)
+   Home page override di bawah: fixed + transparan → frosted glass saat scroll
+   ========================================================================== */
+header.header-v4 {
+    position: sticky !important;
+    top: 0;
+    z-index: 1100;
+    height: 84px;
+    background: rgba(255, 255, 255, .97) !important;
+    -webkit-backdrop-filter: saturate(1.4) blur(10px);
+    backdrop-filter: saturate(1.4) blur(10px);
+    box-shadow: 0 2px 14px rgba(23, 23, 29, .07) !important;
+    border-bottom: 1px solid var(--tu-line);
+    transition: background 0.35s ease, box-shadow 0.35s ease, backdrop-filter 0.35s ease;
+}
+
+/* Netralkan fixed & fix-menu-desktop bawaan template */
+header.header-v4 .container-menu-desktop {
+    position: static !important;
+    height: auto !important;
+    transition: none !important;
+}
+header.header-v4 .wrap-menu-desktop,
+header.header-v4 .fix-menu-desktop .wrap-menu-desktop,
+header.header-v4.fix-menu-desktop .wrap-menu-desktop,
+.fix-menu-desktop .wrap-menu-desktop {
+    position: static !important;
+    top: auto !important;
+    height: 84px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    transition: none !important;
+}
+.header-v4.fix-menu-desktop.container-menu-desktop {
+    height: auto !important;
+}
+
+/* ==========================================================================
+   HOME PAGE — navbar floating pill: transparan → frosted glass saat scroll
+   ========================================================================== */
+body.page-home header.header-v4 {
+    position: fixed !important;
+    top: 16px !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%);
+    width: calc(100% - 48px) !important;
+    max-width: 1200px;
+    height: 64px !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    border-bottom: none !important;
+    overflow: hidden;
+    transition: background 0.4s ease, backdrop-filter 0.4s ease,
+                box-shadow 0.4s ease, border-color 0.4s ease, top 0.4s ease;
+}
+
+/* Saat scroll → frosted glass pill */
+body.page-home header.header-v4.scrolled {
+    background: rgba(255, 255, 255, 0.72) !important;
+    backdrop-filter: saturate(1.6) blur(20px) !important;
+    -webkit-backdrop-filter: saturate(1.6) blur(20px) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0,0,0,0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    border-bottom: none !important;
+    top: 12px !important;
+}
+
+/* Sesuaikan tinggi wrap-menu agar cocok dengan pill */
+body.page-home header.header-v4 .wrap-menu-desktop {
+    height: 64px !important;
+}
+
+/* Teks putih saat navbar transparan di atas slider */
+body.page-home header.header-v4 .main-menu > li > a,
+body.page-home header.header-v4 .logo > span,
+body.page-home header.header-v4 .icon-header-item,
+body.page-home header.header-v4 .nav-greeting {
+    color: #fff !important;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+/* Teks gelap saat scrolled */
+body.page-home header.header-v4.scrolled .main-menu > li > a,
+body.page-home header.header-v4.scrolled .logo > span,
+body.page-home header.header-v4.scrolled .icon-header-item,
+body.page-home header.header-v4.scrolled .nav-greeting {
+    color: var(--tu-ink) !important;
+    text-shadow: none !important;
+}
+
+/* Slider mulai dari atas — navbar mengambang di atasnya */
+body.page-home .section-slide {
+    margin-top: -84px;
+}
+
+/* Logo — wordmark: DRVN + titik aksen indigo */
+.logo { text-decoration: none; display: inline-flex; align-items: center; }
+.logo > span {
+    font-size: 21px !important;
+    font-weight: 800 !important;
+    letter-spacing: 5px !important;
+    color: var(--tu-ink) !important;
+    line-height: 1;
+}
+.logo > span::after {
+    content: ".";
+    color: var(--tu-accent);
+    margin-left: 2px;
+}
+
+/* Menu desktop — tipografi tenang, warna ikut state */
+.main-menu > li > a {
+    position: relative;
+    color: var(--tu-ink-2) !important;
+    font-size: 14.5px !important;
+    font-weight: 500 !important;
+    letter-spacing: .02em;
+    transition: color .18s ease;
+}
+.main-menu > li > a:hover,
+.main-menu > li.active-menu > a {
+    color: var(--tu-ink) !important;
+}
+
+/* Greeting "Hi {nama}" di ikon header — kecil, elegan, sembunyikan di mobile */
+.nav-greeting {
+    display: inline-block;
+    font-size: 13.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    color: var(--tu-ink-2);
+    white-space: nowrap;
+}
+.nav-greeting::after {
+    content: "";
+    display: inline-block;
+    margin-left: 10px;
+    width: 1px;
+    height: 18px;
+    background: var(--tu-line);
+    vertical-align: -4px;
+}
+@media (max-width: 991.98px) {
+    .nav-greeting {
+        display: none;
+    }
+    /* Header desktop disembunyikan di mobile (stock: .container-menu-desktop
+       juga display:none) — header sticky tidak boleh menambah gap putih 84px */
+    header.header-v4 {
+        display: none;
+    }
+}
+
+/* Ikon header (keranjang akun) — hover aksen, badge indigo */
+.icon-header-item {
+    color: var(--tu-ink-2);
+    transition: color .18s ease;
+}
+.icon-header-item:hover {
+    color: var(--tu-accent);
+}
+.icon-header-noti::after {
+    background-color: var(--tu-accent) !important;
+    border-radius: var(--tu-radius-pill);
+    font-weight: 600;
+}
+
+.main-menu > li > a::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    width: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--tu-accent);
+    transition: width .25s ease, left .25s ease;
+}
+.main-menu > li:hover > a::after,
+.main-menu > li.active-menu > a::after {
+    width: 24px;
+    left: calc(50% - 12px);
+}
+
+/* ==========================================================================
+   FOOTER (user) — sudah dirancang ulang di partial footer.blade.php (.site-footer)
+   ========================================================================== */
+.site-footer {
+    background: var(--tu-ink);
+    color: #cfcfd8;
+    padding: 72px 0 34px;
+    margin-top: 20px;
+}
+
+.site-footer__col { padding-bottom: 30px; }
+
+.site-footer__logo {
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.site-footer__logo img {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: #fff;
+    padding: 3px;
+}
+.site-footer__logo span {
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: .12em;
+    font-size: 15px;
+}
+
+.site-footer__desc {
+    font-size: 13.5px;
+    line-height: 1.75;
+    opacity: .78;
+    max-width: 320px;
+    margin: 0 0 18px;
+}
+
+.site-footer__social { display: flex; gap: 10px; }
+.site-footer__social a {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .08);
+    color: #dcdce4;
+    text-decoration: none;
+    transition: background-color .2s ease, transform .2s ease, color .2s ease;
+}
+.site-footer__social a:hover {
+    background: var(--tu-accent);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.site-footer__heading {
+    font-size: 12.5px;
+    color: #fff;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+}
+
+.site-footer__links { list-style: none; padding: 0; margin: 0; }
+.site-footer__links li { padding: 6px 0; font-size: 13.5px; }
+.site-footer__links a {
+    color: #cfcfd8;
+    text-decoration: none;
+    transition: color .18s ease;
+}
+.site-footer__links a:hover { color: #fff; }
+
+.site-footer__muted { opacity: .55; }
+.site-footer__links .site-footer__muted--with-icon,
+.site-footer__links li:has(.fas) { opacity: .82; }
+
+.site-footer__bottom {
+    border-top: 1px solid rgba(255, 255, 255, .10);
+    margin-top: 26px;
+    padding-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.site-footer__pays { display: flex; flex-wrap: wrap; }
+.site-footer__pays img {
+    background: #fff;
+    border-radius: 7px;
+    padding: 4px;
+    width: 44px;
+    height: 28px;
+    object-fit: contain;
+    transition: transform .18s ease;
+}
+.site-footer__pays img:hover { transform: translateY(-2px); }
+
+.site-footer__copy { margin: 0; font-size: 12.5px; opacity: .6; }
+
+/* ==========================================================================
+   PAGE TRANSITIONS (halus, dengan hormat pada reduced-motion).
+   Hanya elemen main yang dianimasikan — JANGAN #content/header, karena
+   transform pada ancestor akan merusak positioning sticky navbar.
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+    main { animation: tuPage .35s ease both; }
+    @keyframes tuPage {
+        from { opacity: 0; transform: translateY(6px); }
+        to   { opacity: 1; transform: none; }
+    }
+}
+
+/* ==========================================================================
+   AUTH PAGES (login / register / password) — markup .app-auth
+   ========================================================================== */
+.app-auth {
+    --auth-ink: #17171d;
+    --auth-line: #e9e9ef;
+    margin: 28px auto 90px;
+    min-height: 60vh;
+    font-family: inherit;
+}
+
+.app-auth__card {
+    max-width: 980px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    background: #fff;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(23, 23, 29, .18);
+    border: 1px solid var(--auth-line);
+}
+
+/* Panel kiri: brand story */
+.app-auth__brand {
+    position: relative;
+    background: linear-gradient(140deg, #17171d 12%, #2b2b3c 58%, #4f46e5 130%);
+    color: #fff;
+    padding: 52px 46px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 560px;
+}
+
+.app-auth__brand::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(600px 300px at -10% -10%, rgba(165, 180, 252, .25), transparent 60%),
+        radial-gradient(400px 260px at 110% 110%, rgba(109, 40, 217, .35), transparent 60%);
+    pointer-events: none;
+}
+
+.app-auth__brand > * { position: relative; z-index: 1; }
+
+.app-auth__logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: .04em;
+}
+.app-auth__logo img { width: 34px; height: 34px; border-radius: 8px; }
+
+.app-auth__pitch h1 {
+    font-size: clamp(26px, 3vw, 34px);
+    line-height: 1.25;
+    margin: 26px 0 14px;
+}
+.app-auth__pitch h1 span { color: #a5b4fc; }
+.app-auth__pitch p {
+    font-size: 14.5px;
+    line-height: 1.7;
+    opacity: .82;
+    max-width: 340px;
+}
+
+.app-auth__points { list-style: none; padding: 0; margin: 28px 0 0; font-size: 13.5px; }
+.app-auth__points li { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; opacity: .9; }
+.app-auth__points i { color: #a5b4fc; font-size: 12px; }
+
+.app-auth__foot { font-size: 12.5px; opacity: .6; }
+
+/* Panel kanan: form */
+.app-auth__form {
+    padding: 52px 52px 44px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.app-auth__head h2 { font-size: 25px; font-weight: 700; color: var(--auth-ink); margin-bottom: 6px; }
+.app-auth__head p { font-size: 13.5px; color: var(--tu-ink-2); margin-bottom: 30px; }
+
+.app-auth__field { margin-bottom: 18px; }
+.app-auth__field label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--tu-ink-2);
+    margin-bottom: 7px;
+}
+
+.app-auth__field .form-control,
+.app-auth__field input {
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 14.5px;
+    border: 1.5px solid var(--auth-line);
+    border-radius: var(--tu-radius-sm);
+    background: #fbfbfd;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+}
+.app-auth__field input:focus {
+    border-color: var(--tu-accent);
+    box-shadow: var(--tu-ring);
+    background: #fff;
+}
+
+.app-auth__field .is-invalid,
+.app-auth__field input.is-invalid {
+    border-color: var(--tu-danger);
+    background: #fff5f7;
+}
+.invalid-feedback, .text-danger.small { font-size: 12.5px; color: var(--tu-danger); }
+
+/* Show/hide password */
+.pass-wrap { position: relative; }
+.pass-wrap input { padding-right: 46px !important; }
+.pass-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--tu-ink-3, #9ca3af);
+    cursor: pointer;
+    transition: color .18s ease, background .18s ease;
+}
+.pass-toggle:hover { color: var(--tu-accent); background: rgba(79, 70, 229, .08); }
+.pass-toggle i { font-size: 14px; }
+
+.app-auth__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin: 6px 0 22px;
+    font-size: 13.5px;
+}
+.app-auth__row a { color: var(--tu-accent); text-decoration: none; font-weight: 600; }
+.app-auth__row a:hover { text-decoration: underline; }
+.app-auth__row input[type="checkbox"] { accent-color: var(--tu-accent); width: 16px; height: 16px; margin-right: 6px; }
+
+.app-auth__submit {
+    width: 100%;
+    padding: 14px 18px;
+    font-weight: 600;
+    font-size: 15px;
+    border: 0;
+    border-radius: var(--tu-radius-sm);
+    background: linear-gradient(120deg, var(--tu-accent), var(--tu-accent-2));
+    color: #fff;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(79, 70, 229, .30);
+}
+.app-auth__submit:hover { transform: translateY(-2px); box-shadow: 0 14px 30px rgba(79, 70, 229, .38); }
+.app-auth__submit:active { transform: none; }
+
+.app-auth__alt { text-align: center; margin-top: 26px; font-size: 14px; color: var(--tu-ink-2); }
+.app-auth__alt a { color: var(--tu-accent); font-weight: 600; text-decoration: none; }
+.app-auth__alt a:hover { text-decoration: underline; }
+
+.app-auth__back {
+    display: inline-block;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: var(--tu-ink-3);
+    text-decoration: none;
+}
+.app-auth__back:hover { color: var(--tu-accent); }
+
+/* Panel brand mobile: disembunyikan agar form fokus */
+@media (max-width: 991.98px) {
+    .app-auth { margin-top: 90px; }
+    .app-auth__card { grid-template-columns: 1fr; }
+    .app-auth__brand { display: none; }
+    .app-auth__form { padding: 38px 26px 34px; }
+}
+
+/* ==========================================================================
+   USER SIDEBAR/FLOAT — tombol kembali ata ke atas (bila ada) ikut dipoles
+   ========================================================================== */
+.btn-back-to-top {
+    box-shadow: var(--tu-shadow-md) !important;
+    border-radius: 12px;
+}

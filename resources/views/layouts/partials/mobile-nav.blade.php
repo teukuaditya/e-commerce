@@ -40,13 +40,13 @@
                     <i class="zmdi zmdi-favorite-outline"></i>
                 </a>
                 <!-- Dropdown User Info -->
-                <div class="">
-                    <a class="icon-header-item cl2 hov-cl1 trans-04 p-l-11 p-r-11" href="#" id="userDropdown"
-                        role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <div class="tu-dd">
+                    <a class="icon-header-item cl2 hov-cl1 trans-04 p-l-11 p-r-11" href="#" id="userDropdownM"
+                        role="button" data-tu-dropdown aria-haspopup="true" aria-expanded="false">
                         <i class="zmdi zmdi-account"></i>
                     </a>
                     <!-- Dropdown Menu -->
-                    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdownM">
                         <h6 class="dropdown-header stext-110 cl2" style="font-weight: bold; font-size: 14px">
                             {{ Auth::user()->name }}<br>
                             <small class="stext-104 cl4" style="font-size: 12px">{{ Auth::user()->email }}</small>
@@ -74,15 +74,16 @@
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ route('logout') }}"
                             onclick="event.preventDefault();
-       document.getElementById('logout-form').submit();">
+       document.getElementById('logout-form-m').submit();">
                             <i class="fas fa-sign-out-alt fa-fw mr-2 text-gray-400"></i>
                             Sign Out
                         </a>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                        <form id="logout-form-m" action="{{ route('logout') }}" method="POST" class="d-none">
                             @csrf
                         </form>
                     </div>
                 </div>
+            </div>
             @endguest
             <!-- Button show menu -->
             <div class="btn-show-menu-mobile hamburger hamburger--squeeze">
@@ -91,7 +92,6 @@
                 </span>
             </div>
         </div>
-    </div>
 
 
     <!-- Menu Mobile -->
@@ -117,16 +117,8 @@
                 </ul>
             </li>
 
-            <li class="{{ Route::currentRouteName() == 'blog' ? 'active-menu' : '' }}">
-                <a href="">Blog</a>
-            </li>
-
-            <li class="{{ Route::currentRouteName() == 'about' ? 'active-menu' : '' }}">
-                <a href="">About</a>
-            </li>
-
-            <li class="{{ Route::currentRouteName() == 'contact' ? 'active-menu' : '' }}">
-                <a href="">Contact</a>
+            <li class="{{ request()->routeIs('user.about.*') ? 'active-menu' : '' }}">
+                <a href="{{ route('user.about.index') }}">About</a>
             </li>
         </ul>
     </div>

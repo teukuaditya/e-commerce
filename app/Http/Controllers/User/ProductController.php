@@ -19,8 +19,18 @@ class ProductController extends Controller
 
     public function show($id)
     {
-        $product = Product::with('category')->findOrFail($id);
-        return view('pages.user.products.detail', compact('product'));
+        $product = Product::with(['category', 'reviews.user'])->findOrFail($id);
+
+        // Ringkasan rating (avg/count/stars) + review milik user sendiri (bila ada)
+        $rating = $product->ratingSummary();
+        $myReview = auth()->check()
+            ? $product->reviews->firstWhere('user_id', auth()->id())
+            : null;
+
+        return view(
+            'pages.user.products.detail',
+            compact('product', 'rating', 'myReview')
+        );
     }
 }
 

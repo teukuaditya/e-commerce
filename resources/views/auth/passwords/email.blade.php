@@ -1,74 +1,59 @@
-@extends('layouts.home')
- <link rel="icon" type="image/png" href="{{ asset('images/drvn-logo.png') }}" />
+@extends('layouts.main')
+
+@section('title', 'Reset Password | DRVN')
+
 @section('content')
-<div class="container">
 
-    <!-- Outer Row -->
-    <div class="row justify-content-center">
+<div class="app-auth">
+    <div class="app-auth__card">
 
-        <div class="col-lg-6">
+        <div class="app-auth__brand">
+            <a href="{{ route('user.home') }}" class="app-auth__logo">
+                <img src="{{ asset('images/drvn-logo.png') }}" alt="DRVN">
+                <span>DRVN STORE</span>
+            </a>
 
-            <div class="card o-hidden border-0 shadow-lg my-5">
-                <div class="card-body p-0">
-                    <!-- Nested Row within Card Body -->
-                    <div class="row">
-                        <div class="col-lg-12 container justify-content-center">
-                            <div class="p-5">
-                                <div class="text-center">
-                                    <h1 class="mtext-111 cl2 mb-5">Forgot Your Password?</h1>
-                                </div>
-
-                                <!-- Form Start -->
-                                @if (session('status'))
-                                    <div class="alert alert-success" role="alert">
-                                        {{ session('status') }}
-                                    </div>
-                                @endif
-
-                                <form method="POST" action="{{ route('password.email') }}" class="user">
-                                    @csrf
-
-                                    <div class="form-group">
-                                        <input type="email"
-                                               class="stext-102 form-control form-control-user @error('email') is-invalid @enderror"
-                                               id="exampleInputEmail"
-                                               name="email"
-                                               value="{{ old('email') }}"
-                                               placeholder="Enter Email Address..."
-                                               required
-                                               autocomplete="email"
-                                               autofocus>
-
-                                        @error('email')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
-
-                                    <button type="submit" class="flex-c-m stext-101 cl0 size-116 bg3 bor14 hov-btn3 p-lr-15 trans-04 pointer">
-                                        Reset Password
-                                    </button>
-                                </form>
-                                <!-- Form End -->
-
-                                <hr>
-                                <div class="stext-102 cl2 text-center">
-                                    <a class="small" href="{{ route('register') }}">Create an Account!</a>
-                                </div>
-                                <div class="stext-102 cl2 text-center">
-                                    <a class="small" href="{{ route('login') }}">Already have an account? Login!</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="app-auth__pitch">
+                <h1>Lupa <span>password</span>?</h1>
+                <p>Masukkan email akun Anda. Kami akan mengirim tautan untuk membuat password baru.</p>
             </div>
 
+            <div class="app-auth__foot">© {{ date('Y') }} Drive Venture</div>
+        </div>
+
+        <div class="app-auth__form">
+            <div class="app-auth__head">
+                <h2>Reset password</h2>
+                <p>Kami akan kirim tautan reset ke email Anda.</p>
+            </div>
+
+            @if (session('status'))
+                <div class="alert alert-success py-2 px-3 small" style="margin-bottom: 18px;">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('password.email') }}">
+                @csrf
+
+                <div class="app-auth__field">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" id="email" placeholder="nama@email.com"
+                           value="{{ old('email') }}" required @error('email') class="is-invalid" @enderror>
+                    @error('email')
+                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    @enderror
+                </div>
+
+                <button type="submit" class="app-auth__submit">Kirim Tautan Reset</button>
+            </form>
+
+            <div class="app-auth__alt">
+                Sudah ingat password?
+                <a href="{{ route('login') }}">Login di sini</a>
+            </div>
         </div>
 
     </div>
-
 </div>
-
 @endsection

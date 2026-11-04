@@ -19,10 +19,11 @@
 
             <!-- Tombol Search -->
             <div class="flex-w flex-c-m m-tb-10">
-                <form action="{{ route('products.search') }}" method="GET" class="flex-w m-tb-4">
+                <form action="{{ route('products.search') }}" method="GET" class="flex-w m-tb-4" id="searchForm">
                     <input
                         class="plh3 stext-106 cl6 size-105 bor4 p-l-20 p-r-20 m-r-8"
                         type="text"
+                        id="liveSearchInput"
                         name="query"
                         placeholder="Search products..."
                         value="{{ request('query') }}"
@@ -35,52 +36,9 @@
             </div>
         </div>
 
-        <!-- Produk -->
-        <div class="row isotope-grid">
-            @foreach ($products as $product)
-            <div class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item {{ strtolower($product->category->category_name) }}">
-                <!-- Block2 -->
-                <div class="block2">
-                    <div class="block2-pic hov-img0">
-                        <!-- Gambar Produk, klik gambar ini akan mengarahkan ke halaman detail -->
-                        <a href="{{ route('user.products.show', $product->id) }}">
-                            <img src="{{ asset('storage/products/' . (is_array($product->image) ? $product->image[0] : $product->image)) }}" alt="{{ $product->title }}">
-                        </a>
-
-                        <!-- Tombol Quick View -->
-                        <a href="{{ route('user.products.show', $product->id) }}" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">
-                            Add To Cart
-                        </a>
-                    </div>
-
-                    <div class="block2-txt flex-w flex-t p-t-14">
-                        <div class="block2-txt-child1 flex-col-l">
-                            <!-- Klik Brand untuk masuk ke halaman detail produk -->
-                            <a href="{{ route('user.products.show', $product->id) }}" class="stext-106 cl5 hov-cl1 trans-04 m-b-3" style="font-weight: bold;">
-                                {{ $product->brand }}
-                            </a>
-
-                            <!-- Nama produk, klik nama ini akan mengarahkan ke halaman detail -->
-                            <a href="{{ route('user.products.show', $product->id) }}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
-                                {{ $product->title }}
-                            </a>
-
-                            <!-- Klik Harga untuk masuk ke halaman detail produk -->
-                            <a href="{{ route('user.products.show', $product->id) }}" class="stext-105 cl5 hov-cl1 trans-04">
-                                Rp {{ number_format($product->price, 0, ',', '.') }}
-                            </a>
-                        </div>
-
-                        {{-- <div class="block2-txt-child2 flex-r p-t-3">
-                            <a href="#" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">
-                                <img class="icon-heart1 dis-block trans-04" src="{{ asset('images/icons/icon-heart-01.png') }}" alt="ICON">
-                                <img class="icon-heart2 dis-block trans-04 ab-t-l" src="{{ asset('images/icons/icon-heart-02.png') }}" alt="ICON">
-                            </a>
-                        </div> --}}
-                    </div>
-                </div>
-            </div>
-            @endforeach
+        <!-- Produk (grid di-render lewat partial — markup yang sama dengan AJAX live search) -->
+        <div class="row" id="productGrid">
+            @include('pages.user.products._partials.grid-items', ['products' => $products])
         </div>
     </div>
 </div>
@@ -89,18 +47,61 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        // Mengatur filter berdasarkan kategori
+        // Filter kategori — jQuery show/hide (tanpa Isotope agar Bootstrap grid tidak di-override)
         $('.filter-tope-group button').click(function() {
             var filterValue = $(this).attr('data-filter');
 
-            // Menambahkan kelas aktif ke tombol yang dipilih
             $('.filter-tope-group button').removeClass('how-active1');
             $(this).addClass('how-active1');
 
-            // Menampilkan produk yang sesuai dengan kategori yang dipilih
-            $('.isotope-grid').isotope({
-                filter: filterValue
+            if (filterValue === '*') {
+                $('#productGrid .isotope-item').show();
+            } else {
+                var cls = filterValue.replace('.', '');
+                $('#productGrid .isotope-item').each(function() {
+                    if ($(this).hasClass(cls)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+        });
+
+        /* ==== LIVE SEARCH (filter langsung saat mengetik) ==== */
+        var searchTimer = null;
+        var searchXhr = null;
+        var $input = $('#liveSearchInput');
+        var $grid = $('#productGrid');
+        var lastQuery = $input.val();
+
+        function liveSearch() {
+            var q = $input.val().trim();
+
+            if (q === lastQuery) return;
+            lastQuery = q;
+
+            if (searchXhr) searchXhr.abort();
+
+            searchXhr = $.ajax({
+                url: '{{ route("user.products.search") }}',
+                type: 'GET',
+                data: { query: q },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function(res) {
+                    $grid.html(res.html);
+                },
+                error: function(xhr) {
+                    if (xhr.statusText === 'abort') return;
+                    console.error('Live search gagal:', xhr.responseText);
+                }
             });
+        }
+
+        // Debounce 250 ms
+        $input.on('keyup input', function() {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(liveSearch, 250);
         });
     });
 </script>
@@ -109,15 +110,7 @@
 @push('styles')
 <style>
   .product-hero {
-    margin-top: 100px;
-  }
-
-  @media (max-width: 991.98px) {
-
-    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
-    .product-hero {
-      margin-top: 70px;
-    }
+    margin-top: 24px;
   }
 </style>
 @endpush

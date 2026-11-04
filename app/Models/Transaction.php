@@ -19,7 +19,7 @@ class Transaction extends Model
         'courier_service',
         'transaction_status',
         'transaction_time',
-        'metadata',
+        'snap_token',
     ];
 
     public function details()

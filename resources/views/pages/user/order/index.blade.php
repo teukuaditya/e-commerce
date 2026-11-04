@@ -43,17 +43,21 @@
                                         <div class="cart-item d-flex align-items-center mb-3">
                                             <!-- Product Image -->
                                             <div class="cart-item-img" style="flex-shrink: 0; margin-right: 15px;">
-                                                <img src="{{ asset('storage/products/' . $detail->product->image[0]) }}"
-                                                     alt="{{ $detail->product->title }}" class="rounded" width="100">
+                                                @php
+                                                    $hasImg = !empty($detail->product?->image) && isset($detail->product->image[0]);
+                                                    $imgUrl = $hasImg ? asset('storage/products/' . $detail->product->image[0]) : asset('images/product-01.jpg');
+                                                @endphp
+                                                <img src="{{ $imgUrl }}"
+                                                     alt="{{ $detail->product->title ?? 'Product' }}" class="rounded" width="100">
                                             </div>
 
                                             <!-- Product Info -->
                                             <div class="cart-item-info flex-grow-1 ml-3">
                                                 <h6 class="stext-102 cl2 font-weight-bold" style="font-size: 15px;">
-                                                    {{ $detail->product->brand }}
+                                                    {{ $detail->product->brand ?? '' }}
                                                 </h6>
                                                 <p class="stext-102 cl2 mb-1" style="font-size: 12px;">
-                                                    {{ $detail->product->title }}
+                                                    {{ $detail->product->title ?? 'Item' }}
                                                 </p>
                                                 <span class="mtext-107 cl2" style="font-size: 15px; font-weight: bold;">
                                                     Rp {{ number_format($detail->price, 0, ',', '.') }}
@@ -167,15 +171,7 @@ $(document).ready(function() {
 @push('styles')
 <style>
   .order-hero {
-    margin-top: 120px;
-  }
-
-  @media (max-width: 991.98px) {
-
-    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
-    .order-hero {
-      margin-top: 70px;
-    }
+    margin-top: 24px;
   }
 </style>
 @endpush

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
@@ -11,20 +12,24 @@ use Midtrans\Snap;
 
 class MidtransController extends Controller
 {
+    public function __construct()
+    {
+        // Temuan audit K5: kredensial dibaca lewat config (cacheable),
+        // BUKAN env() langsung yang mengembalikan null setelah config:cache.
+        // Nilai aktual diambil dari .env — dijadikan aman karena config sudah
+        // meng-merge via config/midtrans.php.
+        Config::$serverKey    = config('midtrans.server_key');
+        Config::$clientKey    = config('midtrans.client_key');
+        Config::$isProduction = (bool) config('midtrans.is_production', false);
+        Config::$isSanitized  = (bool) config('midtrans.is_sanitized', true);
+        Config::$is3ds        = (bool) config('midtrans.is_3ds', true);
+    }
+
     /**
      * Generate Snap Token dari Midtrans
      */
     public function getSnapToken(Request $request)
     {
-        // ===========================
-        // Konfigurasi Midtrans
-        // ===========================
-        Config::$serverKey    = env('MIDTRANS_SERVER_KEY');
-        Config::$clientKey    = env('MIDTRANS_CLIENT_KEY');
-        Config::$isProduction = false; // true kalau sudah live/production
-        Config::$isSanitized  = true;
-        Config::$is3ds        = true;
-
         // Cek server key
         if (empty(Config::$serverKey)) {
             return response()->json([
@@ -51,35 +56,46 @@ class MidtransController extends Controller
         }
 
         // ===========================
-        //  Ambil items dengan aman
+        //  Ambil items dengan aman & hitung ulang harga dari database (K2)
         // ===========================
         $items = $request->input('items', []);
 
-        if (!is_array($items)) {
+        if (!is_array($items) || empty($items)) {
             return response()->json([
-                'error' => 'Invalid items format (must be array)',
-                'items' => $items,
+                'error' => 'Invalid items format (must be non-empty array)',
             ], 422);
         }
 
+        $productIds = collect($items)->pluck('id')->filter()->unique()->values()->all();
+        $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
         $itemDetails = [];
+        $calculatedItemsTotal = 0;
+
         foreach ($items as $item) {
+            $productId = $item['id'] ?? null;
+            $qty = max(1, (int) ($item['quantity'] ?? 1));
+            $product = $products->get($productId);
+
+            // Gunakan harga asli dari database untuk mencegah price tampering (K2)
+            $price = $product ? (int) $product->price : (int) ($item['price'] ?? 0);
+            $name = $product ? trim($product->brand . ' - ' . $product->title . (!empty($item['product_size']) ? ' - ' . $item['product_size'] : ''))
+                             : trim(($item['product_brand'] ?? '') . ' - ' . ($item['product_title'] ?? ''));
+
             $itemDetails[] = [
-                'id'       => $item['id'] ?? 'unknown',
-                'quantity' => (int) ($item['quantity'] ?? 1),
-                'name'     => trim(
-                    ($item['product_brand'] ?? '') . ' - ' .
-                        ($item['product_title'] ?? '') .
-                        (!empty($item['product_size']) ? ' - ' . $item['product_size'] : '')
-                ),
-                'price'    => (int) ($item['price'] ?? 0),
+                'id'       => (string) ($productId ?? 'unknown'),
+                'quantity' => $qty,
+                'name'     => mb_substr($name, 0, 50),
+                'price'    => $price,
             ];
+
+            $calculatedItemsTotal += ($price * $qty);
         }
 
         // ===========================
         //  Tambah Ongkir (optional)
         // ===========================
-        $shippingCost = (int) $request->input('shipping_cost', 0);
+        $shippingCost = max(0, (int) $request->input('shipping_cost', 0));
 
         if ($shippingCost > 0) {
             $courier = $request->input('courier', '');
@@ -88,10 +104,13 @@ class MidtransController extends Controller
             $itemDetails[] = [
                 'id'       => 'shipping',
                 'quantity' => 1,
-                'name'     => 'Shipping (' . $courier . ' - ' . $service . ')',
+                'name'     => mb_substr('Shipping (' . $courier . ' - ' . $service . ')', 0, 50),
                 'price'    => $shippingCost,
             ];
         }
+
+        // Total gross amount yang diverifikasi di server
+        $verifiedGrossAmount = $calculatedItemsTotal + $shippingCost;
 
         // ===========================
         //  Build payload ke Midtrans
@@ -99,8 +118,7 @@ class MidtransController extends Controller
         $params = [
             'transaction_details' => [
                 'order_id'     => $orderId,
-                // total dari frontend (sudah termasuk ongkir)
-                'gross_amount' => $grossAmount,
+                'gross_amount' => $verifiedGrossAmount,
             ],
             'customer_details' => [
                 'first_name' => $customer['first_name'] ?? '',
@@ -123,8 +141,7 @@ class MidtransController extends Controller
             ]);
 
             return response()->json([
-                'error'  => $e->getMessage(),
-                'params' => $params, // buat debug kalau perlu
+                'error' => 'Gagal membuat Snap Token. Cek konfigurasi Midtrans / payload order.',
             ], 500);
         }
     }
@@ -140,7 +157,8 @@ class MidtransController extends Controller
         $statusCode   = $request->input('status_code');
         $grossAmount  = $request->input('gross_amount');
         $signatureKey = $request->input('signature_key');
-        $serverKey    = env('MIDTRANS_SERVER_KEY');
+        // Temuan audit K5: baca lewat config, BUKAN env() (rusak setelah config:cache)
+        $serverKey    = config('midtrans.server_key');
 
         // ===========================
         //  Validasi signature
@@ -217,7 +235,18 @@ class MidtransController extends Controller
             $transaction->transaction_status = 'settlement';
         }
 
-        $transaction->gross_amount = $grossAmount;
+        // Temuan audit T4: jangan timpa gross_amount tanpa dicocokkan
+        if ((int) $transaction->gross_amount !== (int) $grossAmount) {
+            Log::warning('Midtrans callback gross_amount mismatch', [
+                'order_id' => $orderId,
+                'expected' => $transaction->gross_amount,
+                'received' => $grossAmount,
+            ]);
+            // Hanya update jika sebelumnya belum ada nilai
+            if (empty($transaction->gross_amount)) {
+                $transaction->gross_amount = $grossAmount;
+            }
+        }
         $transaction->save();
 
         Log::info('Transaction updated successfully', [

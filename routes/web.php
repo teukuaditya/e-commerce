@@ -12,6 +12,7 @@ use App\Http\Controllers\User\CheckoutController as UserCheckoutController;
 use App\Http\Controllers\User\OrderController as UserOrderController;
 use App\Http\Controllers\User\UserController as UserUserController;
 use App\Http\Controllers\User\AboutController as UserAboutController;
+use App\Http\Controllers\User\ReviewController as UserReviewController;
 
 // ADMIN (Backend) Controllers
 use App\Http\Controllers\DashboardController;
@@ -31,7 +32,7 @@ use App\Http\Controllers\UserController;
  */
 Route::get('/', fn () => redirect()->route('user.home'));
 
-// Search Products
+// Search Products (alias root route name products.search to user search)
 Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
 
 
@@ -49,11 +50,14 @@ Route::prefix('user')->name('user.')->group(function () {
 
     // Products (public listing & detail)
     Route::get('/products', [UserProductController::class, 'index'])->name('products.index');
-    Route::get('/products/{id}', [UserProductController::class, 'show'])->name('products.show');
+    // ->whereNumber mencegah "search"/"abc" tertangkap sebagai {id} (route collision)
+    Route::get('/products/{id}', [UserProductController::class, 'show'])
+        ->name('products.show')->whereNumber('id');
 
     // Categories (public listing & detail)
     Route::get('/categories', [UserCategoryController::class, 'index'])->name('categories.index');
-    Route::get('/categories/{id}', [UserCategoryController::class, 'show'])->name('categories.products');
+    Route::get('/categories/{id}', [UserCategoryController::class, 'show'])
+        ->name('categories.products')->whereNumber('id');
 
     // Search Products
     Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
@@ -73,6 +77,12 @@ Route::prefix('user')->name('user.')->group(function () {
             Route::delete('/{cartId}', [UserCartController::class, 'removeFromCart'])->name('remove');
             Route::post('/bulk-remove', [UserCartController::class, 'removeSelectedItems'])->name('bulkRemove');
         });
+
+        // Review produk (butuh login)
+        Route::post('/products/{product}/reviews', [UserReviewController::class, 'store'])
+            ->name('reviews.store')->whereNumber('product');
+        Route::delete('/reviews/{review}', [UserReviewController::class, 'destroy'])
+            ->name('reviews.destroy');
 
         // Checkout
         Route::prefix('checkout')->name('checkout.')->group(function () {
@@ -116,12 +126,19 @@ Route::prefix('user')->name('user.')->group(function () {
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
 
-    Route::resource('categories', CategoryController::class);
-    Route::resource('products', ProductController::class);
-    Route::resource('transactions', TransactionController::class);
-    Route::resource('transactions-details', TransactionDetailController::class);
-    Route::resource('carts', CartController::class);
-    Route::resource('users', UserController::class);
+    /* CRUD Category & Product memakai modal di halaman index —
+       create/show/edit tidak dipakai (tidak ada view-nya) */
+    Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('products', ProductController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    /* Transaksi, Detail Transaksi, Cart — read-only (index).
+       CartController/Sub-controller lain tidak punya method/grid aksi. */
+    Route::resource('transactions', TransactionController::class)->only(['index']);
+    Route::resource('transactions-details', TransactionDetailController::class)->only(['index']);
+    Route::resource('carts', CartController::class)->only(['index']);
+
+    /* User — modal CRUD di halaman index (create/show/edit tidak dipakai) */
+    Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
 });
 
 /**

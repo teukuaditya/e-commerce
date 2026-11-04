@@ -24,7 +24,7 @@
                         <div class="d-flex align-items-center justify-content-between bor12 p-b-20 mb-3">
                             <div class="d-flex align-items-center">
                                 <input type="checkbox"
-                                    style="cursor: pointer; accent-color: #717fe0; transform: scale(1.2);" id="select-all"
+                                    style="cursor: pointer; accent-color: #4F46E5; transform: scale(1.2);" id="select-all"
                                     class="mr-2" style="transform: scale(1.2);">
                                 <label for="select-all" class="stext-102 cl2 m-0">Select All</label>
                             </div>
@@ -115,7 +115,7 @@
                                     <!-- Checkbox -->
                                     <div class="cart-item-checkbox">
                                         <input type="checkbox"
-                                            style="cursor: pointer; accent-color: #717fe0; transform: scale(1.2);"
+                                            style="cursor: pointer; accent-color: #4F46E5; transform: scale(1.2);"
                                             class="item-checkbox" value="{{ $item->id }}"
                                             data-price="{{ $item->product->price }}" style="transform: scale(1.2);">
                                     </div>
@@ -418,18 +418,8 @@
 
 @push('styles')
 <style>
-  /* Supaya hero About tidak ketimpa navbar */
   .cart-hero {
-    margin-top: 90px;
-    /* coba 80–120px, silakan disesuaikan */
-  }
-
-  @media (max-width: 991.98px) {
-
-    /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
-    .product-hero {
-      margin-top: 70px;
-    }
+    margin-top: 24px;
   }
 </style>
 @endpush

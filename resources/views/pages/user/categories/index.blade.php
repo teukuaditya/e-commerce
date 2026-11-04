@@ -17,10 +17,6 @@
                             <span class="block1-name ltext-102 trans-04 p-b-8">
                                 {{ $category->category_name }}
                             </span>
-
-                            <span class="block1-info stext-102 trans-04">
-                                {{ $category->description }}
-                            </span>
                         </div>
 
                         <div class="block1-txt-child2 p-b-4 trans-05">
@@ -38,18 +34,8 @@
 @endsection
 @push('styles')
 <style>
-    /* Supaya hero About tidak ketimpa navbar */
     .category-hero {
-        margin-top: 100px;
-        /* coba 80–120px, silakan disesuaikan */
-    }
-
-    @media (max-width: 991.98px) {
-
-        /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
-        .category-hero {
-            margin-top: 70px;
-        }
+        margin-top: 24px;
     }
 </style>
 @endpush

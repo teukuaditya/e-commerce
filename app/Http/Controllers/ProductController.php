@@ -26,10 +26,10 @@ class ProductController extends Controller
             'brand' => 'nullable|string',
             'title' => 'required|string',
             'description' => 'nullable|string',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:0',
             'size' => 'nullable|array',
             'size.*' => 'nullable|string',
-            'stock' => 'required|integer',
+            'stock' => 'required|integer|min:0',
             'weight' => 'required|integer|min:0',
             'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
@@ -62,10 +62,10 @@ class ProductController extends Controller
             'brand' => 'nullable|string',
             'title' => 'required|string',
             'description' => 'nullable|string',
-            'price' => 'required|numeric',
+            'price' => 'required|numeric|min:0',
             'size' => 'nullable|array',
             'size.*' => 'nullable|string',
-            'stock' => 'required|integer',
+            'stock' => 'required|integer|min:0',
             'weight' => 'required|integer|min:0',
             'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
             'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
@@ -115,6 +115,12 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
 
+        // Temuan audit K4: jangan izinkan menghapus produk yang memiliki riwayat transaksi
+        if ($product->transactionDetails()->exists()) {
+            return redirect()->route('admin.products.index')
+                ->with('error', 'Produk tidak dapat dihapus karena sudah memiliki riwayat transaksi penjualan.');
+        }
+
         if ($product->image) {
             $oldImages = is_string($product->image) ? json_decode($product->image, true) : (array) $product->image;
             foreach ($oldImages as $oldImage) {
@@ -129,11 +135,12 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
     }
 
-    // Fungsi untuk membuat nama file gambar unik
+    // Fungsi untuk membuat nama file gambar unik (temuan audit T5)
     private function generateImageName($image, $title, $index)
     {
-        $titleSlug = str_replace(' ', '_', strtolower($title));
-        return $titleSlug . '-' . $index . '.' . $image->getClientOriginalExtension();
+        $titleSlug = \Illuminate\Support\Str::slug($title);
+        $random = \Illuminate\Support\Str::random(8);
+        return $titleSlug . '-' . $random . '-' . $index . '.' . $image->getClientOriginalExtension();
     }
 
     /**
@@ -152,14 +159,22 @@ class ProductController extends Controller
                 $q->where('status', 'active');
             });
 
-        // 🔹 Kalau request dari AJAX (live search)
+        // 🔹 Kalau request dari AJAX (live search saat mengetik) →
+        //    kembalikan HTML grid yang sudah di-render agar markup kartu produk
+        //    tetap satu sumber kebenaran di Blade (tidak diduplikasi di JS)
         if ($request->ajax()) {
             $products = $productsQuery
-                ->limit(10)
-                ->get(['id', 'title', 'brand', 'price', 'slug']); // sesuaikan kolom & slug punyamu
+                ->with('category') // hindari N+1: partial mengakses $product->category
+                ->when($query === '', fn ($q) => $q->orderByDesc('created_at'), fn ($q) => $q->orderBy('title'))
+                ->limit(24)
+                ->get();
+
+            $html = view('pages.user.products._partials.grid-items', compact('products'))->render();
 
             return response()->json([
-                'items' => $products,
+                'count'  => $products->count(),
+                'query'  => $query,
+                'html'   => $html,
             ]);
         }
         

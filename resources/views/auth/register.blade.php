@@ -1,83 +1,117 @@
-@extends('layouts.home')
- <link rel="icon" type="image/png" href="{{ asset('images/drvn-logo.png') }}" />
+@extends('layouts.main')
+
+@section('title', 'Daftar | DRVN')
+
 @section('content')
-<div class="container">
 
-    <div class="row justify-content-center">
+<div class="app-auth">
+    <div class="app-auth__card">
 
-        <div class="col-lg-6 col-md-9">
-            <div class="card o-hidden border-0 shadow-lg my-5">
-                <div class="card-body p-0">
-                    <!-- Nested Row within Card Body -->
-                    <div class="row">
-                        <div class="col-lg-12 container justify-content-center">
-                            <div class="p-5">
-                                <div class="text-center">
-                                    <h1 class="mtext-111 cl2 mb-5">Create an Account!</h1>
-                                </div>
-                                <!-- Form Start -->
-                                <form method="POST" action="{{ route('register') }}" class="user">
-                                    @csrf
-                                    <div class="form-group">
-                                        <input type="text" class="stext-102 form-control form-control-user @error('name') is-invalid @enderror"
-                                               id="name" placeholder="Full Name" name="name" value="{{ old('name') }}" required>
-                                        @error('name')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
+        {{-- Panel brand (kiri) --}}
+        <div class="app-auth__brand">
+            <a href="{{ route('user.home') }}" class="app-auth__logo">
+                <img src="{{ asset('images/drvn-logo.png') }}" alt="DRVN">
+                <span>DRVN STORE</span>
+            </a>
 
-                                    <div class="form-group">
-                                        <input type="email" class="stext-102 form-control form-control-user @error('email') is-invalid @enderror"
-                                               id="email" placeholder="Email Address" name="email" value="{{ old('email') }}" required>
-                                        @error('email')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
+            <div class="app-auth__pitch">
+                <h1>Buat akun<br><span>dalam semenit</span>.</h1>
+                <p>Satu akun untuk semua kebutuhan belanja: keranjang, alamat, ongkir, dan pembayaran.</p>
 
-                                    <div class="form-group">
-                                        <input type="password" class="stext-102 form-control form-control-user @error('password') is-invalid @enderror"
-                                               id="password" placeholder="Password" name="password" required>
-                                        @error('password')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
-
-                                    <div class="form-group">
-                                        <input type="password" class="stext-102 form-control form-control-user @error('password_confirmation') is-invalid @enderror"
-                                               id="password-confirm" placeholder="Confirm Password" name="password_confirmation" required>
-                                        @error('password_confirmation')
-                                            <span class="invalid-feedback" role="alert">
-                                                <strong>{{ $message }}</strong>
-                                            </span>
-                                        @enderror
-                                    </div>
-
-                                    <button type="submit" class="flex-c-m stext-101 cl0 size-116 bg3 bor14 hov-btn3 p-lr-15 trans-04 pointer">
-                                        Register
-                                    </button>
-                                    <hr>
-                                </form>
-                                <!-- Form End -->
-                                <div class="stext-102 cl2 text-center">
-                                    <a class="small" href="{{ route('password.request') }}">Forgot Password?</a>
-                                </div>
-                                <div class="stext-102 cl2 text-center">
-                                    <a class="small" href="{{ route('login') }}">Already have an account? Login!</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <ul class="app-auth__points">
+                    <li><i class="fa fa-check"></i> Gratis, tanpa syarat rumit</li>
+                    <li><i class="fa fa-check"></i> Data hanya untuk keperluan pesanan</li>
+                    <li><i class="fa fa-check"></i> Akses ke promo &amp; produk baru</li>
+                </ul>
             </div>
+
+            <div class="app-auth__foot">© {{ date('Y') }} Drive Venture — all about essentials</div>
+        </div>
+
+        {{-- Panel form (kanan) --}}
+        <div class="app-auth__form">
+            <div class="app-auth__head">
+                <h2>Daftar akun baru</h2>
+                <p>Lengkapi data berikut — semuanya cepat.</p>
+            </div>
+
+            <form method="POST" action="{{ route('register') }}">
+                @csrf
+
+                <div class="app-auth__field">
+                    <label for="name">Nama Lengkap</label>
+                    <input type="text" name="name" id="name" placeholder="Nama lengkap"
+                           value="{{ old('name') }}" required @error('name') class="is-invalid" @enderror>
+                    @error('name')
+                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    @enderror
+                </div>
+
+                <div class="app-auth__field">
+                    <label for="email">Email</label>
+                    <input type="email" name="email" id="email" placeholder="nama@email.com"
+                           value="{{ old('email') }}" required @error('email') class="is-invalid" @enderror>
+                    @error('email')
+                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    @enderror
+                </div>
+
+                <div class="app-auth__field">
+                    <label for="password">Password</label>
+                    <div class="pass-wrap">
+                        <input type="password" name="password" id="password" placeholder="Minimal 8 karakter" required>
+                        <button type="button" class="pass-toggle" data-target="password"
+                                aria-label="Tampilkan password" title="Tampilkan password">
+                            <i class="fa fa-eye"></i>
+                        </button>
+                    </div>
+                    @error('password')
+                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    @enderror
+                </div>
+
+                <div class="app-auth__field">
+                    <label for="password-confirm">Ulangi Password</label>
+                    <div class="pass-wrap">
+                        <input type="password" name="password_confirmation" id="password-confirm" required>
+                        <button type="button" class="pass-toggle" data-target="password-confirm"
+                                aria-label="Tampilkan password" title="Tampilkan password">
+                            <i class="fa fa-eye"></i>
+                        </button>
+                    </div>
+                    @error('password_confirmation')
+                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                    @enderror
+                </div>
+
+                <button type="submit" class="app-auth__submit" style="margin-top: 6px;">Buat Akun</button>
+            </form>
+
+            <div class="app-auth__alt">
+                Sudah punya akun?
+                <a href="{{ route('login') }}">Login di sini</a>
+            </div>
+
+            <a href="{{ route('user.home') }}" class="app-auth__back" style="margin-top: 22px;">
+                <i class="fa fa-arrow-left"></i> Kembali ke beranda
+            </a>
         </div>
 
     </div>
-
 </div>
+
+{{-- Toggle show/hide password (delegasi, 1 listener untuk semua field) --}}
+<script>
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.pass-toggle');
+        if (!btn) return;
+        var input = document.getElementById(btn.getAttribute('data-target'));
+        if (!input) return;
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        btn.innerHTML = '<i class="fa ' + (show ? 'fa-eye-slash' : 'fa-eye') + '"></i>';
+        btn.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+        input.focus({ preventScroll: true });
+    });
+</script>
 @endsection

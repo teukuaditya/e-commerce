@@ -25,18 +25,24 @@ class CartController extends Controller
             $size = $validated['size'] ?? null;  // Default null jika tidak ada size
             $quantity = $validated['quantity'];
 
-            // Cek apakah item dengan size dan quantity yang sama sudah ada
-            $cart = Cart::where('user_id', $user->id)
-                ->where('product_id', $product->id)
-                ->where('size', $size)
-                ->first();
+            // Cari cart item user + produk; SEMUA query di-scope user_id (temuan audit K3)
+            if ($size !== null) {
+                $query = Cart::where('user_id', $user->id)->where('product_id', $product->id)->where('size', $size);
+            } else {
+                // (temuan audit S1) size=NULL harus pakai whereNull —
+                // where('size', null) menghasilkan "size = NULL" yang TIDAK PERNAH match
+                $query = Cart::where('user_id', $user->id)->where('product_id', $product->id)->whereNull('size');
+            }
+            $cart = $query->first();
 
             if ($cart) {
-                // Jika ada, update quantity-nya
+                // Gaung plus kuantitas baru tidak boleh melebihi stok (temuan audit S7)
+                if ($cart->quantity + $quantity > $product->stock) {
+                    return redirect()->back()->with('error', 'Not enough stock available.');
+                }
                 $cart->quantity += $quantity;
                 $cart->save();
             } else {
-                // Jika belum ada, buat item baru di keranjang
                 Cart::create([
                     'user_id' => $user->id,
                     'product_id' => $product->id,
@@ -51,66 +57,60 @@ class CartController extends Controller
         return redirect()->back()->with('error', 'Not enough stock available.');
     }
 
-
-
     public function index()
     {
-        $cartItems = Cart::where('user_id', auth()->id())->with('product')->get();
+        $cartItems = Cart::where('user_id', Auth::id())->with('product')->get();
         $cartCount = $cartItems->sum('quantity'); // Menjumlahkan kuantitas produk di keranjang
 
         return view('pages.user.cart.index', compact('cartItems', 'cartCount'));
     }
 
     public function updateCart(Request $request, $cartId)
-{
-    // Validasi input kuantitas
-    $request->validate([
-        'quantity' => 'required|integer|min:1',
-    ]);
+    {
+        // Validasi input kuantitas
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
 
-    // Cari cart item berdasarkan ID
-    $cart = Cart::find($cartId);
+        /**
+         * Temuan audit K3 (IDOR): sebelumnya Cart::find($cartId) tanpa filter,
+         * siapapun bisa mengubah kuantitas keranjang user lain.
+         */
+        $cart = Cart::where('user_id', Auth::id())->find($cartId);
 
-    if ($cart) {
-        // Ambil produk yang terkait dengan cart item
-        $product = $cart->product;
+        if (! $cart || ! $cart->product) {
+            return response()->json(['success' => false, 'message' => 'Cart item not found.'], 404);
+        }
 
         // Cek jika kuantitas yang diminta tidak melebihi stok produk
-        if ($request->quantity > $product->stock) {
+        if ($validated['quantity'] > $cart->product->stock) {
             return response()->json(['success' => false, 'message' => 'Not enough stock available.']);
         }
 
-        // Update kuantitas dan simpan ke database
-        $cart->quantity = $request->quantity;
+        $cart->quantity = $validated['quantity'];
         $cart->save();
 
         return response()->json(['success' => true]);
     }
 
-    return response()->json(['success' => false, 'message' => 'Cart item not found.']);
-}
-
-
-
     public function removeFromCart($cartId)
     {
-        $cart = Cart::find($cartId);
-
-        if ($cart) {
-            $cart->delete();
-        }
+        // Hanya boleh menghapus item keranjang milik sendiri (temuan audit K3)
+        Cart::where('user_id', Auth::id())->where('id', $cartId)->delete();
 
         return redirect()->route('user.cart.index');
     }
 
     public function removeSelectedItems(Request $request)
     {
-        $ids = $request->input('ids');
-        if ($ids) {
-            Cart::whereIn('id', $ids)->delete();
-            return response()->json(['success' => true]);
+        $ids = (array) $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json(['success' => false], 422);
         }
-        return response()->json(['success' => false]);
-    }
 
+        // Temuan audit K3: scope user_id supaya tidak bisa menghapus cart orang lain
+        Cart::where('user_id', Auth::id())->whereIn('id', $ids)->delete();
+
+        return response()->json(['success' => true]);
+    }
 }

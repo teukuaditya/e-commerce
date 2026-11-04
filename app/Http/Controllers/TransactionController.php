@@ -10,8 +10,7 @@ class TransactionController extends Controller
 {
     public function index()
     {
-
-        $transactions = Transaction::all(); // Ambil semua data transaksi
+        $transactions = Transaction::latest('created_at')->get();
         return view('pages.admin.transactions.index', compact('transactions'));
     }
 }

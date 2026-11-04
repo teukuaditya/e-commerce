@@ -27,17 +27,27 @@ class DashboardController extends Controller
         ->whereYear('transaction_time', $currentYear) // Filter berdasarkan tahun saat ini
         ->sum('gross_amount');
 
-        // Menghitung jumlah transaksi yang statusnya 'pending' atau 'null'
-        $pendingRequests = Transaction::where('transaction_status', 'pending')
-            ->orWhereNull('transaction_status') // Menambahkan kondisi untuk status null
-            ->count();
+        // Menghitung jumlah transaksi yang statusnya 'pending' atau 'null' (grup where agar aman dari nesting)
+        $pendingRequests = Transaction::where(function ($q) {
+            $q->where('transaction_status', 'pending')
+              ->orWhereNull('transaction_status');
+        })->count();
 
-        // Mengambil total pendapatan per bulan
-        $earningsPerMonth = Transaction::selectRaw('SUM(gross_amount) as total, MONTH(transaction_time) as month')
-        ->whereNotNull('transaction_time')
-        ->groupBy('month')
-        ->orderBy('month', 'asc')
-        ->get();
+        // Mengambil total pendapatan per bulan di tahun berjalan (DB-agnostic & filter settlement saja)
+        $earningsPerMonth = Transaction::where('transaction_status', 'settlement')
+            ->whereYear('transaction_time', $currentYear)
+            ->whereNotNull('transaction_time')
+            ->get()
+            ->groupBy(function ($transaction) {
+                return date('n', strtotime($transaction->transaction_time));
+            })
+            ->map(function ($rows, $month) {
+                return (object) [
+                    'month' => (int) $month,
+                    'total' => (float) $rows->sum('gross_amount'),
+                ];
+            })
+            ->values();
 
         /// Mengambil jumlah produk per kategori
     $productCountsByCategory = Product::selectRaw('category_id, COUNT(*) as count')

@@ -45,7 +45,7 @@ class UserController extends Controller
     User::create([
         'name' => $validated['name'],
         'email' => $validated['email'],
-        'phone' => $validated['phone'],
+        'phone' => $validated['phone'] ?? null,
         'role' => $validated['role'],
         'password' => $password,
     ]);

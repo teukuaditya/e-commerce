@@ -108,15 +108,7 @@
 @push('styles')
 <style>
     .address-hero {
-        margin-top: 120px;
-    }
-
-    @media (max-width: 991.98px) {
-
-        /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
-        .address-hero {
-            margin-top: 70px;
-        }
+        margin-top: 24px;
     }
 </style>
 @endpush

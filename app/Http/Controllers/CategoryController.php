@@ -19,7 +19,6 @@ class CategoryController extends Controller
         // Validasi input
         $request->validate([
             'category_name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // Validasi gambar
         ]);
 
@@ -33,7 +32,6 @@ class CategoryController extends Controller
         // Simpan kategori ke database
         Category::create([
             'category_name' => $request->category_name,
-            'description' => $request->description,
             'image' => $imagePath ? basename($imagePath) : null, // Simpan hanya nama file
         ]);
 
@@ -45,7 +43,6 @@ class CategoryController extends Controller
         // Validasi input
         $request->validate([
             'category_name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // Validasi gambar
         ]);
 
@@ -67,7 +64,6 @@ class CategoryController extends Controller
         // Update kategori
         $category->update([
             'category_name' => $request->category_name,
-            'description' => $request->description,
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully.');

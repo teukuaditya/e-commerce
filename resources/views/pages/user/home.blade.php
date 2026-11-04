@@ -2,6 +2,8 @@
 
 @section('title', 'Home | DRVN')
 
+@section('body-class', 'page-home')
+
 @section('content')
 <!-- Slider -->
 <section class="section-slide">
@@ -153,10 +155,10 @@
         </div>
 
         <!-- Produk -->
-        <div class="row isotope-grid">
+        <div class="row" id="homeProductGrid">
             @foreach ($products as $product)
             <div
-                class="col-sm-6 col-md-4 col-lg-3 p-b-35 isotope-item {{ strtolower($product->category->category_name) }}">
+                class="col-6 col-md-3 p-b-35 product-item {{ strtolower($product->category->category_name) }}">
                 <div class="block2">
                     <div class="block2-pic hov-img0">
                         <a href="{{ route('user.products.show', $product->id) }}">
@@ -203,26 +205,41 @@
         </div>
     </div>
 </div>
-@push('styles')
-<style>
-    /* ===== NAVBAR HOME ===== */
+{{-- style navbar & grid ada di theme-upgrade.css dan main.css --}}
 
-    /* Default (di atas slider) = transparan */
-    .header-v4 .container-menu-desktop,
-    .header-v4 .wrap-menu-desktop {
-        background-color: transparent !important;
-        box-shadow: none !important;
-    }
+@push('scripts')
+<script>
+    $(document).ready(function () {
+        // Toggle class scrolled pada navbar home untuk efek frosted glass
+        // (threshold 50px, sinkron dengan toggle global di navbar.blade.php)
+        var $header = $('header.header-v4');
+        function updateNavbar() {
+            if ($(window).scrollTop() > 50) {
+                $header.addClass('scrolled');
+            } else {
+                $header.removeClass('scrolled');
+            }
+        }
+        $(window).on('scroll', updateNavbar);
+        updateNavbar(); // cek langsung saat load
 
-    /* Saat discroll, CozaStore nambahin class "fix-menu-desktop" ke container-menu-desktop */
-    .header-v4 .container-menu-desktop.fix-menu-desktop,
-    .header-v4 .container-menu-desktop.fix-menu-desktop .wrap-menu-desktop {
-        background-color: #ffffff !important;
-        box-shadow: 0 2px 10px rgba(0,0,0,.05) !important;
-    }
-</style>
+        // Filter kategori home — jQuery show/hide (tanpa Isotope)
+        $('.filter-tope-group button').on('click', function () {
+            var filterValue = $(this).attr('data-filter');
+            $('.filter-tope-group button').removeClass('how-active1');
+            $(this).addClass('how-active1');
+
+            if (filterValue === '*') {
+                $('#homeProductGrid .product-item').show();
+            } else {
+                var cls = filterValue.replace('.', '');
+                $('#homeProductGrid .product-item').each(function () {
+                    $(this).toggle($(this).hasClass(cls));
+                });
+            }
+        });
+    });
+</script>
 @endpush
-
-
 
 @endsection

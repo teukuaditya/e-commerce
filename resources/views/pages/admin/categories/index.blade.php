@@ -31,7 +31,6 @@
                             <tr>
                                 <th>ID</th>
                                 <th>Category Name</th>
-                                <th>Description</th>
                                 <th>Image</th>
                                 <th>Actions</th>
                             </tr>
@@ -41,7 +40,6 @@
                                 <tr>
                                     <td>{{ $category->id }}</td>
                                     <td>{{ $category->category_name }}</td>
-                                    <td>{{ $category->description }}</td>
                                     <td>
                                         @if ($category->image)
                                             <img src="{{ asset('storage/categories/' . $category->image) }}" alt="{{ $category->category_name }}" width="100" class="img-thumbnail">
@@ -62,7 +60,6 @@
                                                 <a class="dropdown-item text-warning" data-toggle="modal"
                                                     data-target="#categoryModal" data-id="{{ $category->id }}"
                                                     data-category_name="{{ $category->category_name }}"
-                                                    data-description="{{ $category->description }}"
                                                     data-image="{{ $category->image }}"><i
                                                         class="fas fa-edit mr-2"></i> Edit
                                                 </a>
@@ -114,12 +111,6 @@
                             <input type="text" class="form-control" name="category_name" id="category_name" required>
                         </div>
 
-                        <!-- Description -->
-                        <div class="form-group">
-                            <label for="description">Description</label>
-                            <textarea class="form-control" name="description" id="description"></textarea>
-                        </div>
-
                         <!-- Image -->
                         <div class="form-group">
                             <label for="image">Category Image</label>
@@ -156,14 +147,12 @@
             var button = $(event.relatedTarget); // Button yang men-trigger modal
             var id = button.data('id');
             var name = button.data('category_name');
-            var description = button.data('description');
             var image = button.data('image');
 
             var modal = $(this);
             modal.find('.modal-title').text(id ? 'Edit Category' : 'Add Category');
             modal.find('#category_id').val(id); // Set ID untuk Edit
             modal.find('#category_name').val(name);
-            modal.find('#description').val(description);
 
             // Cek jika ada gambar
             if (image) {

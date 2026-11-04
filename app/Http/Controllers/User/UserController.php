@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Support\AddressFormatter;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 
 class UserController extends Controller
 {
@@ -18,21 +18,15 @@ class UserController extends Controller
             'recipient_phone' => 'required|string|max:20',
             'address' => 'required|string',
             'destination_name' => 'required|string',
-            'destination_id' => 'required'
+            'destination_id' => 'required|string|max:50',
         ]);
 
         $user = auth()->user();
-        
-        $fullAddress = sprintf(
-            "Nama Penerima: %s, No. Telepon: %s, Alamat: %s, Destination: %s, Destination ID: %s",
-            $request->recipient_name,
-            $request->recipient_phone,
-            $request->address,
-            $request->destination_name,
-            $request->destination_id
-        );
-        
-        $user->address = $fullAddress;
+
+        // Format alamat diseragamkan lewat AddressFormatter (temuan audit T1)
+        $user->address = AddressFormatter::format($request->only([
+            'recipient_name', 'recipient_phone', 'address', 'destination_name', 'destination_id',
+        ]));
         $user->save();
 
         if ($request->ajax()) {
@@ -47,21 +41,14 @@ class UserController extends Controller
      */
     public function showEditAddress()
     {
-        $user = auth()->user();
-        $address = $user->address;
-
-        preg_match(
-            '/Nama Penerima: (.*?), No\. Telepon: (.*?), Alamat: (.*?), Destination: (.*?), Destination ID: (.*)/',
-            $address,
-            $matches
-        );
+        $parsed = AddressFormatter::parse(auth()->user()->address);
 
         return view('pages.user.address.index', [
-            'recipientName' => $matches[1] ?? '',
-            'recipientPhone' => $matches[2] ?? '',
-            'streetAddress' => $matches[3] ?? '',
-            'destinationName' => $matches[4] ?? '',
-            'destinationId' => $matches[5] ?? '',
+            'recipientName' => $parsed['recipient_name'] ?? '',
+            'recipientPhone' => $parsed['recipient_phone'] ?? '',
+            'streetAddress' => $parsed['street_address'] ?? '',
+            'destinationName' => $parsed['destination_name'] ?? '',
+            'destinationId' => $parsed['destination_id'] ?? '',
         ]);
     }
 
@@ -71,32 +58,28 @@ class UserController extends Controller
     public function updateAddress(Request $request)
     {
         $request->validate([
-            'recipient_name' => 'required|string',
-            'recipient_phone' => 'required|string',
+            'recipient_name' => 'required|string|max:255',
+            'recipient_phone' => 'required|string|max:20',
             'address' => 'required|string',
             'destination_name' => 'required|string',
-            'destination_id' => 'nullable|string',
         ]);
 
-        $destinationId = $request->destination_id;
-
-        if (!$destinationId) {
-            preg_match('/Destination ID: (.*?)(,|$)/', auth()->user()->address, $match);
-            $destinationId = trim($match[1] ?? '');
+        // Destination ID boleh kosong — dipertahankan dari alamat lama
+        $destinationId = $request->input('destination_id');
+        if (! $destinationId) {
+            $old = AddressFormatter::parse(auth()->user()->address);
+            $destinationId = $old['destination_id'] ?? '';
         }
 
         $user = auth()->user();
 
-        $fullAddress = sprintf(
-            "Nama Penerima: %s, No. Telepon: %s, Alamat: %s, Destination: %s, Destination ID: %s",
-            $request->recipient_name,
-            $request->recipient_phone,
-            $request->address,
-            $request->destination_name,
-            $destinationId
-        );
-
-        $user->address = $fullAddress;
+        $user->address = AddressFormatter::format([
+            'recipient_name' => $request->input('recipient_name'),
+            'recipient_phone' => $request->input('recipient_phone'),
+            'address' => $request->input('address'),
+            'destination_name' => $request->input('destination_name'),
+            'destination_id' => $destinationId,
+        ]);
         $user->save();
 
         // Cek jika request AJAX
@@ -134,19 +117,21 @@ class UserController extends Controller
      */
     public function editUser(Request $request)
     {
+        $user = auth()->user();
+
         $request->validate([
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:15',
-            'email' => 'required|email|max:255',
+            // Email harus unik (kecuali milik sendiri) — temuan audit S3
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
         ]);
 
-        $user = auth()->user();
         $user->name = $request->name;
         $user->phone = $request->phone;
         $user->email = $request->email;
         $user->save();
 
-        return redirect()->route('user.profile.update')->with('success', 'User data has been updated successfully.');
+        return redirect()->route('user.profile.update.get')->with('success', 'User data has been updated successfully.');
     }
 
     /**

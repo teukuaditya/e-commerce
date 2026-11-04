@@ -590,67 +590,8 @@
             });
 
 
-            // Variabel untuk controller pembatalan fetch
-            let controller = new AbortController();
-
-            // Fungsi untuk mereset tombol
             function resetButtonState() {
                 $('#save-edit-address-btn').html('Save Changes').attr('disabled', false);
-            }
-
-            // Fungsi untuk memuat kota berdasarkan provinsi yang dipilih
-            function loadCitiesByProvince(provinceName) {
-                let citySelect = document.getElementById('edit-city');
-
-                // Reset opsi kota dan nonaktifkan sementara dropdown kota
-                citySelect.innerHTML = '<option value="">Select City</option>';
-                citySelect.disabled = true;
-
-                if (provinceName) {
-                    // Membatalkan request sebelumnya jika masih berlangsung
-                    if (controller) {
-                        controller.abort(); // Membatalkan fetch sebelumnya
-                    }
-                    // Membuat controller baru untuk fetch berikutnya
-                    controller = new AbortController();
-
-                    // Fetch data kota berdasarkan provinsi
-                    fetch(`/user/getCitiesByProvince?province_name=${provinceName}`, {
-                            signal: controller.signal // Menggunakan signal untuk mengontrol request
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // Tambahkan opsi kota baru
-                                data.cities.forEach(city => {
-                                    let option = document.createElement('option');
-                                    option.value = city.city_name;
-                                    option.textContent = city.city_name;
-
-                                    // Tentukan apakah kota yang ada pada database sudah terpilih
-                                    if (city.city_name === "{{ $city ?? '' }}") {
-                                        option.selected = true;
-                                    }
-
-                                    citySelect.appendChild(option);
-                                });
-
-                                // Aktifkan kembali dropdown kota setelah data berhasil dimuat
-                                citySelect.disabled = false;
-                            } else {
-                                alert('Failed to load city');
-                            }
-                        })
-                        .catch(error => {
-                            if (error.name !== 'AbortError') { // Pastikan tidak error karena fetch dibatalkan
-                                console.error('Error fetching cities:', error);
-                                alert('Error fetching cities.');
-                            }
-                        });
-                } else {
-                    // Jika tidak ada provinsi yang dipilih, pastikan dropdown kota tetap nonaktif
-                    citySelect.disabled = true;
-                }
             }
 
             // Hapus alamat yang tersimpan

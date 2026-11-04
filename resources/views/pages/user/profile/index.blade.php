@@ -95,18 +95,8 @@
 
 @push('styles')
 <style>
-    /* Supaya hero About tidak ketimpa navbar */
     .profile-hero {
-        margin-top: 120px;
-        /* coba 80–120px, silakan disesuaikan */
-    }
-
-    @media (max-width: 991.98px) {
-
-        /* Di mobile biasanya header lebih kecil, jadi jaraknya bisa dikurangi */
-        .profile-hero {
-            margin-top: 70px;
-        }
+        margin-top: 24px;
     }
 </style>
 @endpush

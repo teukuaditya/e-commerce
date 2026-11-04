@@ -69,19 +69,19 @@
                         Sign In
                     </a>
                     <a href="{{ route('register') }}"
-                        class="flex-c-m stext-110 cl0 size-127 bg3 ml-2 bor14 hov-btn4 p-lr-15 trans-04 pointer"
+                        class="flex-c-m stext-110 size-127 tu-btn-outline ml-2 bor14 p-lr-15 trans-04 pointer"
                         style="font-size: 14px; min-width: 10%; height: 30px">
                         Register
                     </a>
                     @else
-                    <!-- Dropdown User Info -->
-                    <div class="">
+                    <!-- Dropdown User Info (mandiri — tidak bergantung data-toggle Bootstrap/modal) -->
+                    <div class="tu-dd">
                         <a class="icon-header-item cl2 hov-cl1 trans-04 p-l-22 p-r-11" href="#" id="userDropdown"
-                            role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            role="button" data-tu-dropdown aria-haspopup="true" aria-expanded="false">
                             <i class="zmdi zmdi-account"></i>
                         </a>
                         <!-- Dropdown Menu -->
-                        <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                        <div class="dropdown-menu dropdown-menu-right" id="userDropdownMenu"
                             aria-labelledby="userDropdown">
                             <h6 class="dropdown-header stext-110 cl2" style="font-weight: bold; font-size: 14px">
                                 {{ Auth::user()->name }}<br>
@@ -110,88 +110,87 @@
                             @endif
 
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="{{ route('logout') }}" data-toggle="modal" data-target="#logoutModal">
+                            <!-- Sign Out: submit POST logout-form langsung (punya @csrf) -->
+                            <a class="dropdown-item" href="{{ route('logout') }}"
+                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 <i class="fas fa-sign-out-alt fa-fw mr-2 text-gray-400"></i>
                                 Sign Out
                             </a>
-                            {{-- <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                            @csrf
-                            </form> --}}
                         </div>
                     </div>
                     @endguest
-                        @auth
-                            @php
-                                $fullname = Auth::user()->name;
-                                $firstName = explode(' ',($fullname))[0];
-                            @endphp
-                                <span class="mtext-50 cl2">
-                                    Hi {{ $firstName }},
-                                </span>
-                        @endauth
-                </div>
+                    @auth
+                        @php
+                            $fullname = Auth::user()->name;
+                            $firstName = explode(' ',($fullname))[0];
+                        @endphp
+                        <span class="nav-greeting ml-2">
+                            Hi {{ $firstName }},
+                        </span>
+                    @endauth
+                </div> <!-- /wrap-icon-header -->
 
-        </div>
-        <!-- Logout Modal-->
-        <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog"
-            aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title mtext-101 cl2" id="exampleModalLabel">Ready to Leave?</h5>
-                        <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">×</span>
-                        </button>
-                    </div>
-                    <div class="modal-body stext-102">Select "Logout" below if you are ready to end your current session.
-                    </div>
-                    <div class="modal-footer">
-                        <button class="flex-c-m stext-102 cl0 size-304 bg10 bor14 hov-btn4 p-lr-15 trans-04 pointer" type="button" data-dismiss="modal">Cancel</button>
-                        <a class="flex-c-m stext-102 cl0 size-304 bg1 bor14 hov-btn5 p-lr-15 trans-04 pointer" href="{{ route('logout') }}"
-                            onclick="event.preventDefault();
-                                            document.getElementById('logout-form').submit();">
-                            {{ __('Logout') }}
-                        </a>
+            </nav> <!-- /limiter-menu-desktop -->
+        </div> <!-- /wrap-menu-desktop -->
+    </div> <!-- /container-menu-desktop -->
 
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                            class="d-none">
-                            @csrf
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Form logout POST (punya @csrf) — dipakai oleh item "Sign Out" di dropdown -->
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+        @csrf
+    </form>
 
-    <style>
-        .dropdown-item:active {
-            background-color: #8E5B23;
-            /* Warna yang diinginkan */
-            color: #fff;
-            /* Warna teks jika perlu */
-        }
+    <script>
+        /* Dropdown akun mandiri (delegasi) — bekerja untuk navbar desktop & mobile,
+           tidak bergantung data-toggle Bootstrap. */
+        (function () {
+            function closeAll(except) {
+                document.querySelectorAll('.dropdown-menu.show').forEach(function (m) {
+                    if (m !== except) {
+                        m.classList.remove('show');
+                    }
+                });
+                document.querySelectorAll('[data-tu-dropdown]').forEach(function (t) {
+                    t.setAttribute('aria-expanded', 'false');
+                });
+            }
 
-        /* CSS untuk Modal */
-        .modal-backdrop {
-            z-index: 1200 !important;
-            /* Pastikan backdrop lebih tinggi dari top bar */
-        }
+            document.addEventListener('click', function (e) {
+                var toggle = e.target.closest('[data-tu-dropdown]');
 
-        .modal {
-            z-index: 1300 !important;
-            /* Modal harus berada di atas backdrop */
-        }
+                if (toggle) {
+                    e.preventDefault();
+                    var menu = toggle.parentElement.querySelector('.dropdown-menu');
+                    var willOpen = !menu.classList.contains('show');
 
-        /* Memberikan margin atas pada modal */
-        .modal-dialog {
-            margin-top: 80px;
-            /* Atur sesuai dengan kebutuhan, semakin besar maka semakin ke bawah */
-        }
-    </style>
+                    closeAll(null);
+                    menu.classList.toggle('show', willOpen);
+                    toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                    return;
+                }
 
-    </div>
+                /* Klik di luar menu → tutup */
+                if (!e.target.closest('.dropdown-menu.show')) {
+                    closeAll(null);
+                }
+            }, true);
 
-    </div>
+            /* Esc menutup dropdown */
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeAll(null);
+            });
 
-    </div>
+            /* Scroll > 50px → navbar (desktop & mobile) lebih solid */
+            var header = document.querySelector('header.header-v4');
+            var headerMobile = document.querySelector('.wrap-header-mobile');
+
+            function toggleScrolled() {
+                var solid = (window.scrollY || window.pageYOffset) > 50;
+                if (header) header.classList.toggle('scrolled', solid);
+                if (headerMobile) headerMobile.classList.toggle('scrolled', solid);
+            }
+
+            window.addEventListener('scroll', toggleScrolled, { passive: true });
+            toggleScrolled();
+        })();
+    </script>
 </header>

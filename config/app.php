@@ -194,7 +194,9 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-        App\Providers\TelescopeServiceProvider::class,
+        // Telescope dinonaktifkan: tidak kompatibel dengan PHP 8.5
+        // (deprecation "Implicitly marking parameter $chunkSize as nullable" fatal saat boot)
+        // App\Providers\TelescopeServiceProvider::class,
 
     ],
 

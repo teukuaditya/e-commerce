@@ -16,26 +16,28 @@ class RajaOngkirController extends Controller
     {
         try {
             $term = $request->term ?? '';
-            
-            Log::info('Search term: ' . $term);
-            Log::info('API Key exists: ' . (env('RAJAONGKIR_API_KEY') ? 'Yes' : 'No'));
+            $apiKey = config('rajaongkir.api_key');
+
+            if (empty($apiKey)) {
+                return response()->json(['error' => 'RajaOngkir API key belum dikonfigurasi.'], 500);
+            }
 
             $response = Http::withHeaders([
-                'key' => env('RAJAONGKIR_API_KEY')
+                'key' => $apiKey
             ])->get('https://rajaongkir.komerce.id/api/v1/destination/domestic-destination', [
                 'search' => $term,
                 'limit' => 20,
                 'offset' => 0
             ]);
 
-            Log::info('API Response Status: ' . $response->status());
-            Log::info('API Response Body: ' . $response->body());
-
             if (!$response->successful()) {
+                Log::warning('RajaOngkir searchDestinations failed', [
+                    'status' => $response->status(),
+                    'error' => $response->json('message') ?? 'API request failed'
+                ]);
                 return response()->json([
                     'error' => 'API request failed',
-                    'status' => $response->status(),
-                    'message' => $response->body()
+                    'message' => 'Gagal mencari destinasi pengiriman.'
                 ], 500);
             }
 
@@ -58,7 +60,7 @@ class RajaOngkirController extends Controller
             Log::error('Error in searchDestinations: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Internal server error',
-                'message' => $e->getMessage()
+                'message' => 'Terjadi kesalahan sistem saat mencari destinasi.'
             ], 500);
         }
     }
@@ -76,28 +78,30 @@ class RajaOngkirController extends Controller
                 'weight' => 'required|integer',
             ]);
 
-            Log::info('Cek Ongkir Request:', [
-                'courier' => $request->courier,
-                'destination' => $request->destination,
-                'weight' => $request->weight
-            ]);
+            $apiKey = config('rajaongkir.api_key');
+            if (empty($apiKey)) {
+                return response()->json(['error' => 'RajaOngkir API key belum dikonfigurasi.'], 500);
+            }
+
+            $origin = config('rajaongkir.origin', 17549);
 
             $response = Http::withHeaders([
-                'key' => env('RAJAONGKIR_API_KEY')
+                'key' => $apiKey
             ])->asForm()->post('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', [
-                'origin' => 17549,
+                'origin' => $origin,
                 'destination' => $request->destination,
                 'weight' => $request->weight,
                 'courier' => $request->courier
             ]);
 
-            Log::info('API Response Status: ' . $response->status());
-
             if (!$response->successful()) {
+                Log::warning('RajaOngkir cekOngkir failed', [
+                    'status' => $response->status(),
+                    'error' => $response->json('message') ?? 'API request failed'
+                ]);
                 return response()->json([
                     'error' => 'API request failed',
-                    'status' => $response->status(),
-                    'message' => $response->body()
+                    'message' => 'Gagal menghitung ongkos kirim.'
                 ], 500);
             }
 
@@ -129,7 +133,7 @@ class RajaOngkirController extends Controller
             Log::error('Error in cekOngkir: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Internal server error',
-                'message' => $e->getMessage()
+                'message' => 'Terjadi kesalahan sistem saat mengecek ongkir.'
             ], 500);
         }
     }

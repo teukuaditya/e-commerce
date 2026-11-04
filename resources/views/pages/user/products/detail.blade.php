@@ -137,12 +137,140 @@
                     {!! nl2br(e($product->description)) !!}
                 </p>
             </div>
+
+            {{-- ===================== REVIEWS ===================== --}}
+            <div class="pdp-reviews bor10 p-t-25 p-b-25 p-l-20 p-r-20 mt-3 bg-white">
+                <div class="row">
+                    {{-- Ringkasan rating --}}
+                    <div class="col-md-4 p-r-20 p-r-0-lg">
+                        <div class="pdp-rsummary bg0 p-all-20 bor10">
+                            <div class="pdp-rsummary__avg mtext-106 cl2">
+                                {{ $rating['avg'] !== null ? number_format($rating['avg'], 1) : '–' }}
+                                <small class="cl6 stext-103">/ 5</small>
+                            </div>
+                            <div class="pdp-stars">
+                                @for ($i = 1; $i <= 5; $i++)
+                                    <i class="fa fa-star{{ ($rating['avg'] !== null && $i <= round($rating['avg'])) ? ' pdp-star--on' : '' }}"></i>
+                                @endfor
+                            </div>
+                            <p class="stext-107 cl6 p-t-8">
+                                {{ $rating['count'] }} {{ Str::plural('review', $rating['count']) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Daftar review --}}
+                    <div class="col-md-8">
+                        <h5 class="mtext-101 cl2 p-b-15">Ulasan Pembeli</h5>
+
+                        @forelse ($product->reviews->sortByDesc('created_at') as $rv)
+                            <div class="pdp-review bor8 p-all-15 mb-3">
+                                <div class="pdp-widgets flex-w flex-sb-m">
+                                    <div>
+                                        <strong class="stext-107 cl2">{{ $rv->user->name ?? 'Pembeli' }}</strong>
+                                        <span class="stext-107 cl6 p-l-10">{{ $rv->created_at->translatedFormat('d M Y') }}</span>
+                                    </div>
+                                    <div class="pdp-stars pdp-stars--sm">
+                                        @for ($i = 1; $i <= 5; $i++)
+                                            <i class="fa fa-star{{ $i <= $rv->rating ? ' pdp-star--on' : '' }}"></i>
+                                        @endfor
+                                    </div>
+                                </div>
+                                <p class="stext-107 cl6 p-t-10">{{ $rv->comment }}</p>
+
+                                @if (auth()->check() && auth()->id() === $rv->user_id)
+                                    <div class="p-t-10">
+                                        <small class="stext-101 cl6">
+                                            <button type="button" class="btn btn-link btn-sm pl-0 js-edit-review">Edit review saya</button>
+                                            <form action="{{ route('user.reviews.destroy', $rv->id) }}" method="POST" class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-link btn-sm text-danger" onclick="return confirm('Hapus review Anda?')">Hapus</button>
+                                            </form>
+                                        </small>
+                                    </div>
+                                @endif
+                            </div>
+                        @empty
+                            <p class="stext-107 cl6">
+                                Belum ada review. Jadilah yang pertama memberi ulasan!
+                            </p>
+                        @endforelse
+
+                        {{-- Form review (auth) --}}
+                        @if (auth()->check())
+                            <div class="pdp-form bor8 p-all-20 mt-3" id="reviewForm">
+                                <h6 class="stext-108 cl2 m-b-10">
+                                    {{ $myReview ? 'Edit review Anda' : 'Tulis review Anda' }}
+                                </h6>
+                                <form action="{{ route('user.reviews.store', $product->id) }}" method="POST">
+                                    @csrf
+                                    @if (session('success'))
+                                        <div class="alert alert-success py-2 px-3 small">{{ session('success') }}</div>
+                                    @endif
+                                    @if (session('info'))
+                                        <div class="alert alert-info py-2 px-3 small">{{ session('info') }}</div>
+                                    @endif
+
+                                    <div class="flex-w mb-2">
+                                        <label class="stext-107 cl2 p-r-12">Rating:</label>
+                                        <div id="starPick" class="pdp-stars pdp-stars--pick">
+                                            @for ($i = 1; $i <= 5; $i++)
+                                                <i class="fa fa-star {{ $myReview && $i <= $myReview->rating ? 'pdp-star--on' : '' }}"
+                                                   data-value="{{ $i }}"></i>
+                                            @endfor
+                                        </div>
+                                        <input type="hidden" name="rating" id="ratingInput"
+                                               value="{{ $myReview ? $myReview->rating : '5' }}" required>
+                                    </div>
+
+                                    <textarea name="comment" class="w-full stext-107 cl6 bor8 p-all-15 pdp-textarea"
+                                              rows="3" required
+                                              placeholder="Bagaimana kualitas produknya?">{{ $myReview ? $myReview->comment : old('comment') }}</textarea>
+                                    @error('comment') <div class="stext-107 cl-g small m-t-5">{{ $message }}</div> @enderror
+
+                                    <button type="submit" class="flex-c-m stext-101 cl0 size-105 bg1 bor1 hov-btn1 p-lr-15 m-t-10">
+                                        {{ $myReview ? 'Perbarui Review' : 'Kirim Review' }}
+                                    </button>
+                                </form>
+                            </div>
+                        @else
+                            <div class="bor8 bg-light p-all-15 mt-3 stext-107 cl6">
+                                <a href="{{ route('login') }}" class="stext-107 cl2">Login</a>
+                                untuk menulis review.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
         </div>
         </div>
         </div>
     </section>
 @endsection
 
+
+@push('styles')
+<style>
+    /* ==== Review (scoped ke elemen .pdp-*) ==== */
+    .pdp-stars .fa-star { color: #d8d8dc; margin-right: 3px; transition: color .15s; }
+    .pdp-stars .pdp-star--on { color: #f8b64b; }
+
+    .pdp-rsummary__avg { font-size: 34px; line-height: 1; }
+
+    .pdp-review { background: #fafafb; }
+    .pdp-stars--sm .fa-star { font-size: 12px; }
+
+    .pdp-stars--pick .fa-star { cursor: pointer; font-size: 22px; margin-right: 6px; }
+    .pdp-textarea { resize: vertical; }
+
+    /* Hover preview bintang di form */
+    .pdp-stars--pick .fa-star:hover { color: #f8b64b; }
+
+    /* Perlihatkan 5 bintang terpilih saat hover — minimal: mereka tetap merah muda */
+    a.text-primary { text-decoration: none; }
+</style>
+@endpush
 
 @push('scripts')
     <script>
@@ -195,5 +323,49 @@
 
             updateQuantity(); // Update quantity display or perform other logic
         }
+
+        /* ===================== PICK RATING BINTANG ===================== */
+        document.addEventListener('DOMContentLoaded', function () {
+            var pick = document.getElementById('starPick');
+            var input = document.getElementById('ratingInput');
+            if (!pick || !input) return;
+
+            var stars = pick.querySelectorAll('.fa-star');
+            var selected = parseInt(input.value) || 0;
+
+            function paint(count) {
+                stars.forEach(function (s, idx) {
+                    s.classList.toggle('pdp-star--on', idx < count);
+                });
+            }
+
+            paint(selected);
+
+            stars.forEach(function (star) {
+                star.addEventListener('mouseenter', function () {
+                    paint(parseInt(star.dataset.value));
+                });
+                star.addEventListener('mouseleave', function () {
+                    paint(selected);
+                });
+                star.addEventListener('click', function () {
+                    selected = parseInt(star.dataset.value);
+                    input.value = selected;
+                    paint(selected);
+                });
+            });
+
+            var editBtn = document.querySelector('.js-edit-review');
+            if (editBtn) {
+                editBtn.addEventListener('click', function () {
+                    var form = document.getElementById('reviewForm');
+                    if (form) {
+                        form.scrollIntoView({ behavior: 'smooth' });
+                        var ta = form.querySelector('textarea');
+                        if (ta) ta.focus();
+                    }
+                });
+            }
+        });
     </script>
 @endpush
