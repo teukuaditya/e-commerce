@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Transaction;
-use Midtrans\Config;
-use Midtrans\Snap;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Midtrans\Snap;
 
 class OrderController extends Controller
 {
@@ -20,20 +19,20 @@ class OrderController extends Controller
     }
 
     public function SnapToken(Request $request)
-{
-    // Ambil transaksi berdasarkan order_id
-    $transaction = Transaction::where('order_id', $request->order_id)->first();
+    {
+        // Ambil transaksi berdasarkan order_id
+        $transaction = Transaction::where('order_id', $request->order_id)->first();
 
-    // Jika transaksi tidak ditemukan atau snap_token tidak ada
-    if (!$transaction || !$transaction->snap_token) {
-        return response()->json(['error' => 'Transaction or Snap Token not found.'], 404);
+        // Jika transaksi tidak ditemukan atau snap_token tidak ada
+        if (! $transaction || ! $transaction->snap_token) {
+            return response()->json(['error' => 'Transaction or Snap Token not found.'], 404);
+        }
+
+        // Kembalikan snap_token yang ditemukan
+        return response()->json(['snap_token' => $transaction->snap_token]);
     }
 
-    // Kembalikan snap_token yang ditemukan
-    return response()->json(['snap_token' => $transaction->snap_token]);
-}
-
-public function handlePaymentSuccess(Request $request)
+    public function handlePaymentSuccess(Request $request)
     {
         $transaction = Transaction::where('order_id', $request->order_id)->first();
 
@@ -43,6 +42,5 @@ public function handlePaymentSuccess(Request $request)
         $transaction->save();
 
         return response()->json(['success' => 'Transaction status updated successfully.']);
-}
-
+    }
 }

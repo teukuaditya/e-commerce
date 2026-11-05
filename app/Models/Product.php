@@ -10,7 +10,7 @@ class Product extends Model
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'brand', 'title', 'description', 'price', 'size', 'stock', 'image', 'weight'
+        'category_id', 'brand', 'title', 'description', 'price', 'size', 'stock', 'image', 'weight',
     ];
 
     // Relasi dengan kategori
@@ -38,7 +38,7 @@ class Product extends Model
     public function ratingSummary(): array
     {
         $summary = [
-            'avg'   => null,
+            'avg' => null,
             'count' => (int) $this->reviews()->count(),
             'stars' => null,
         ];

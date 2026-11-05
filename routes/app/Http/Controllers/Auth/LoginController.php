@@ -43,7 +43,6 @@ class LoginController extends Controller
      * Handle the user after authenticated.
      * Redirect based on user role.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  \App\Models\User  $user
      * @return \Illuminate\Http\RedirectResponse
      */

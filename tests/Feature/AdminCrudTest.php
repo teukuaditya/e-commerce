@@ -43,18 +43,18 @@ class AdminCrudTest extends TestCase
 
     public function test_crud_kategori_store_update_destroy(): void
     {
-        $name = 'TESTKRUD ' . uniqid();
+        $name = 'TESTKRUD '.uniqid();
 
         $this->post('/admin/categories', ['category_name' => $name])
-             ->assertStatus(302);
+            ->assertStatus(302);
         $cat = Category::where('category_name', $name)->firstOrFail();
 
-        $this->put("/admin/categories/{$cat->id}", ['category_name' => $name . '-2'])
-             ->assertStatus(302);
-        $this->assertDatabaseHas('categories', ['id' => $cat->id, 'category_name' => $name . '-2']);
+        $this->put("/admin/categories/{$cat->id}", ['category_name' => $name.'-2'])
+            ->assertStatus(302);
+        $this->assertDatabaseHas('categories', ['id' => $cat->id, 'category_name' => $name.'-2']);
 
         $this->delete("/admin/categories/{$cat->id}")
-             ->assertStatus(302);
+            ->assertStatus(302);
         $this->assertDatabaseMissing('categories', ['id' => $cat->id]);
     }
 
@@ -63,13 +63,13 @@ class AdminCrudTest extends TestCase
         $cat = Category::firstOrFail();
 
         $payload = [
-            'category_id'   => $cat->id,
-            'brand'         => 'TEST',
-            'title'         => 'TESTPRODUK',
-            'description'   => 'test refactor',
-            'price'         => 150000,
-            'stock'         => 10,
-            'weight'        => 100,
+            'category_id' => $cat->id,
+            'brand' => 'TEST',
+            'title' => 'TESTPRODUK',
+            'description' => 'test refactor',
+            'price' => 150000,
+            'stock' => 10,
+            'weight' => 100,
         ];
 
         $this->post('/admin/products', $payload)->assertStatus(302);

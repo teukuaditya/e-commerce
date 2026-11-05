@@ -11,6 +11,7 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::all(); // Ambil semua kategori
+
         return view('pages.admin.categories.index', compact('categories'));
     }
 
@@ -55,8 +56,8 @@ class CategoryController extends Controller
         // Menyimpan gambar baru jika ada
         if ($request->hasFile('image')) {
             // Hapus gambar lama jika ada
-            if ($category->image && Storage::exists('public/categories/' . $category->image)) {
-                Storage::delete('public/categories/' . $category->image);
+            if ($category->image && Storage::exists('public/categories/'.$category->image)) {
+                Storage::delete('public/categories/'.$category->image);
             }
 
             // Simpan gambar baru dan hanya simpan nama file
@@ -79,8 +80,8 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         // Hapus gambar kategori jika ada
-        if ($category->image && Storage::exists('public/categories/' . $category->image)) {
-            Storage::delete('public/categories/' . $category->image);
+        if ($category->image && Storage::exists('public/categories/'.$category->image)) {
+            Storage::delete('public/categories/'.$category->image);
         }
 
         // Hapus kategori

@@ -101,6 +101,9 @@
 
 
 @push('scripts')
+{{-- Midtrans Snap SDK — hanya di halaman order (tombol Bayar Sekarang) --}}
+<script src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+    data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
 $(document).ready(function() {
     // Handler untuk tombol Continue Payment

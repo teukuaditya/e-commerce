@@ -17,13 +17,13 @@ class AuthFlowTest extends TestCase
     {
         foreach ([
             'admin@demo.com' => 'admin',
-            'user@demo.com'  => 'user',
+            'user@demo.com' => 'user',
         ] as $email => $role) {
             $user = User::where('email', $email)->firstOrFail();
 
             $this->actingAs($user)
-                 ->get('/admin/dashboard')
-                 ->assertStatus($role === 'admin' ? 200 : 302);
+                ->get('/admin/dashboard')
+                ->assertStatus($role === 'admin' ? 200 : 302);
         }
     }
 
@@ -32,7 +32,7 @@ class AuthFlowTest extends TestCase
         $user = User::where('email', 'user@demo.com')->firstOrFail();
 
         $this->actingAs($user)->get('/admin/dashboard')
-             ->assertRedirect('/');
+            ->assertRedirect('/');
     }
 
     public function test_tamu_diarahkan_ke_login_dari_admin(): void
@@ -43,9 +43,9 @@ class AuthFlowTest extends TestCase
     public function test_register_membuat_user_role_user_dan_bisa_login(): void
     {
         $resp = $this->post('/register', [
-            'name'                  => 'Refactor Test',
-            'email'                 => 'refactor-test@mail.test',
-            'password'              => 'password-test',
+            'name' => 'Refactor Test',
+            'email' => 'refactor-test@mail.test',
+            'password' => 'password-test',
             'password_confirmation' => 'password-test',
         ]);
 
@@ -57,7 +57,7 @@ class AuthFlowTest extends TestCase
 
         // login berakhir di user home (RedirectBasedRole::redirectToLogin)
         $this->post('/login', [
-            'email'    => 'refactor-test@mail.test',
+            'email' => 'refactor-test@mail.test',
             'password' => 'password-test',
         ])->assertRedirect();
     }

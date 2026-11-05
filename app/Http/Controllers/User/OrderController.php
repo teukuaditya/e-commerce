@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\PaymentCallbackRequest;
 use App\Models\Transaction;
-use Midtrans\Config;
-use Midtrans\Transaction as MidtransTransaction;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Midtrans\Config;
+use Midtrans\Transaction as MidtransTransaction;
 
 class OrderController extends Controller
 {
@@ -55,12 +56,9 @@ class OrderController extends Controller
      * menyimpan. Bila verifikasi gagal (key belum diset / network), status
      * PENDING dipertahankan dan webhook Midtrans yang akan mengubahnya.
      */
-    public function handlePaymentSuccess(Request $request)
+    public function handlePaymentSuccess(PaymentCallbackRequest $request)
     {
-        $data = $request->validate([
-            'order_id' => 'required|string',
-            'payment_type' => 'nullable|string|max:50',
-        ]);
+        $data = $request->validated();
 
         // Hanya transaksi milik user sendiri (temuan audit K3) yang boleh disentuh
         $transaction = Transaction::where('user_id', Auth::id())
@@ -123,7 +121,7 @@ class OrderController extends Controller
 
             return $status['transaction_status'] ?? null;
         } catch (\Throwable $e) {
-            Log::warning('verifyWithMidtrans gagal: ' . $e->getMessage());
+            Log::warning('verifyWithMidtrans gagal: '.$e->getMessage());
 
             return null;
         }

@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
-use App\Models\Category; // Pastikan model Category digunakan
-use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Models\Product; // Pastikan model Category digunakan
 
 class ProductController extends Controller
 {
@@ -33,5 +32,3 @@ class ProductController extends Controller
         );
     }
 }
-
-

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ReviewRequest;
 use App\Models\Product;
 use App\Models\Review;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
@@ -14,20 +14,17 @@ class ReviewController extends Controller
      * Menyimpan / memperbarui review user untuk sebuah produk.
      * Satu user = satu review per produk (unique index), menyimpan ulang = update.
      */
-    public function store(Request $request, Product $product)
+    public function store(ReviewRequest $request, Product $product)
     {
-        $data = $request->validate([
-            'rating'  => 'required|integer|min:1|max:5',
-            'comment' => 'required|string|min:5|max:1000',
-        ]);
+        $data = $request->validated();
 
         $review = Review::updateOrCreate(
             [
-                'user_id'    => Auth::id(),
+                'user_id' => Auth::id(),
                 'product_id' => $product->id,
             ],
             [
-                'rating'  => $data['rating'],
+                'rating' => $data['rating'],
                 'comment' => $data['comment'],
             ]
         );
@@ -39,13 +36,13 @@ class ReviewController extends Controller
                 'message' => $review->wasRecentlyCreated
                     ? 'Review berhasil ditambahkan!'
                     : 'Review berhasil diperbarui!',
-                'rating'  => $review->rating,
+                'rating' => $review->rating,
             ]);
         }
 
-        $wasNew   = $review->wasRecentlyCreated;
-        $status   = $wasNew ? 'success' : 'info';
-        $message  = $wasNew ? 'Terima kasih! Review Anda berhasil ditambahkan.' : 'Review Anda berhasil diperbarui.';
+        $wasNew = $review->wasRecentlyCreated;
+        $status = $wasNew ? 'success' : 'info';
+        $message = $wasNew ? 'Terima kasih! Review Anda berhasil ditambahkan.' : 'Review Anda berhasil diperbarui.';
 
         return redirect()
             ->route('user.products.show', $product->id)

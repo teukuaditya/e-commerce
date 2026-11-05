@@ -23,28 +23,29 @@ class RajaOngkirController extends Controller
             }
 
             $response = Http::withHeaders([
-                'key' => $apiKey
+                'key' => $apiKey,
             ])->get('https://rajaongkir.komerce.id/api/v1/destination/domestic-destination', [
                 'search' => $term,
                 'limit' => 20,
-                'offset' => 0
+                'offset' => 0,
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('RajaOngkir searchDestinations failed', [
                     'status' => $response->status(),
-                    'error' => $response->json('message') ?? 'API request failed'
+                    'error' => $response->json('message') ?? 'API request failed',
                 ]);
+
                 return response()->json([
                     'error' => 'API request failed',
-                    'message' => 'Gagal mencari destinasi pengiriman.'
+                    'message' => 'Gagal mencari destinasi pengiriman.',
                 ], 500);
             }
 
             $results = [];
             $data = $response->json();
 
-            if (!empty($data['data'])) {
+            if (! empty($data['data'])) {
                 foreach ($data['data'] as $item) {
                     $results[] = [
                         'id' => $item['id'],
@@ -57,10 +58,11 @@ class RajaOngkirController extends Controller
             return response()->json($results);
 
         } catch (\Exception $e) {
-            Log::error('Error in searchDestinations: ' . $e->getMessage());
+            Log::error('Error in searchDestinations: '.$e->getMessage());
+
             return response()->json([
                 'error' => 'Internal server error',
-                'message' => 'Terjadi kesalahan sistem saat mencari destinasi.'
+                'message' => 'Terjadi kesalahan sistem saat mencari destinasi.',
             ], 500);
         }
     }
@@ -86,22 +88,23 @@ class RajaOngkirController extends Controller
             $origin = config('rajaongkir.origin', 17549);
 
             $response = Http::withHeaders([
-                'key' => $apiKey
+                'key' => $apiKey,
             ])->asForm()->post('https://rajaongkir.komerce.id/api/v1/calculate/domestic-cost', [
                 'origin' => $origin,
                 'destination' => $request->destination,
                 'weight' => $request->weight,
-                'courier' => $request->courier
+                'courier' => $request->courier,
             ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('RajaOngkir cekOngkir failed', [
                     'status' => $response->status(),
-                    'error' => $response->json('message') ?? 'API request failed'
+                    'error' => $response->json('message') ?? 'API request failed',
                 ]);
+
                 return response()->json([
                     'error' => 'API request failed',
-                    'message' => 'Gagal menghitung ongkos kirim.'
+                    'message' => 'Gagal menghitung ongkos kirim.',
                 ], 500);
             }
 
@@ -121,19 +124,20 @@ class RajaOngkirController extends Controller
             }
 
             return response()->json([
-                'services' => $services
+                'services' => $services,
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'error' => 'Validation failed',
-                'messages' => $e->errors()
+                'messages' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Error in cekOngkir: ' . $e->getMessage());
+            Log::error('Error in cekOngkir: '.$e->getMessage());
+
             return response()->json([
                 'error' => 'Internal server error',
-                'message' => 'Terjadi kesalahan sistem saat mengecek ongkir.'
+                'message' => 'Terjadi kesalahan sistem saat mengecek ongkir.',
             ], 500);
         }
     }

@@ -2,51 +2,34 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Http\Requests\ProductRequest;
 use App\Models\Category;
+use App\Models\Product;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    // Menampilkan daftar produk (admin)
-    public function index()
+    public function index(): View
     {
         $categories = Category::all();
-        $products = Product::all();
+        // with('category') mencegah N+1: tiap baris tabel memakai $product->category
+        $products = Product::with('category')->get();
 
         return view('pages.admin.products.index', compact('categories', 'products'));
     }
 
-    // Menyimpan produk baru
-    public function store(Request $request)
+    public function store(ProductRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'brand' => 'nullable|string',
-            'title' => 'required|string',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'size' => 'nullable|array',
-            'size.*' => 'nullable|string',
-            'stock' => 'required|integer|min:0',
-            'weight' => 'required|integer|min:0',
-            'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-        ]);
+        $validated = $request->validated();
+        $images = $this->handleUploadedImages($request, $validated['title']);
 
-        $images = [];
-        foreach (['image1', 'image2', 'image3'] as $index => $imageField) {
-            if ($request->hasFile($imageField)) {
-                $image = $request->file($imageField);
-                $imageName = $this->generateImageName($image, $request->title, $index + 1);
-                $image->storeAs('public/products', $imageName);
-                $images[] = $imageName;
-            }
-        }
-
-        $validated['image'] = !empty($images) ? json_encode($images) : null;
+        $validated['image'] = ! empty($images) ? json_encode($images) : null;
         $validated['size'] = $request->has('size') ? json_encode($request->size) : null;
 
         Product::create($validated);
@@ -54,55 +37,12 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product created successfully.');
     }
 
-    // Mengupdate produk
-    public function update(Request $request, Product $product)
+    public function update(ProductRequest $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
-            'brand' => 'nullable|string',
-            'title' => 'required|string',
-            'description' => 'nullable|string',
-            'price' => 'required|numeric|min:0',
-            'size' => 'nullable|array',
-            'size.*' => 'nullable|string',
-            'stock' => 'required|integer|min:0',
-            'weight' => 'required|integer|min:0',
-            'image1' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'image2' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-            'image3' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
-        ]);
+        $validated = $request->validated();
+        $images = $this->handleUploadedImages($request, $validated['title'], $product);
 
-        $images = [];
-        $oldImages = $product->image
-            ? (is_string($product->image) ? json_decode($product->image, true) : (array) $product->image)
-            : [];
-
-        foreach (['image1', 'image2', 'image3'] as $index => $imageField) {
-            if ($request->hasFile($imageField)) {
-                if (isset($oldImages[$index]) && Storage::exists('public/products/' . $oldImages[$index])) {
-                    Storage::delete('public/products/' . $oldImages[$index]);
-                }
-
-                $image = $request->file($imageField);
-                $imageName = $this->generateImageName($image, $request->title, $index + 1);
-                $image->storeAs('public/products', $imageName);
-                $images[] = $imageName;
-            } elseif ($request->filled('delete_image' . ($index + 1))) {
-                // Jika ada permintaan hapus gambar spesifik
-                $imageToDelete = $request->input('delete_image' . ($index + 1));
-                if ($imageToDelete && Storage::exists('public/products/' . $imageToDelete)) {
-                    Storage::delete('public/products/' . $imageToDelete);
-                }
-                // jangan masukkan ke $images (dihapus)
-            } else {
-                // Simpan gambar lama jika ada
-                if (isset($oldImages[$index])) {
-                    $images[] = $oldImages[$index];
-                }
-            }
-        }
-
-        $validated['image'] = !empty($images) ? json_encode(array_values($images)) : null;
+        $validated['image'] = ! empty($images) ? json_encode(array_values($images)) : null;
         $validated['size'] = $request->has('size') ? json_encode($request->size) : null;
 
         $product->update($validated);
@@ -110,23 +50,17 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
     }
 
-    // Menghapus produk
-    public function destroy($id)
+    public function destroy(Product $product): RedirectResponse
     {
-        $product = Product::findOrFail($id);
-
-        // Temuan audit K4: jangan izinkan menghapus produk yang memiliki riwayat transaksi
+        // Jangan izinkan menghapus produk yang memiliki riwayat transaksi
         if ($product->transactionDetails()->exists()) {
             return redirect()->route('admin.products.index')
                 ->with('error', 'Produk tidak dapat dihapus karena sudah memiliki riwayat transaksi penjualan.');
         }
 
-        if ($product->image) {
-            $oldImages = is_string($product->image) ? json_decode($product->image, true) : (array) $product->image;
-            foreach ($oldImages as $oldImage) {
-                if ($oldImage && Storage::exists('public/products/' . $oldImage)) {
-                    Storage::delete('public/products/' . $oldImage);
-                }
+        foreach ($this->existingImages($product) as $oldImage) {
+            if ($oldImage && Storage::exists('public/products/'.$oldImage)) {
+                Storage::delete('public/products/'.$oldImage);
             }
         }
 
@@ -135,36 +69,27 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
     }
 
-    // Fungsi untuk membuat nama file gambar unik (temuan audit T5)
-    private function generateImageName($image, $title, $index)
-    {
-        $titleSlug = \Illuminate\Support\Str::slug($title);
-        $random = \Illuminate\Support\Str::random(8);
-        return $titleSlug . '-' . $random . '-' . $index . '.' . $image->getClientOriginalExtension();
-    }
-
     /**
-     * Search products (public)
+     * Search products (public) — full page & mode AJAX live search.
      */
-    public function search(Request $request)
+    public function search(Request $request): JsonResponse|View|RedirectResponse
     {
-        $query = trim($request->input('query', ''));
+        $query = trim((string) $request->input('query', ''));
 
         $productsQuery = Product::where(function ($q) use ($query) {
-                $q->where('title', 'LIKE', "%{$query}%")
+            $q->where('title', 'LIKE', "%{$query}%")
                 ->orWhere('brand', 'LIKE', "%{$query}%")
                 ->orWhere('description', 'LIKE', "%{$query}%");
-            })
-            ->when(schemaHasColumn('products', 'status'), function ($q) {
+        })
+            ->when($this->schemaHasColumn('products', 'status'), function ($q) {
                 $q->where('status', 'active');
             });
 
-        // 🔹 Kalau request dari AJAX (live search saat mengetik) →
-        //    kembalikan HTML grid yang sudah di-render agar markup kartu produk
-        //    tetap satu sumber kebenaran di Blade (tidak diduplikasi di JS)
+        // 🔹 AJAX (live search): render ulang partial grid agar markup kartu
+        //    tetap satu sumber kebenaran (tidak diduplikasi di JS)
         if ($request->ajax()) {
             $products = $productsQuery
-                ->with('category') // hindari N+1: partial mengakses $product->category
+                ->with('category')
                 ->when($query === '', fn ($q) => $q->orderByDesc('created_at'), fn ($q) => $q->orderBy('title'))
                 ->limit(24)
                 ->get();
@@ -172,12 +97,11 @@ class ProductController extends Controller
             $html = view('pages.user.products._partials.grid-items', compact('products'))->render();
 
             return response()->json([
-                'count'  => $products->count(),
-                'query'  => $query,
-                'html'   => $html,
+                'count' => $products->count(),
+                'query' => $query,
+                'html' => $html,
             ]);
         }
-        
 
         // 🔹 Mode normal (full page hasil search)
         if ($query === '') {
@@ -189,23 +113,77 @@ class ProductController extends Controller
 
         return view('pages.user.products.search', [
             'products' => $products,
-            'query'    => $query,
-            'total'    => $products->total(),
+            'query' => $query,
+            'total' => $products->total(),
         ]);
     }
 
+    /**
+     * Upload foto produk baru (maks 3), hapus foto lama yang diganti/deleted-flagged,
+     * kembalikan daftar nama file akhir. Digrantisasi untuk store & update.
+     */
+    private function handleUploadedImages(ProductRequest $request, string $title, ?Product $existing = null): array
+    {
+        $images = [];
+        $oldImages = $existing ? $this->existingImages($existing) : [];
 
+        foreach (['image1', 'image2', 'image3'] as $index => $imageField) {
+            if ($request->hasFile($imageField)) {
+                if (isset($oldImages[$index]) && Storage::exists('public/products/'.$oldImages[$index])) {
+                    Storage::delete('public/products/'.$oldImages[$index]);
+                }
+
+                $image = $request->file($imageField);
+                $imageName = $this->generateImageName($image, $title, $index + 1);
+                $image->storeAs('public/products', $imageName);
+                $images[] = $imageName;
+            } elseif ($request->filled('delete_image'.($index + 1))) {
+                // Permintaan hapus foto tertentu: buang dari disk, tidak selit ke hasil
+                $imageToDelete = $request->input('delete_image'.($index + 1));
+                if ($imageToDelete && Storage::exists('public/products/'.$imageToDelete)) {
+                    Storage::delete('public/products/'.$imageToDelete);
+                }
+            } elseif (isset($oldImages[$index])) {
+                // Foto lama tetap dipakai
+                $images[] = $oldImages[$index];
+            }
+        }
+
+        return $images;
     }
 
-/**
- * Helper kecil: periksa apakah kolom ada (opsional, menghindari error jika migrasi berbeda)
- * Jika tidak ingin helper ini, hapus penggunaan when(...) di atas dan gunakan ->where('status','active') langsung.
- */
-if (! function_exists('schemaHasColumn')) {
-    function schemaHasColumn($table, $column)
+    /**
+     * Decode kolom image produk (JSON string / array) ke daftar nama file.
+     */
+    private function existingImages(Product $product): array
+    {
+        if (! $product->image) {
+            return [];
+        }
+
+        return is_string($product->image)
+            ? (array) (json_decode($product->image, true) ?: [])
+            : (array) $product->image;
+    }
+
+    /**
+     * Nama file unik: {slug-title}-{random}-{index}.{ext}
+     */
+    private function generateImageName($image, string $title, int $index): string
+    {
+        $titleSlug = Str::slug($title);
+        $random = Str::random(8);
+
+        return $titleSlug.'-'.$random.'-'.$index.'.'.$image->getClientOriginalExtension();
+    }
+
+    /**
+     * Cek kolom tabel dengan aman (schema panjang padat).
+     */
+    private function schemaHasColumn(string $table, string $column): bool
     {
         try {
-            return \Schema::hasColumn($table, $column);
+            return Schema::hasColumn($table, $column);
         } catch (\Throwable $e) {
             return false;
         }

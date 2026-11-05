@@ -1,27 +1,25 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
-
-// USER (Frontend) Controllers
-use App\Http\Controllers\User\HomeController as UserHomeController;
-use App\Http\Controllers\User\CategoryController as UserCategoryController;
-use App\Http\Controllers\User\ProductController as UserProductController;
-use App\Http\Controllers\User\CartController as UserCartController;
-use App\Http\Controllers\User\CheckoutController as UserCheckoutController;
-use App\Http\Controllers\User\OrderController as UserOrderController;
-use App\Http\Controllers\User\UserController as UserUserController;
-use App\Http\Controllers\User\AboutController as UserAboutController;
-use App\Http\Controllers\User\ReviewController as UserReviewController;
-
-// ADMIN (Backend) Controllers
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\CategoryController;
-use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoryController;
+// USER (Frontend) Controllers
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionDetailController;
+use App\Http\Controllers\User\AboutController as UserAboutController;
+use App\Http\Controllers\User\CartController as UserCartController;
+use App\Http\Controllers\User\CategoryController as UserCategoryController;
+use App\Http\Controllers\User\CheckoutController as UserCheckoutController;
+use App\Http\Controllers\User\HomeController as UserHomeController;
+// ADMIN (Backend) Controllers
+use App\Http\Controllers\User\OrderController as UserOrderController;
+use App\Http\Controllers\User\ProductController as UserProductController;
+use App\Http\Controllers\User\ReviewController as UserReviewController;
+use App\Http\Controllers\User\UserController as UserUserController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /**
  * PUBLIC ROOT
@@ -34,7 +32,6 @@ Route::redirect('/', '/user', 302);
 
 // Search Products (alias root route name products.search to user search)
 Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');
-
 
 /**
  * -------------------------------------------------------
@@ -105,15 +102,16 @@ Route::prefix('user')->name('user.')->group(function () {
             Route::get('/update', [UserUserController::class, 'showEditForm'])->name('update.get');
         });
 
-
         // Address
-         Route::prefix('address')->name('address.')->group(function () {
+        Route::prefix('address')->name('address.')->group(function () {
             Route::post('/save', [UserUserController::class, 'saveAddress'])->name('save');
             Route::get('/edit', [UserUserController::class, 'showEditAddress'])->name('edit');
             Route::post('/update', [UserUserController::class, 'updateAddress'])->name('update');
             Route::delete('/delete', [UserUserController::class, 'deleteAddress'])->name('delete');
-            Route::get('/provinces', [UserUserController::class, 'searchProvinces'])->name('provinces');
-            Route::get('/cities', [UserUserController::class, 'searchCities'])->name('cities');
+            /* Route GET provinces & cities DIHAPUS (Tahap 6):
+               memanggil UserController::searchProvinces/searchCities yang
+               tidak ada (Always 500). Frontend autocomplete memakai
+               /api/search-destinations. */
         });
     });
 });

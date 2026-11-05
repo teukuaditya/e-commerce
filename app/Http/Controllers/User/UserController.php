@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AddressSaveRequest;
+use App\Http\Requests\AddressUpdateRequest;
+use App\Http\Requests\ProfileRequest;
 use App\Support\AddressFormatter;
 use Illuminate\Http\Request;
 
@@ -11,16 +14,8 @@ class UserController extends Controller
     /**
      * Save new address
      */
-    public function saveAddress(Request $request)
+    public function saveAddress(AddressSaveRequest $request)
     {
-        $request->validate([
-            'recipient_name' => 'required|string|max:255',
-            'recipient_phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'destination_name' => 'required|string',
-            'destination_id' => 'required|string|max:50',
-        ]);
-
         $user = auth()->user();
 
         // Format alamat diseragamkan lewat AddressFormatter (temuan audit T1)
@@ -55,15 +50,8 @@ class UserController extends Controller
     /**
      * Update existing address
      */
-    public function updateAddress(Request $request)
+    public function updateAddress(AddressUpdateRequest $request)
     {
-        $request->validate([
-            'recipient_name' => 'required|string|max:255',
-            'recipient_phone' => 'required|string|max:20',
-            'address' => 'required|string',
-            'destination_name' => 'required|string',
-        ]);
-
         // Destination ID boleh kosong — dipertahankan dari alamat lama
         $destinationId = $request->input('destination_id');
         if (! $destinationId) {
@@ -103,28 +91,23 @@ class UserController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => true]);
             }
+
             return redirect()->back()->with('success', 'Address deleted successfully.');
         }
 
         if ($request->ajax()) {
             return response()->json(['success' => false, 'message' => 'Address not found.']);
         }
+
         return redirect()->back()->with('error', 'Address not found.');
     }
 
     /**
      * Update user profile
      */
-    public function editUser(Request $request)
+    public function editUser(ProfileRequest $request)
     {
         $user = auth()->user();
-
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'phone' => 'nullable|string|max:15',
-            // Email harus unik (kecuali milik sendiri) — temuan audit S3
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-        ]);
 
         $user->name = $request->name;
         $user->phone = $request->phone;

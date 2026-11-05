@@ -3,19 +3,17 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\CartRequest;
 use App\Models\Cart;
 use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    public function add(Request $request, $productId)
+    public function add(CartRequest $request, $productId)
     {
-        $validated = $request->validate([
-            'size' => 'nullable|string',  // size nullable
-            'quantity' => 'required|integer|min:1',
-        ]);
+        $validated = $request->validated();
 
         $product = Product::find($productId);
 
@@ -65,12 +63,9 @@ class CartController extends Controller
         return view('pages.user.cart.index', compact('cartItems', 'cartCount'));
     }
 
-    public function updateCart(Request $request, $cartId)
+    public function updateCart(CartRequest $request, $cartId)
     {
-        // Validasi input kuantitas
-        $validated = $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
+        $validated = $request->validated();
 
         /**
          * Temuan audit K3 (IDOR): sebelumnya Cart::find($cartId) tanpa filter,

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Cart;
 use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
@@ -51,8 +51,6 @@ class CartController extends Controller
         return redirect()->back()->with('error', 'Not enough stock available.');
     }
 
-
-
     public function index()
     {
         $cartItems = Cart::where('user_id', auth()->id())->with('product')->get();
@@ -62,35 +60,33 @@ class CartController extends Controller
     }
 
     public function updateCart(Request $request, $cartId)
-{
-    // Validasi input kuantitas
-    $request->validate([
-        'quantity' => 'required|integer|min:1',
-    ]);
+    {
+        // Validasi input kuantitas
+        $request->validate([
+            'quantity' => 'required|integer|min:1',
+        ]);
 
-    // Cari cart item berdasarkan ID
-    $cart = Cart::find($cartId);
+        // Cari cart item berdasarkan ID
+        $cart = Cart::find($cartId);
 
-    if ($cart) {
-        // Ambil produk yang terkait dengan cart item
-        $product = $cart->product;
+        if ($cart) {
+            // Ambil produk yang terkait dengan cart item
+            $product = $cart->product;
 
-        // Cek jika kuantitas yang diminta tidak melebihi stok produk
-        if ($request->quantity > $product->stock) {
-            return response()->json(['success' => false, 'message' => 'Not enough stock available.']);
+            // Cek jika kuantitas yang diminta tidak melebihi stok produk
+            if ($request->quantity > $product->stock) {
+                return response()->json(['success' => false, 'message' => 'Not enough stock available.']);
+            }
+
+            // Update kuantitas dan simpan ke database
+            $cart->quantity = $request->quantity;
+            $cart->save();
+
+            return response()->json(['success' => true]);
         }
 
-        // Update kuantitas dan simpan ke database
-        $cart->quantity = $request->quantity;
-        $cart->save();
-
-        return response()->json(['success' => true]);
+        return response()->json(['success' => false, 'message' => 'Cart item not found.']);
     }
-
-    return response()->json(['success' => false, 'message' => 'Cart item not found.']);
-}
-
-
 
     public function removeFromCart($cartId)
     {
@@ -108,9 +104,10 @@ class CartController extends Controller
         $ids = $request->input('ids');
         if ($ids) {
             Cart::whereIn('id', $ids)->delete();
+
             return response()->json(['success' => true]);
         }
+
         return response()->json(['success' => false]);
     }
-
 }

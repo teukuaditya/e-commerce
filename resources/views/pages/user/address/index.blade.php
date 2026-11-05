@@ -106,6 +106,8 @@
 @endsection
 
 @push('styles')
+    {{-- jQuery UI (autocomplete) hanya di halaman ini — module berat CSS 32KB + JS 297KB --}}
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <style>
     .address-hero {
         margin-top: 24px;
@@ -114,6 +116,8 @@
 @endpush
 
 @push('scripts')
+{{-- jQuery UI JS (autocomplete) — hanya di halaman address --}}
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <script>
     setTimeout(function() {
         let alertElement = document.getElementById('success-alert');

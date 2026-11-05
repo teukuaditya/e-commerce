@@ -1,6 +1,7 @@
 <?php
 
 // Seeder TEMPORARY hanya untuk demo run (tidak bagian dari project asli)
+
 namespace Database\Seeders;
 
 use App\Models\Category;
@@ -29,7 +30,7 @@ class DemoRunSeeder extends Seeder
             'password' => bcrypt('password123'),
             'role' => 'user',
             'phone' => '081234567890',
-            'address' => "Nama Penerima: User Demo, No. Telepon: 081234567890, Alamat: Jl. Demo No. 1, Destination: Jakarta Selatan, Destination ID: 1520",
+            'address' => 'Nama Penerima: User Demo, No. Telepon: 081234567890, Alamat: Jl. Demo No. 1, Destination: Jakarta Selatan, Destination ID: 1520',
         ]);
 
         $ctg = Category::create(['category_name' => 'Kaos Kaki', 'description' => 'Kategori demo']);

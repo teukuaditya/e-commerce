@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Transaction;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class TransactionController extends Controller
 {
@@ -12,6 +10,7 @@ class TransactionController extends Controller
     {
 
         $transactions = Transaction::all(); // Ambil semua data transaksi
+
         return view('pages.admin.transactions.index', compact('transactions'));
     }
 }

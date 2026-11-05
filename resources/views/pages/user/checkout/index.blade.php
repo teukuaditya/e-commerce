@@ -387,7 +387,25 @@
     </section>
 @endsection
 
+@push('styles')
+    {{-- select2 hanya di halaman ini --}}
+    <link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
+@endpush
+
 @push('scripts')
+    {{-- Midtrans Snap SDK — hanya di halaman yang memanggil snap.pay --}}
+    <script src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+        data-client-key="{{ config('midtrans.client_key') }}"></script>
+    {{-- select2: lib + init ( dipindahrakan dari layout agar tak dibeload semua page ) --}}
+    <script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
+    <script>
+        $(".js-select2").each(function() {
+            $(this).select2({
+                minimumResultsForSearch: 20,
+                dropdownParent: $(this).next('.dropDownSelect2')
+            });
+        });
+    </script>
     <script>
         // Menghitung total berat produk dalam keranjang
         $(document).ready(function() {

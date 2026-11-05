@@ -3,11 +3,10 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Product;
 use App\Models\Category;
-use App\Models\Transaction;
+use App\Models\Product;
 use App\Models\Review;
-use Illuminate\Http\Request;
+use App\Models\Transaction;
 
 class AboutController extends Controller
 {
@@ -22,11 +21,11 @@ class AboutController extends Controller
 
         // Statistik nyata dari database untuk band angka (bukan angka hard-code)
         $stats = [
-            'products'    => Product::count(),
-            'categories'  => Category::count(),
-            'orders'      => Transaction::count(),
+            'products' => Product::count(),
+            'categories' => Category::count(),
+            'orders' => Transaction::count(),
             // Rating rata-rata dari tabel reviews — fallback "?" bila belum ada
-            'avg_rating'  => Review::count() > 0 ? (float) round(Review::avg('rating'), 1) : null,
+            'avg_rating' => Review::count() > 0 ? (float) round(Review::avg('rating'), 1) : null,
         ];
 
         return view('pages.user.about.index', compact('company', 'stats'));

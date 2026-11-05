@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 use GuzzleHttp\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
-use Illuminate\Http\Request;
 
 class CheckoutController extends Controller
 {
@@ -28,7 +28,7 @@ class CheckoutController extends Controller
         });
 
         // Panggil API RajaOngkir untuk mendapatkan daftar provinsi
-        $client = new Client();
+        $client = new Client;
         $response = $client->request('GET', 'https://api.rajaongkir.com/starter/province', [
             'headers' => [
                 'key' => env('RAJAONGKIR_API_KEY'),
@@ -56,7 +56,6 @@ class CheckoutController extends Controller
         return view('pages.user.checkout.index', compact('cartItems', 'cartTotal', 'provinces', 'cityId'));
     }
 
-
     // Menangani POST request untuk memproses data checkout
     public function store(Request $request)
     {
@@ -71,7 +70,6 @@ class CheckoutController extends Controller
         // Setelah proses selesai, redirect ke halaman checkout
         return redirect()->route('checkout.index');
     }
-
 
     public function getSnapToken(Request $request)
     {
@@ -88,7 +86,7 @@ class CheckoutController extends Controller
         }
 
         // Pastikan data ada di request
-        if (!$request->order_id || !$request->gross_amount || !$request->customer_details) {
+        if (! $request->order_id || ! $request->gross_amount || ! $request->customer_details) {
             return response()->json(['error' => 'Missing required parameters.'], 400);
         }
 
@@ -107,7 +105,7 @@ class CheckoutController extends Controller
                 return [
                     'id' => $item['id'], // ID produk, pastikan ini ada di frontend
                     'quantity' => $item['quantity'], // Jumlah produk
-                    'name' => $item['product_brand'] . ' - ' . $item['product_title'] . ' - ' . $item['product_size'], // Nama produk, sesuai dengan yang dikirim dari frontend
+                    'name' => $item['product_brand'].' - '.$item['product_title'].' - '.$item['product_size'], // Nama produk, sesuai dengan yang dikirim dari frontend
                     'price' => $item['price'], // Harga per unit produk
                 ];
             }, $request->items), // Pastikan Anda mengirimkan data `items` dalam request
@@ -119,7 +117,7 @@ class CheckoutController extends Controller
             $params['item_details'][] = [
                 'id' => 'shipping', // ID untuk ongkos kirim
                 'quantity' => 1, // Jumlah hanya 1
-                'name' => 'Shipping (' . $request->courier . ' - ' . $request->service . ')', // Nama layanan pengiriman
+                'name' => 'Shipping ('.$request->courier.' - '.$request->service.')', // Nama layanan pengiriman
                 'price' => $request->shipping_cost, // Biaya pengiriman
             ];
         }
@@ -127,6 +125,7 @@ class CheckoutController extends Controller
         try {
             // Mendapatkan snap token
             $snapToken = Snap::getSnapToken($params);
+
             return response()->json(['token' => $snapToken]);
         } catch (\Exception $e) {
             // Menangani kesalahan jika terjadi
@@ -137,7 +136,7 @@ class CheckoutController extends Controller
     public function createTransaction(Request $request)
     {
         // Simpan data transaksi
-        $transaction = new Transaction();
+        $transaction = new Transaction;
         $transaction->order_id = $request->order_id;  // ID unik order
         $transaction->user_id = Auth::id();  // ID user yang login
         $transaction->gross_amount = $request->gross_amount;  // Total harga
@@ -171,7 +170,6 @@ class CheckoutController extends Controller
         return response()->json(['order_id' => $transaction->order_id, 'message' => 'Transaction created successfully']);
     }
 
-
     public function handleMidtransCallback(Request $request)
     {
         \Log::info('Midtrans Callback Received:', ['data' => $request->all()]);
@@ -184,19 +182,21 @@ class CheckoutController extends Controller
         $serverKey = env('MIDTRANS_SERVER_KEY'); // Ambil Server Key Midtrans dari .env
 
         // Validasi Signature Key dengan urutan yang benar: order_id . status_code . gross_amount . server_key
-        $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
+        $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
 
         // Periksa apakah signature yang dikirimkan cocok dengan yang diharapkan
         if ($signatureKey !== $expectedSignature) {
             \Log::warning('Invalid Signature Key:', ['order_id' => $orderId]);
+
             return response()->json(['error' => 'Invalid Signature Key'], 403);
         }
 
         // Cari transaksi berdasarkan order_id
         $transaction = Transaction::where('order_id', $orderId)->first();
 
-        if (!$transaction) {
+        if (! $transaction) {
             \Log::error('Transaction not found', ['order_id' => $orderId]);
+
             return response()->json(['error' => 'Transaction not found'], 404);
         }
 
@@ -204,6 +204,7 @@ class CheckoutController extends Controller
         if ($transaction->transaction_status === 'settlement') {
             // Jika status transaksi sudah settlement, kita hanya log dan tidak update status lagi
             \Log::info('Transaction already settled, skipping update.', ['order_id' => $orderId]);
+
             return response()->json(['success' => 'Transaction is already settled']);
         }
 
@@ -229,5 +230,4 @@ class CheckoutController extends Controller
 
         return response()->json(['success' => 'Transaction status updated successfully']);
     }
-
 }

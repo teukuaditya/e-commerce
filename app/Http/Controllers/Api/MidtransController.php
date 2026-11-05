@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Transaction;
 use App\Models\Product;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
@@ -18,11 +18,11 @@ class MidtransController extends Controller
         // BUKAN env() langsung yang mengembalikan null setelah config:cache.
         // Nilai aktual diambil dari .env — dijadikan aman karena config sudah
         // meng-merge via config/midtrans.php.
-        Config::$serverKey    = config('midtrans.server_key');
-        Config::$clientKey    = config('midtrans.client_key');
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$clientKey = config('midtrans.client_key');
         Config::$isProduction = (bool) config('midtrans.is_production', false);
-        Config::$isSanitized  = (bool) config('midtrans.is_sanitized', true);
-        Config::$is3ds        = (bool) config('midtrans.is_3ds', true);
+        Config::$isSanitized = (bool) config('midtrans.is_sanitized', true);
+        Config::$is3ds = (bool) config('midtrans.is_3ds', true);
     }
 
     /**
@@ -40,16 +40,16 @@ class MidtransController extends Controller
         // ===========================
         // Ambil data dasar dari request
         // ===========================
-        $orderId     = $request->input('order_id');
+        $orderId = $request->input('order_id');
         $grossAmount = (int) $request->input('gross_amount');
-        $customer    = $request->input('customer_details', []);
+        $customer = $request->input('customer_details', []);
 
-        if (!$orderId || !$grossAmount || empty($customer)) {
+        if (! $orderId || ! $grossAmount || empty($customer)) {
             return response()->json([
                 'error' => 'Missing required parameters (order_id / gross_amount / customer_details).',
                 'debug' => [
-                    'order_id'         => $orderId,
-                    'gross_amount'     => $grossAmount,
+                    'order_id' => $orderId,
+                    'gross_amount' => $grossAmount,
                     'customer_details' => $customer,
                 ],
             ], 400);
@@ -60,7 +60,7 @@ class MidtransController extends Controller
         // ===========================
         $items = $request->input('items', []);
 
-        if (!is_array($items) || empty($items)) {
+        if (! is_array($items) || empty($items)) {
             return response()->json([
                 'error' => 'Invalid items format (must be non-empty array)',
             ], 422);
@@ -79,14 +79,14 @@ class MidtransController extends Controller
 
             // Gunakan harga asli dari database untuk mencegah price tampering (K2)
             $price = $product ? (int) $product->price : (int) ($item['price'] ?? 0);
-            $name = $product ? trim($product->brand . ' - ' . $product->title . (!empty($item['product_size']) ? ' - ' . $item['product_size'] : ''))
-                             : trim(($item['product_brand'] ?? '') . ' - ' . ($item['product_title'] ?? ''));
+            $name = $product ? trim($product->brand.' - '.$product->title.(! empty($item['product_size']) ? ' - '.$item['product_size'] : ''))
+                             : trim(($item['product_brand'] ?? '').' - '.($item['product_title'] ?? ''));
 
             $itemDetails[] = [
-                'id'       => (string) ($productId ?? 'unknown'),
+                'id' => (string) ($productId ?? 'unknown'),
                 'quantity' => $qty,
-                'name'     => mb_substr($name, 0, 50),
-                'price'    => $price,
+                'name' => mb_substr($name, 0, 50),
+                'price' => $price,
             ];
 
             $calculatedItemsTotal += ($price * $qty);
@@ -102,10 +102,10 @@ class MidtransController extends Controller
             $service = $request->input('service', '');
 
             $itemDetails[] = [
-                'id'       => 'shipping',
+                'id' => 'shipping',
                 'quantity' => 1,
-                'name'     => mb_substr('Shipping (' . $courier . ' - ' . $service . ')', 0, 50),
-                'price'    => $shippingCost,
+                'name' => mb_substr('Shipping ('.$courier.' - '.$service.')', 0, 50),
+                'price' => $shippingCost,
             ];
         }
 
@@ -117,13 +117,13 @@ class MidtransController extends Controller
         // ===========================
         $params = [
             'transaction_details' => [
-                'order_id'     => $orderId,
+                'order_id' => $orderId,
                 'gross_amount' => $verifiedGrossAmount,
             ],
             'customer_details' => [
                 'first_name' => $customer['first_name'] ?? '',
-                'email'      => $customer['email']      ?? '',
-                'phone'      => $customer['phone']      ?? '',
+                'email' => $customer['email'] ?? '',
+                'phone' => $customer['phone'] ?? '',
             ],
             'item_details' => $itemDetails,
         ];
@@ -137,7 +137,7 @@ class MidtransController extends Controller
         } catch (\Exception $e) {
             Log::error('Midtrans getSnapToken error', [
                 'message' => $e->getMessage(),
-                'params'  => $params,
+                'params' => $params,
             ]);
 
             return response()->json([
@@ -153,17 +153,17 @@ class MidtransController extends Controller
     {
         Log::info('Midtrans Callback Received:', ['data' => $request->all()]);
 
-        $orderId      = $request->input('order_id');
-        $statusCode   = $request->input('status_code');
-        $grossAmount  = $request->input('gross_amount');
+        $orderId = $request->input('order_id');
+        $statusCode = $request->input('status_code');
+        $grossAmount = $request->input('gross_amount');
         $signatureKey = $request->input('signature_key');
         // Temuan audit K5: baca lewat config, BUKAN env() (rusak setelah config:cache)
-        $serverKey    = config('midtrans.server_key');
+        $serverKey = config('midtrans.server_key');
 
         // ===========================
         //  Validasi signature
         // ===========================
-        $expectedSignature = hash('sha512', $orderId . $statusCode . $grossAmount . $serverKey);
+        $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
 
         if ($signatureKey !== $expectedSignature) {
             Log::warning('Invalid Signature Key:', ['order_id' => $orderId]);
@@ -180,7 +180,7 @@ class MidtransController extends Controller
             ->where('order_id', $orderId)
             ->first();
 
-        if (!$transaction) {
+        if (! $transaction) {
             Log::error('Transaction not found', ['order_id' => $orderId]);
 
             return response()->json([
@@ -215,7 +215,7 @@ class MidtransController extends Controller
         if (in_array($newStatus, ['expire', 'cancel', 'failure'])) {
             // Cegah double-restock:
             // cuma restock kalau sebelumnya BUKAN expire/cancel/failure/settlement
-            if (!in_array($oldStatus, ['expire', 'cancel', 'failure', 'settlement'])) {
+            if (! in_array($oldStatus, ['expire', 'cancel', 'failure', 'settlement'])) {
                 foreach ($transaction->details as $detail) {
                     if ($detail->product) {
                         $detail->product->stock += $detail->quantity;
@@ -250,7 +250,7 @@ class MidtransController extends Controller
         $transaction->save();
 
         Log::info('Transaction updated successfully', [
-            'order_id'   => $orderId,
+            'order_id' => $orderId,
             'old_status' => $oldStatus,
             'new_status' => $transaction->transaction_status,
         ]);

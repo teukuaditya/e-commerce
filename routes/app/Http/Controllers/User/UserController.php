@@ -5,8 +5,6 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Hash;
-
 
 class UserController extends Controller
 {
@@ -23,7 +21,7 @@ class UserController extends Controller
 
         // Pastikan user terautentikasi
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return response()->json(['error' => 'User is not authenticated'], 401);
         }
 
@@ -34,19 +32,19 @@ class UserController extends Controller
         // Cari ID Kota
         $cityId = $this->getCityId($provinceName, $cityName);
 
-        if (!$cityId) {
+        if (! $cityId) {
             return response()->json(['error' => 'City not found'], 404);
         }
 
         // Cari ID Provinsi
         $provinceId = $this->getProvinceId($provinceName);
-        if (!$provinceId) {
+        if (! $provinceId) {
             return response()->json(['error' => 'Province not found'], 404);
         }
 
         // Gabungkan detail alamat, termasuk city_id dan province_id
         $fullAddress = sprintf(
-            "Nama Penerima: %s, No. Telepon: %s, Alamat: %s, Kota: %s, Provinsi: %s, City ID: %s, Province ID: %s",
+            'Nama Penerima: %s, No. Telepon: %s, Alamat: %s, Kota: %s, Provinsi: %s, City ID: %s, Province ID: %s',
             $request->recipient_name,
             $request->recipient_phone,
             $request->address,
@@ -75,7 +73,7 @@ class UserController extends Controller
         // Cari ID provinsi
         $provinceId = $this->getProvinceId($provinceName);
 
-        if (!$provinceId) {
+        if (! $provinceId) {
             return response()->json(['error' => 'Province not found'], 404);
         }
 
@@ -83,8 +81,8 @@ class UserController extends Controller
         $response = Http::withHeaders([
             'key' => env('RAJAONGKIR_API_KEY'), // Ganti dengan API Key RajaOngkir Anda
         ])->get('https://api.rajaongkir.com/starter/city', [
-                    'province' => $provinceId, // Gunakan ID provinsi
-                ]);
+            'province' => $provinceId, // Gunakan ID provinsi
+        ]);
 
         if ($response->successful()) {
             $cities = $response->json()['rajaongkir']['results'];
@@ -104,7 +102,7 @@ class UserController extends Controller
         // Ambil ID provinsi berdasarkan nama
         $provinceId = $this->getProvinceId($provinceName);
 
-        if (!$provinceId) {
+        if (! $provinceId) {
             return null; // Jika provinsi tidak ditemukan
         }
 
@@ -112,8 +110,8 @@ class UserController extends Controller
         $response = Http::withHeaders([
             'key' => env('RAJAONGKIR_API_KEY'), // Ganti dengan API Key RajaOngkir Anda
         ])->get('https://api.rajaongkir.com/starter/city', [
-                    'province' => $provinceId, // Gunakan ID provinsi
-                ]);
+            'province' => $provinceId, // Gunakan ID provinsi
+        ]);
 
         if ($response->successful()) {
             $cities = $response->json()['rajaongkir']['results'];
@@ -159,7 +157,6 @@ class UserController extends Controller
             'province_name' => 'required|string',
         ]);
 
-
         // Ambil ID Kota dan Provinsi berdasarkan nama yang dikirim
         $provinceName = $request->province_name;
         $cityName = $request->city_name;
@@ -170,7 +167,7 @@ class UserController extends Controller
         $user = auth()->user();
         // Gabungkan detail alamat
         $fullAddress = sprintf(
-            "Nama Penerima: %s, No. Telepon: %s, Alamat: %s, Kota: %s, Provinsi: %s, City ID: %s, Province ID: %s",
+            'Nama Penerima: %s, No. Telepon: %s, Alamat: %s, Kota: %s, Provinsi: %s, City ID: %s, Province ID: %s',
             $request->recipient_name,
             $request->recipient_phone,
             $request->address,
@@ -217,7 +214,7 @@ class UserController extends Controller
 
         // Pastikan user terautentikasi
         $user = auth()->user();
-        if (!$user) {
+        if (! $user) {
             return redirect()->route('login')->withErrors(['error' => 'User is not authenticated']);
         }
 
@@ -240,7 +237,6 @@ class UserController extends Controller
         // Redirect ke halaman profil dengan pesan sukses
         return redirect()->route('user.edit')->with('success', 'User data has been updated successfully.');
     }
-
 
     public function showEditForm()
     {
@@ -287,8 +283,8 @@ class UserController extends Controller
                 $response = Http::withHeaders([
                     'key' => env('RAJAONGKIR_API_KEY'), // Ganti dengan API Key RajaOngkir Anda
                 ])->get('https://api.rajaongkir.com/starter/city', [
-                            'province' => $provinceId,
-                        ]);
+                    'province' => $provinceId,
+                ]);
 
                 if ($response->successful()) {
                     $cities = $response->json()['rajaongkir']['results'];
@@ -296,10 +292,7 @@ class UserController extends Controller
             }
         }
 
-
         // Kirimkan data ke view
         return view('pages.user.address.index', compact('recipientName', 'recipientPhone', 'streetAddress', 'city', 'province', 'cityId', 'provinceId', 'provinces', 'cities'));
     }
-
-
 }

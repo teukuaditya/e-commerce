@@ -17,28 +17,20 @@
 
     <!-- Vendor CSS -->
     <link rel="stylesheet" href="{{ asset('vendor/bootstrap/css/bootstrap.min.css') }}">
-    {{-- Hindari duplikasi Font Awesome. Pakai salah satu. FA4 dimatikan, pakai FA6 CDN di bawah --}}
-    {{-- <link rel="stylesheet" href="{{ asset('fonts/font-awesome-4.7.0/css/font-awesome.min.css') }}"> --}}
+    {{-- FA lokal (5 Free, satu-satunya) — CDN FA6-beta dihapus: kelas fa/fa4 + fas semuanya didukung --}}
+    <link rel="stylesheet" href="{{ asset('libs/fontawesome-free/css/all.min.css') }}">
     <link rel="stylesheet" href="{{ asset('fonts/iconic/css/material-design-iconic-font.min.css') }}">
     <link rel="stylesheet" href="{{ asset('fonts/linearicons-v1.0.0/icon-font.min.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/animate/animate.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/css-hamburgers/hamburgers.min.css') }}">
-    
-    <link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('vendor/daterangepicker/daterangepicker.css') }}">
+
+    {{-- CSS plugin berat dimuat kondisional via @push('styles') di view terkait:
+         select2 (checkout, detail produk), jquery-ui (address) --}}
     <link rel="stylesheet" href="{{ asset('vendor/slick/slick.css') }}">
-    <link rel="stylesheet" href="{{ asset('vendor/MagnificPopup/magnific-popup.css') }}">
-    <link rel="stylesheet" href="{{ asset('vendor/perfect-scrollbar/perfect-scrollbar.css') }}">
-    <!-- jQuery UI CSS untuk autocomplete -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 
     <!-- App CSS -->
     <link rel="stylesheet" href="{{ asset('css/util.css') }}">
     <link rel="stylesheet" href="{{ asset('css/main.css') }}?v={{ filemtime(public_path('css/main.css')) }}">
-
-    <!-- Font Awesome v6 (pilihan) -->
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
     <!-- Theme upgrade (design system global) -->
     <link rel="stylesheet" href="{{ asset('css/theme-upgrade.css') }}?v={{ filemtime(public_path('css/theme-upgrade.css')) }}">
@@ -136,9 +128,8 @@
     <!-- Slot CSS per-halaman (harus setelah style global agar bisa override) -->
     @stack('styles')
 
-    <!-- Midtrans Snap SDK -->
-    <script src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
-        data-client-key="{{ config('midtrans.client_key') }}"></script>
+    {{-- Midtrans Snap tidak lagi dipuat global — hanya di page yang
+         membutuhkan (checkout, order) via @push('scripts'). --}}
 </head>
 
 <body @yield('body-class')>
@@ -160,107 +151,61 @@
 
     <!--===============================================================================================-->
     <script src="{{ asset('vendor/jquery/jquery-3.2.1.min.js') }}"></script>
-    <!-- jQuery UI JS untuk autocomplete (harus setelah jQuery) -->
-    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <!--===============================================================================================-->
-    
+
     <!--===============================================================================================-->
     <script src="{{ asset('vendor/bootstrap/js/popper.js') }}"></script>
     <script src="{{ asset('vendor/bootstrap/js/bootstrap.min.js') }}"></script>
     <!--===============================================================================================-->
-    <script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
-    <script>
-        $(".js-select2").each(function() {
-            $(this).select2({
-                minimumResultsForSearch: 20,
-                dropdownParent: $(this).next('.dropDownSelect2')
-            });
-        });
-    </script>
+    {{-- select2 pindah kondisional: @push('scripts') di checkout & detail produk --}}
     <!--===============================================================================================-->
-    <script src="{{ asset('vendor/daterangepicker/moment.min.js') }}"></script>
-    <script src="{{ asset('vendor/daterangepicker/daterangepicker.js') }}"></script>
+    {{-- daterangepicker/moment, parallax100, MagnificPopup, perfect-scrollbar, sweetalert
+        DIHAPUS — tidak ada satu view yang memakai plugin tersebut --}}
     <!--===============================================================================================-->
     <script src="{{ asset('vendor/slick/slick.min.js') }}"></script>
     <script src="{{ asset('js/slick-custom.js') }}"></script>
     <!--===============================================================================================-->
-    <script src="{{ asset('vendor/parallax100/parallax100.js') }}"></script>
-    <script>
-        $('.parallax100').parallax100();
-    </script>
-    <!--===============================================================================================-->
-    <script src="{{ asset('vendor/MagnificPopup/jquery.magnific-popup.min.js') }}"></script>
-    <script>
-        $('.gallery-lb').each(function() {
-            $(this).magnificPopup({
-                delegate: 'a',
-                type: 'image',
-                gallery: {
-                    enabled: true
-                },
-                mainClass: 'mfp-fade'
-            });
-        });
-    </script>
-    <!--===============================================================================================-->
     <script src="{{ asset('vendor/isotope/isotope.pkgd.min.js') }}"></script>
     <!--===============================================================================================-->
-    <script src="{{ asset('vendor/sweetalert/sweetalert.min.js') }}"></script>
+    <script src="{{ asset('js/main.js') }}"></script>
     <script>
-        $('.js-addwish-b2').on('click', function(e) {
+        /* Toast mini pengganti sweetalert (wishlist dll.) */
+        window.tuToast = function (title, msg) {
+            var el = document.createElement('div');
+            el.className = 'tu-toast';
+            el.innerHTML = '<strong></strong><span></span>';
+            el.children[0].textContent = title || '';
+            el.children[1].textContent = msg || '';
+            document.body.appendChild(el);
+            setTimeout(function () {
+                el.style.opacity = '0';
+                setTimeout(function () { el.remove(); }, 350);
+            }, 2200);
+        };
+
+        $('.js-addwish-b2, .js-addwish-detail').on('click', function (e) {
             e.preventDefault();
         });
 
-        $('.js-addwish-b2').each(function() {
+        $('.js-addwish-b2').each(function () {
             var nameProduct = $(this).parent().parent().find('.js-name-b2').html();
-            $(this).on('click', function() {
-                swal(nameProduct, "is added to wishlist !", "success");
-
+            $(this).on('click', function () {
+                window.tuToast(nameProduct, "is added to wishlist !");
                 $(this).addClass('js-addedwish-b2');
                 $(this).off('click');
             });
         });
 
-        $('.js-addwish-detail').each(function() {
+        $('.js-addwish-detail').each(function () {
             var nameProduct = $(this).parent().parent().parent().find('.js-name-detail').html();
-
-            $(this).on('click', function() {
-                swal(nameProduct, "is added to wishlist !", "success");
-
+            $(this).on('click', function () {
+                window.tuToast(nameProduct, "is added to wishlist !");
                 $(this).addClass('js-addedwish-detail');
                 $(this).off('click');
             });
         });
-
-        /*---------------------------------------------*/
-
-        $('.js-addcart-detail').each(function() {
-            var nameProduct = $(this).parent().parent().parent().parent().find('.js-name-detail').html();
-            $(this).on('click', function() {
-                swal(nameProduct, "is added to cart !", "success");
-            });
-        });
     </script>
-    <!--===============================================================================================-->
-    <script src="{{ asset('vendor/perfect-scrollbar/perfect-scrollbar.min.js') }}"></script>
-    <script>
-        $('.js-pscroll').each(function() {
-            $(this).css('position', 'relative');
-            $(this).css('overflow', 'hidden');
-            var ps = new PerfectScrollbar(this, {
-                wheelSpeed: 1,
-                scrollingThreshold: 1000,
-                wheelPropagation: false,
-            });
-
-            $(window).on('resize', function() {
-                ps.update();
-            })
-        });
-    </script>
-    <!--===============================================================================================-->
-    <script src="{{ asset('js/main.js') }}"></script>
-
+    {{-- JS/CSS per-halaman dimuat lewat slot ini --}}
     @stack('scripts')
 
 </body>

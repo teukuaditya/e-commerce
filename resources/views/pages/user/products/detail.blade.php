@@ -272,7 +272,22 @@
 </style>
 @endpush
 
+@push('styles')
+    {{-- select2 hanya di halaman ini --}}
+    <link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
+@endpush
+
 @push('scripts')
+    {{-- select2: lib + init (dipindah dari layout agar tidak loading semua page) --}}
+    <script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
+    <script>
+        $(".js-select2").each(function() {
+            $(this).select2({
+                minimumResultsForSearch: 20,
+                dropdownParent: $(this).next('.dropDownSelect2')
+            });
+        });
+    </script>
     <script>
         // Update the size input when the user selects a size and blur the select
         function updateSize() {

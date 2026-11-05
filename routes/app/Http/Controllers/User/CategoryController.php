@@ -12,23 +12,24 @@ class CategoryController extends Controller
     public function index()
     {
         $categories = Category::all();
+
         return view('pages.user.categories.index', compact('categories'));
     }
 
     // Menampilkan produk berdasarkan kategori
     // Di CategoryController.php
-public function show($categoryId)
-{
-    // Ambil kategori berdasarkan ID
-    $category = Category::findOrFail($categoryId);
+    public function show($categoryId)
+    {
+        // Ambil kategori berdasarkan ID
+        $category = Category::findOrFail($categoryId);
 
-    // Ambil produk berdasarkan kategori yang dipilih
-    $products = Product::where('category_id', $categoryId)->get();
+        // Ambil produk berdasarkan kategori yang dipilih
+        $products = Product::where('category_id', $categoryId)->get();
 
-    // Ambil semua kategori untuk filter
-    $categories = Category::all();
+        // Ambil semua kategori untuk filter
+        $categories = Category::all();
 
-    // Kirim data ke view
-    return view('pages.user.categories.show', compact('category', 'products', 'categories'));
-}
+        // Kirim data ke view
+        return view('pages.user.categories.show', compact('category', 'products', 'categories'));
+    }
 }

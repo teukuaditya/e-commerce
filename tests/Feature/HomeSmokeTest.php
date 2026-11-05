@@ -40,7 +40,7 @@ class HomeSmokeTest extends TestCase
     public function test_detail_product_pertama_200(): void
     {
         $id = \App\Models\Product::value('id');
-        if (!$id) {
+        if (! $id) {
             $this->markTestSkipped('Belum ada product di seed');
         }
         $this->get(route('user.products.show', $id))->assertOk();

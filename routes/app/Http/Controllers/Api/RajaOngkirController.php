@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 
 class RajaOngkirController extends Controller
 {
@@ -17,7 +17,7 @@ class RajaOngkirController extends Controller
 
     public function provinces()
     {
-        $client = new Client();
+        $client = new Client;
         $response = $client->request('GET', 'https://api.rajaongkir.com/starter/province', [
             'headers' => [
                 'key' => env('RAJAONGKIR_API_KEY'),
@@ -25,19 +25,21 @@ class RajaOngkirController extends Controller
         ]);
 
         $provinces = json_decode($response->getBody()->getContents());
+
         return response()->json($provinces);
     }
 
     public function cities(int $provinceId)
     {
-        $client = new Client();
-        $response = $client->request('GET', 'https://api.rajaongkir.com/starter/city?province=' . $provinceId, [
+        $client = new Client;
+        $response = $client->request('GET', 'https://api.rajaongkir.com/starter/city?province='.$provinceId, [
             'headers' => [
                 'key' => env('RAJAONGKIR_API_KEY'),
             ],
         ]);
 
         $cities = json_decode($response->getBody()->getContents());
+
         return response()->json($cities);
     }
 
@@ -59,7 +61,7 @@ class RajaOngkirController extends Controller
         $weight = $request->weight;
 
         // Menggunakan Guzzle untuk memanggil API RajaOngkir
-        $client = new Client();
+        $client = new Client;
         $response = $client->request('POST', 'https://api.rajaongkir.com/starter/cost', [
             'headers' => [
                 'key' => env('RAJAONGKIR_API_KEY'),
@@ -69,7 +71,7 @@ class RajaOngkirController extends Controller
                 'destination' => $destination,
                 'weight' => $weight,
                 'courier' => $courier,
-            ]
+            ],
         ]);
 
         // Mengambil hasil response dan memformat hasil ongkir
@@ -90,7 +92,7 @@ class RajaOngkirController extends Controller
         }
 
         return response()->json([
-            'services' => $services
+            'services' => $services,
         ]);
     }
 }

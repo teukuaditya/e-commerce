@@ -3,15 +3,16 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CheckoutAddressRequest;
 use App\Models\Cart;
+use App\Models\Product;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
-use App\Models\Product;
 use App\Support\AddressFormatter;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CheckoutController extends Controller
 {
@@ -49,16 +50,9 @@ class CheckoutController extends Controller
     }
 
     // Menangani POST request untuk memproses data checkout
-    public function store(Request $request)
+    public function store(CheckoutAddressRequest $request)
     {
-        // Validasi data
-        $data = $request->validate([
-            'recipient_name' => 'required|string|max:255',
-            'recipient_phone' => 'required|string|max:20',
-            'address' => 'required|string|max:255',
-            'destination_name' => 'required|string|max:255',
-            'destination_id' => 'required|string|max:50',
-        ]);
+        $data = $request->validated();
 
         // Update address user (format seragam lewat AddressFormatter)
         Auth::user()->update([
@@ -169,8 +163,8 @@ class CheckoutController extends Controller
             // Simpan detail transaksi + update stok produk
             foreach ($lines as $line) {
                 $product = $line['product'];
-                $qty     = $line['qty'];
-                $price   = $line['price'];
+                $qty = $line['qty'];
+                $price = $line['price'];
 
                 TransactionDetail::create([
                     'transaction_id' => $transaction->id,

@@ -1,10 +1,8 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\RajaOngkirController;
 use App\Http\Controllers\Api\MidtransController;
-use App\Http\Controllers\User\CheckoutController;
+use App\Http\Controllers\Api\RajaOngkirController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |----------------------------------------------------------------------
@@ -24,4 +22,3 @@ Route::post('cost', [RajaOngkirController::class, 'cekOngkir']);
 // Route untuk menangani callback dari Midtrans (setelah pembayaran)
 Route::post('/midtrans/snap', [MidtransController::class, 'getSnapToken']);
 Route::post('/midtrans/callback', [MidtransController::class, 'handleMidtransCallback']);
-

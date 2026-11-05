@@ -19,9 +19,13 @@ class AddressFormatter
      * Label kanonikal ( dipakai saat menyimpan ke database ).
      */
     public const LABEL_NAME = 'Nama Penerima';
+
     public const LABEL_PHONE = 'No. Telepon';
+
     public const LABEL_ADDRESS = 'Alamat';
+
     public const LABEL_DESTINATION = 'Destination';
+
     public const LABEL_DESTINATION_ID = 'Destination ID';
 
     /**
@@ -66,7 +70,7 @@ class AddressFormatter
 
         // Format kanonikal (indonesia)
         if (preg_match(
-            '/' . self::LABEL_NAME . ': (.*?), ' . self::LABEL_PHONE . ': (.*?), ' . self::LABEL_ADDRESS . ': (.*?), ' . self::LABEL_DESTINATION . ': (.*?), ' . self::LABEL_DESTINATION_ID . ': (.*)$/',
+            '/'.self::LABEL_NAME.': (.*?), '.self::LABEL_PHONE.': (.*?), '.self::LABEL_ADDRESS.': (.*?), '.self::LABEL_DESTINATION.': (.*?), '.self::LABEL_DESTINATION_ID.': (.*)$/',
             $address,
             $m
         )) {

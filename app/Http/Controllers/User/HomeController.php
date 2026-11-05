@@ -12,9 +12,10 @@ class HomeController extends Controller
     {
         // Data produk home ter-cache, sirna saat ada produk yang di-CRUD
         // (lihat invalidasi model event di AppServiceProvider).
+        // with('category') mencegah N+1: tiap kartu memakai $product->category.
         $products = Cache::rememberForever(
             'home.products',
-            fn () => Product::all()
+            fn () => Product::with('category')->get()
         );
 
         return view('pages.user.home', compact('products'));

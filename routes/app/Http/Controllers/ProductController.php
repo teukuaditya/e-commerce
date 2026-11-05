@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -49,7 +49,7 @@ class ProductController extends Controller
         }
 
         // Simpan nama gambar sebagai JSON
-        $validated['image'] = !empty($images) ? json_encode($images) : null;
+        $validated['image'] = ! empty($images) ? json_encode($images) : null;
 
         // Simpan ukuran (jika ada) dalam format JSON
         if ($request->has('size')) {
@@ -88,19 +88,19 @@ class ProductController extends Controller
         foreach (['image1', 'image2', 'image3'] as $index => $imageField) {
             if ($request->hasFile($imageField)) {
                 // Jika ada gambar baru pada form input, hapus gambar lama yang sesuai
-                if (isset($oldImages[$index]) && Storage::exists('public/products/' . $oldImages[$index])) {
-                    Storage::delete('public/products/' . $oldImages[$index]);
+                if (isset($oldImages[$index]) && Storage::exists('public/products/'.$oldImages[$index])) {
+                    Storage::delete('public/products/'.$oldImages[$index]);
                 }
 
                 $image = $request->file($imageField);
                 $imageName = $this->generateImageName($image, $request->title, $index + 1);
                 $image->storeAs('public/products', $imageName);
                 $images[] = $imageName;
-            } elseif ($request->has('delete_image' . ($index + 1))) {
+            } elseif ($request->has('delete_image'.($index + 1))) {
                 // Hapus gambar lama jika field delete_imageX ada
-                $imageToDelete = $request->input('delete_image' . ($index + 1));
-                if ($imageToDelete && Storage::exists('public/products/' . $imageToDelete)) {
-                    Storage::delete('public/products/' . $imageToDelete);
+                $imageToDelete = $request->input('delete_image'.($index + 1));
+                if ($imageToDelete && Storage::exists('public/products/'.$imageToDelete)) {
+                    Storage::delete('public/products/'.$imageToDelete);
                 }
             } else {
                 // Jika tidak ada gambar baru dan tidak ada yang terhapus, simpan gambar lama
@@ -111,7 +111,7 @@ class ProductController extends Controller
         }
 
         // Simpan nama gambar sebagai JSON
-        $validated['image'] = !empty($images) ? json_encode($images) : null;
+        $validated['image'] = ! empty($images) ? json_encode($images) : null;
 
         // Simpan ukuran (jika ada) dalam format JSON
         if ($request->has('size')) {
@@ -123,7 +123,6 @@ class ProductController extends Controller
 
         return redirect()->route('admin.products.index')->with('success', 'Product updated successfully.');
     }
-
 
     // Menghapus produk
     public function destroy($id)
@@ -138,8 +137,8 @@ class ProductController extends Controller
             // Loop untuk menghapus gambar-gambar lama
             foreach ($oldImages as $oldImage) {
                 // Cek apakah file gambar ada dan dihapus
-                if (Storage::exists('public/products/' . $oldImage)) {
-                    Storage::delete('public/products/' . $oldImage);
+                if (Storage::exists('public/products/'.$oldImage)) {
+                    Storage::delete('public/products/'.$oldImage);
                 }
             }
         }
@@ -150,11 +149,11 @@ class ProductController extends Controller
         return redirect()->route('admin.products.index')->with('success', 'Product deleted successfully.');
     }
 
-
     // Fungsi untuk membuat nama file gambar unik
     private function generateImageName($image, $title, $index)
     {
         $titleSlug = str_replace(' ', '_', strtolower($title));
-        return $titleSlug . '-' . $index . '.' . $image->getClientOriginalExtension();
+
+        return $titleSlug.'-'.$index.'.'.$image->getClientOriginalExtension();
     }
 }

@@ -2,86 +2,71 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CategoryRequest;
 use App\Models\Category;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function index(): \Illuminate\View\View
     {
-        $categories = Category::all(); // Ambil semua kategori
+        $categories = Category::all();
+
         return view('pages.admin.categories.index', compact('categories'));
     }
 
-    public function store(Request $request)
+    public function store(CategoryRequest $request): \Illuminate\Http\RedirectResponse
     {
-        // Validasi input
-        $request->validate([
-            'category_name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // Validasi gambar
-        ]);
-
-        // Menyimpan kategori baru
         $imagePath = null;
         if ($request->hasFile('image')) {
-            // Menyimpan gambar dan hanya menyimpan nama file di database
+            // Simpan gambar; database hanya menyimpan nama file
             $imagePath = $request->file('image')->store('categories', 'public');
         }
 
-        // Simpan kategori ke database
         Category::create([
-            'category_name' => $request->category_name,
-            'image' => $imagePath ? basename($imagePath) : null, // Simpan hanya nama file
+            'category_name' => $request->input('category_name'),
+            'image' => $imagePath ? basename($imagePath) : null,
         ]);
 
-        return redirect()->route('admin.categories.index')->with('success', 'Category created successfully.');
+        return redirect()
+            ->route('admin.categories.index')
+            ->with('success', 'Category created successfully.');
     }
 
-    public function update(Request $request, $id)
+    public function update(CategoryRequest $request, Category $category): \Illuminate\Http\RedirectResponse
     {
-        // Validasi input
-        $request->validate([
-            'category_name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048', // Validasi gambar
-        ]);
-
-        // Menemukan kategori berdasarkan ID
-        $category = Category::findOrFail($id);
-
-        // Menyimpan gambar baru jika ada
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika ada
-            if ($category->image && Storage::exists('public/categories/' . $category->image)) {
-                Storage::delete('public/categories/' . $category->image);
-            }
+            // Hapus gambar lama bila ada
+            $this->deleteCategoryImage($category);
 
-            // Simpan gambar baru dan hanya simpan nama file
             $imagePath = $request->file('image')->store('categories', 'public');
-            $category->image = basename($imagePath); // Simpan hanya nama file
+            $category->image = basename($imagePath);
         }
 
-        // Update kategori
-        $category->update([
-            'category_name' => $request->category_name,
-        ]);
+        $category->update(['category_name' => $request->input('category_name')]);
 
-        return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully.');
+        return redirect()
+            ->route('admin.categories.index')
+            ->with('success', 'Category updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(Category $category): \Illuminate\Http\RedirectResponse
     {
-        // Menemukan kategori berdasarkan ID
-        $category = Category::findOrFail($id);
-
-        // Hapus gambar kategori jika ada
-        if ($category->image && Storage::exists('public/categories/' . $category->image)) {
-            Storage::delete('public/categories/' . $category->image);
-        }
-
-        // Hapus kategori
+        $this->deleteCategoryImage($category);
         $category->delete();
 
-        return redirect()->route('admin.categories.index')->with('success', 'Category deleted successfully.');
+        return redirect()
+            ->route('admin.categories.index')
+            ->with('success', 'Category deleted successfully.');
+    }
+
+    /**
+     * Hapus file gambar kategori bila ada di disk public.
+     */
+    private function deleteCategoryImage(Category $category): void
+    {
+        if ($category->image && Storage::exists('public/categories/'.$category->image)) {
+            Storage::delete('public/categories/'.$category->image);
+        }
     }
 }
