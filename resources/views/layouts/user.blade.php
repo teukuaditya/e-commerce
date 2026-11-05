@@ -21,7 +21,7 @@
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="{{ asset('vendor/css-hamburgers/hamburgers.min.css') }}">
     <!--===============================================================================================-->
-    <link rel="stylesheet" type="text/css" href="{{ asset('vendor/animsition/css/animsition.min.css') }}">
+    
     <!--===============================================================================================-->
     <link rel="stylesheet" type="text/css" href="{{ asset('vendor/select2/select2.min.css') }}">
     <!--===============================================================================================-->
@@ -43,7 +43,7 @@
 
 </head>
 
-<body class="animsition">
+<body>
 
     <!-- Main Content -->
     <div id="content">
@@ -71,7 +71,7 @@
     <!--===============================================================================================-->
     <script src="{{ asset('vendor/jquery/jquery-3.2.1.min.js') }}"></script>
     <!--===============================================================================================-->
-    <script src="{{ asset('vendor/animsition/js/animsition.min.js') }}"></script>
+    
     <!--===============================================================================================-->
     <script src="{{ asset('vendor/bootstrap/js/popper.js') }}"></script>
     <script src="{{ asset('vendor/bootstrap/js/bootstrap.min.js') }}"></script>

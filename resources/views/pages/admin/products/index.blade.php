@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('admin_title', 'Kelola Produk')
+
 @section('content')
     <div class="container-fluid">
 
@@ -42,7 +44,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($products as $product)
+                            @forelse ($products as $product)
                                 <tr>
                                     <td>{{ $product->id }}</td>
                                     <td>{{ $product->title }}</td>
@@ -57,7 +59,7 @@
                                             @foreach ($product->size as $size)
                                                 <span class="badge badge-secondary">{{ $size }}</span>
                                             @endforeach
-                                        @else
+@else
                                             No size
                                         @endif
                                     </td>
@@ -109,7 +111,15 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr><td colspan="10">
+                                    <div class="adm-empty">
+                                        <i class="fas fa-inbox"></i>
+                                        <strong>Belum ada data</strong>
+                                        <p>Data Product akan tampil di sini begitu tersedia.</p>
+                                    </div>
+                                </td></tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>

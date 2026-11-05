@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Product;
@@ -30,27 +31,49 @@ class AppServiceProvider extends ServiceProvider
         Config::$isSanitized = config('midtrans.is_sanitized');
         Config::$is3ds = config('midtrans.is_3ds');
 
-        // Menghitung jumlah produk dalam keranjang dan mengirimkan ke semua view
-        view()->composer('*', function ($view) {
-            // Mengecek apakah user sudah login
-            if (Auth::check()) {
-                $cartCount = Cart::where('user_id', Auth::id())->sum('quantity'); // Menjumlahkan jumlah produk di keranjang
-            } else {
-                $cartCount = 0; // Jika user belum login, set jumlah keranjang 0
+        /*
+         * Jumlah produk di keranjang yang tanggal ditampilkan di navbar.
+         * PERFORMA: closure di-memoize (variable by-reference) sehingga
+         * query SUM() hanya dijalankan SATU KALI per request — bukan
+         * untuk setiap view yang di-render (layout + tiap partial).
+         */
+        $cartCount = null;
+        view()->composer('*', function ($view) use (&$cartCount) {
+            if ($cartCount === null) {
+                $cartCount = Auth::check()
+                    ? (int) Cart::where('user_id', Auth::id())->sum('quantity')
+                    : 0;
             }
 
-            // Mengirimkan variabel cartCount ke semua view
             $view->with('cartCount', $cartCount);
         });
 
-        // Validasi apakah tabel 'categories' sudah ada
+        /*
+         * Kategori dipakai di navbar, mobile-nav, dan footer pada SEMUA halaman.
+         * Di-cache agar tidak query tabel kategori setiap request.
+         * Dibersihkan otomatis lewat model events di bawah setiap encode/list.
+         */
         if (Schema::hasTable('categories')) {
-            view()->share('categories', Category::all());
+            view()->share('categories', Cache::rememberForever(
+                'shares.categories',
+                fn () => Category::all()
+            ));
         }
 
-        // Validasi apakah tabel 'products' sudah ada
-        if (Schema::hasTable('products')) {
-            view()->share('products', Product::all());
-        }
+        /*
+         * Invalidasi cache shares setiap categoryId/produk berubah
+         * (dari admin CRUD, seed, dsb).
+         */
+        Category::saved(fn () => Cache::forget('shares.categories'));
+        Category::deleted(fn () => Cache::forget('shares.categories'));
+
+        /*
+         * `$products` global-share (dipakai halaman home) dihapus — sekarang
+         * query hanya dari HomeController, ter-cache sampai ada produk yang
+         * berubah. Membuang load full table products dari setiap request
+         * (termasuk admin).
+         */
+        Product::saved(fn () => Cache::forget('home.products'));
+        Product::deleted(fn () => Cache::forget('home.products'));
     }
 }

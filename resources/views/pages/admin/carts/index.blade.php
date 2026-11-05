@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('admin_title', 'Keranjang')
+
 @section('content')
     <div class="container-fluid">
 
@@ -24,7 +26,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($carts as $cart)
+                            @forelse ($carts as $cart)
                                 <tr>
                                     <td>{{ $cart->id }}</td>
                                     <td>{{ $cart->user_id }}</td>
@@ -32,8 +34,16 @@
                                     <td>{{ $cart->size }}</td>
                                     <td>{{ $cart->quantity }}</td>
                                 </tr>
-                            @endforeach
-                        </tbody>
+                            @empty
+                                <tr><td colspan="6">
+                                    <div class="adm-empty">
+                                        <i class="fas fa-inbox"></i>
+                                        <strong>Belum ada data</strong>
+                                        <p>Data Cart akan tampil di sini begitu tersedia.</p>
+                                    </div>
+                                </td></tr>
+                            @endforelse
+</tbody>
                     </table>
                 </div>
             </div>

@@ -1,78 +1,76 @@
 <!-- Sidebar -->
-<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+<ul class="navbar-nav sidebar accordion" id="accordionSidebar">
 
-    <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="">
-        <div class="sidebar-brand-icon rotate-n-15">
+    <!-- Brand -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('admin.dashboard.index') }}">
+        <div class="sidebar-brand-icon">
             <i class="fas fa-shopping-bag"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">DRVN</div>
+        <div class="sidebar-brand-text">DRVN <span style="color: var(--adm-accent)">.</span></div>
     </a>
 
-    <!-- Divider -->
     <hr class="sidebar-divider my-0">
 
-    <!-- Nav Item - Dashboard -->
+    <!-- Section label -->
+    <div class="sidebar-heading" style="font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--adm-ink-3);padding:14px 24px 6px;">MENU UTAMA</div>
+
     <li class="nav-item {{ Request::is('admin/dashboard') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.dashboard.index') }}">
+        <a class="nav-link" href="{{ route('admin.dashboard.index') }}" data-label="Dashboard">
             <i class="fas fa-fw fa-tachometer-alt"></i>
             <span>Dashboard</span>
         </a>
     </li>
 
-    <!-- Nav Item - Category -->
-    <li class="nav-item {{ Request::is('admin/categories') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.categories.index') }}">
+    <li class="nav-item {{ Request::is('admin/categories*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.categories.index') }}" data-label="Category">
             <i class="fas fa-fw fa-tags"></i>
             <span>Category</span>
         </a>
     </li>
 
-    <!-- Nav Item - Product -->
-    <li class="nav-item {{ Request::is('admin/products') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.products.index') }}">
+    <li class="nav-item {{ Request::is('admin/products*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.products.index') }}" data-label="Product">
             <i class="fas fa-fw fa-box"></i>
             <span>Product</span>
         </a>
     </li>
 
-    <!-- Nav Item - Transaction -->
-    <li class="nav-item {{ Request::is('admin/transactions') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.transactions.index') }}">
+    <div class="sidebar-heading" style="font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--adm-ink-3);padding:14px 24px 6px;">TRANSAKSI</div>
+
+    <li class="nav-item {{ Request::is('admin/transactions') || Request::is('admin/transactions/*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.transactions.index') }}" data-label="Transaction">
             <i class="fas fa-fw fa-exchange-alt"></i>
             <span>Transaction</span>
         </a>
     </li>
 
-    <!-- Nav Item - Transaction -->
-    <li class="nav-item {{ Request::is('admin/transactions-details') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.transactions-details.index') }}">
+    <li class="nav-item {{ Request::is('admin/transactions-details*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.transactions-details.index') }}" data-label="Transaction Detail">
             <i class="fas fa-fw fa-list-alt"></i>
             <span>Transaction Detail</span>
         </a>
     </li>
 
-    <!-- Nav Item - Customer -->
-    <li class="nav-item {{ Request::is('admin/users') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.users.index') }}">
+    <div class="sidebar-heading" style="font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--adm-ink-3);padding:14px 24px 6px;">PENGGUNA</div>
+
+    <li class="nav-item {{ Request::is('admin/users') || Request::is('admin/users/*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.users.index') }}" data-label="User">
             <i class="fas fa-fw fa-users"></i>
             <span>User</span>
         </a>
     </li>
 
-    <li class="nav-item {{ Request::is('admin/carts') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.carts.index') }}">
+    <li class="nav-item {{ Request::is('admin/carts') || Request::is('admin/carts/*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.carts.index') }}" data-label="Cart">
             <i class="fas fa-shopping-cart"></i>
             <span>Cart</span>
         </a>
     </li>
 
-    <!-- Divider -->
     <hr class="sidebar-divider d-none d-md-block">
 
-    <!-- Sidebar Toggler (Sidebar) -->
     <div class="text-center d-none d-md-inline">
-        <button class="rounded-circle border-0" id="sidebarToggle"></button>
+        <button class="rounded-circle border-0" id="sidebarToggle" aria-label="Perkecil atau perbesar sidebar"></button>
     </div>
 
 </ul>

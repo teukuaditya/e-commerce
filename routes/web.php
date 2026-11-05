@@ -24,13 +24,13 @@ use App\Http\Controllers\TransactionDetailController;
 use App\Http\Controllers\UserController;
 
 /**
- * -------------------------------------------------------
  * PUBLIC ROOT
  * -------------------------------------------------------
- * Root diarahkan ke user home. TIDAK diberi nama 'user.home'
- * agar tidak duplikat dengan versi /user.
+ * Root diarahkan ke user home (302) — bentuk Route::redirect supaya
+ * bisa di-cache oleh `php artisan route:cache` (closure dilarang).
+ * Perilaku output sama: HTTP 302 → /user.
  */
-Route::get('/', fn () => redirect()->route('user.home'));
+Route::redirect('/', '/user', 302);
 
 // Search Products (alias root route name products.search to user search)
 Route::get('/products/search', [ProductController::class, 'search'])->name('products.search');

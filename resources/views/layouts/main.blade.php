@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="{{ asset('fonts/linearicons-v1.0.0/icon-font.min.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/animate/animate.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/css-hamburgers/hamburgers.min.css') }}">
-    <link rel="stylesheet" href="{{ asset('vendor/animsition/css/animsition.min.css') }}">
+    
     <link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/daterangepicker/daterangepicker.css') }}">
     <link rel="stylesheet" href="{{ asset('vendor/slick/slick.css') }}">
@@ -141,7 +141,7 @@
         data-client-key="{{ config('midtrans.client_key') }}"></script>
 </head>
 
-<body class="animsition @yield('body-class')">
+<body @yield('body-class')>
 
     <!-- Main Content -->
     <div id="content">
@@ -163,7 +163,7 @@
     <!-- jQuery UI JS untuk autocomplete (harus setelah jQuery) -->
     <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     <!--===============================================================================================-->
-    <script src="{{ asset('vendor/animsition/js/animsition.min.js') }}"></script>
+    
     <!--===============================================================================================-->
     <script src="{{ asset('vendor/bootstrap/js/popper.js') }}"></script>
     <script src="{{ asset('vendor/bootstrap/js/bootstrap.min.js') }}"></script>

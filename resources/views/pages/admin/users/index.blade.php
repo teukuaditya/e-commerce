@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('admin_title', 'Kelola Pengguna')
+
 @section('content')
     <div class="container-fluid">
 
@@ -38,7 +40,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($users as $user)
+                            @forelse ($users as $user)
                                 <tr>
                                     <td>{{ $user->id }}</td>
                                     <td>{{ $user->name }}</td>
@@ -75,8 +77,16 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @endforeach
-                        </tbody>
+                            @empty
+                                <tr><td colspan="7">
+                                    <div class="adm-empty">
+                                        <i class="fas fa-inbox"></i>
+                                        <strong>Belum ada data</strong>
+                                        <p>Data User akan tampil di sini begitu tersedia.</p>
+                                    </div>
+                                </td></tr>
+                            @endforelse
+</tbody>
                     </table>
                 </div>
             </div>

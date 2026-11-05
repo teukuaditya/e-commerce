@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('admin_title', 'Kelola Kategori')
+
 @section('content')
     <div class="container-fluid">
 
@@ -36,7 +38,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($categories as $category)
+                            @forelse ($categories as $category)
                                 <tr>
                                     <td>{{ $category->id }}</td>
                                     <td>{{ $category->category_name }}</td>
@@ -77,8 +79,16 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @endforeach
-                        </tbody>
+                            @empty
+                                <tr><td colspan="4">
+                                    <div class="adm-empty">
+                                        <i class="fas fa-inbox"></i>
+                                        <strong>Belum ada data</strong>
+                                        <p>Data Category akan tampil di sini begitu tersedia.</p>
+                                    </div>
+                                </td></tr>
+                            @endforelse
+</tbody>
                     </table>
                 </div>
             </div>

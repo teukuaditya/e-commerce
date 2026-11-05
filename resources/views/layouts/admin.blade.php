@@ -17,8 +17,17 @@
 
     <!-- Custom fonts for this template-->
     <link rel="stylesheet" href="{{ asset('libs/fontawesome-free/css/all.min.css') }}">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Terapkan tema tersimpan SEBELUM CSS render (hindari flash terang) -->
+    <script>
+        try {
+            var t = localStorage.getItem('adm-theme');
+            if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        } catch (e) { /* localStorage diblokir — abaikan */ }
+    </script>
 
     <!-- Custom styles for this template-->
     <link rel="stylesheet" href="{{ asset('css/sb-admin-2.min.css') }}">
@@ -27,6 +36,8 @@
     <!-- Admin upgrade (polish sb-admin-2) -->
     <link rel="stylesheet" href="{{ asset('css/admin-upgrade.css') }}">
 
+    <!-- Admin theme modern (design tokens + dark mode) -->
+    <link rel="stylesheet" href="{{ asset('css/admin-theme.css') }}?v={{ filemtime(public_path('css/admin-theme.css')) }}">
 
 </head>
 
@@ -83,12 +94,84 @@
     <!-- Custom scripts for all pages-->
     <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>
 
+    <!-- Overlay drawer mobile + container toast -->
+    <div class="adm-overlay" id="admOverlay" aria-hidden="true"></div>
+    <div id="adm-toasts" aria-live="polite"></div>
+
     <script src="{{ asset('libs/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('libs/datatables/dataTables.bootstrap4.min.js') }}"></script>
 
     <script src="{{ asset('js/demo/datatables-demo.js') }}"></script>
 
+    {{-- JS ekstra per-halaman --}}
     @stack('scripts')
+
+    <script>
+        /* ==== DRVN ADMIN GLUE: tema, drawer, toast ==== */
+        (function () {
+            /* Toggle dark/light — tersimpan di localStorage */
+            function applyTheme(t) {
+                document.documentElement.setAttribute('data-theme', t);
+                document.querySelectorAll('.adm-theme-toggle i')
+                    .forEach(function (i) { i.className = 'fas ' + (t === 'dark' ? 'fa-sun' : 'fa-moon'); });
+            }
+            var saved = 'light';
+            try { saved = localStorage.getItem('adm-theme') || 'light'; } catch (e) {}
+            applyTheme(saved);
+            document.addEventListener('click', function (e) {
+                var btn = e.target.closest('.adm-theme-toggle');
+                if (!btn) return;
+                var next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                try { localStorage.setItem('adm-theme', next); } catch (err) {}
+                applyTheme(next);
+            });
+
+            /* Drawer sidebar di mobile + overlay */
+            var overlay = document.getElementById('admOverlay');
+            var sbToggleTop = document.getElementById('sidebarToggleTop');
+            function closeDrawer() {
+                document.body.classList.remove('sidebar-mobile-open');
+                var sb = document.querySelector('.sidebar');
+                if (sb && window.innerWidth < 768) sb.classList.remove('toggled');
+                overlay.classList.remove('show');
+            }
+            if (overlay) overlay.addEventListener('click', closeDrawer);
+            if (sbToggleTop) sbToggleTop.addEventListener('click', function () {
+                document.body.classList.add('sidebar-mobile-open');
+                overlay.classList.add('show');
+            });
+            window.addEventListener('resize', function () {
+                if (window.innerWidth >= 768) closeDrawer();
+            });
+
+            /* Toast global: admin.toast('pesan', 'ok'|'err') */
+            window.admin = window.admin || {};
+            window.admin.toast = function (msg, type) {
+                var wrap = document.getElementById('adm-toasts');
+                if (!wrap) return;
+                var el = document.createElement('div');
+                el.className = 'adm-toast ' + (type === 'err' ? 'err' : 'ok');
+                el.innerHTML = '<i class="fas ' + (type === 'err' ? 'fa-exclamation-circle' : 'fa-check-circle') + '"></i><span></span>';
+                el.querySelector('span').textContent = msg;
+                wrap.appendChild(el);
+                setTimeout(function () {
+                    el.style.transition = 'opacity .3s ease, transform .3s ease';
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateX(20px)';
+                    setTimeout(function () { el.remove(); }, 320);
+                }, 3200);
+            };
+
+            /* Pesan sesi (session('success')) otomatis jadi toast juga */
+            @if (session('success'))
+                window.admin.toast({{ json_encode(session('success')) }}, 'ok');
+            @endif
+            @if (session('error'))
+                window.admin.toast({{ json_encode(session('error')) }}, 'err');
+            @endif
+        })();
+    </script>
+
 
 
 </body>

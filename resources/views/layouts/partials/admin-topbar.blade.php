@@ -2,14 +2,21 @@
 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
 
     <!-- Sidebar Toggle (Mobile) -->
-    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3" aria-label="Buka menu">
         <i class="fa fa-bars"></i>
     </button>
 
-    <h1 class="h3 mb-0 ml-4 text-gray-800">Admin DRVN</h1>
+    <h1 class="h3 mb-0 ml-4 text-gray-800">@yield('admin_title', 'Admin DRVN')</h1>
 
     <!-- Topbar Navbar -->
     <ul class="navbar-nav ml-auto">
+
+        <!-- Toggle tema (dark/light) -->
+        <li class="nav-item no-arrow mx-2">
+            <button type="button" class="btn adm-theme-toggle" aria-label="Ganti tema terang/gelap">
+                <i class="fas fa-moon"></i>
+            </button>
+        </li>
 
         <div class="topbar-divider d-none d-sm-block"></div>
 

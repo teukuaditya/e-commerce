@@ -1,5 +1,7 @@
 @extends('layouts.admin')
 
+@section('admin_title', 'Detail Transaksi')
+
 @section('content')
     <div class="container-fluid">
 
@@ -26,7 +28,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($transactions_details as $transactions)
+                            @forelse ($transactions_details as $transactions)
                                 <tr>
                                     <td>{{ $transactions->id }}</td>
                                     <td>{{ $transactions->transaction_id }}</td>
@@ -36,8 +38,16 @@
                                     <td>{{ number_format($transactions->subtotal, 2) }}</td>
                                     <td>{{ $transactions->created_at }}</td>
                                 </tr>
-                            @endforeach
-                        </tbody>
+                            @empty
+                                <tr><td colspan="8">
+                                    <div class="adm-empty">
+                                        <i class="fas fa-inbox"></i>
+                                        <strong>Belum ada data</strong>
+                                        <p>Data Transaction Detail akan tampil di sini begitu tersedia.</p>
+                                    </div>
+                                </td></tr>
+                            @endforelse
+</tbody>
                     </table>
                 </div>
             </div>
