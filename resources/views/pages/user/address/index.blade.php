@@ -3,12 +3,7 @@
 @section('content')
 <section class="bg0 m-t-45 p-b-60 address-hero">
     <div class="container">
-        @if (session('success'))
-        <div id="success-alert" class="stext-102 alert alert-success">
-            <i class="fas fa-check-circle mr-2"></i>
-            {{ session('success') }}
-        </div>
-        @endif
+        <x-flash-alert class="stext-102" />
 
         <div class="row">
             <div class="col-lg-4 col-md-4">
@@ -119,14 +114,6 @@
 {{-- jQuery UI JS (autocomplete) — hanya di halaman address --}}
 <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
 <script>
-    setTimeout(function() {
-        let alertElement = document.getElementById('success-alert');
-        if (alertElement) {
-            alertElement.style.transition = "opacity 0.5s ease";
-            alertElement.style.opacity = 0;
-            setTimeout(() => alertElement.remove(), 500);
-        }
-    }, 2000);
 
     document.getElementById('edit-address-btn').addEventListener('click', function() {
         document.getElementById('address-display').style.display = 'none';

@@ -90,6 +90,26 @@
         var $empty = $('#emptyBlock');
         var lastQuery = $input.val();
 
+        // Re-init Isotope setelah innerHTML hasil live-search di-replace
+        // agar filter tetap bisa dipakai setelahnya (item harus di-bind ulang).
+        function refreshIsotope() {
+            if ($grid.data('isotope')) {
+                $grid.isotope('destroy');
+            }
+
+            $grid.isotope({
+                itemSelector: '.isotope-item',
+                layoutMode: 'fitRows',
+                percentPosition: true,
+                transitionDuration: '0.35s'
+            });
+
+            var active = $('.filter-tope-group button.how-active1').attr('data-filter');
+            if (active && active !== '*') {
+                $grid.isotope({ filter: active });
+            }
+        }
+
         function liveSearch() {
             var q = $input.val().trim();
 
@@ -105,6 +125,7 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 success: function(res) {
                     $grid.html(res.html);
+                    refreshIsotope();
                     $('#searchCount').text('Found ' + res.count + (res.count === 1 ? ' product' : ' products'));
 
                     // Hasil kosong lewat AJAX → tampilkan empty state

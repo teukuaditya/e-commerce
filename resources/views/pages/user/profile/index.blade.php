@@ -4,13 +4,7 @@
 <section class="bg0 m-t-45 p-b-60 profile-hero">
     <div class="container">
 
-        <!-- Success message -->
-        @if (session('success'))
-        <div id="success-alert" class="stext-102 alert alert-success">
-            <i class="fas fa-check-circle mr-2"></i> <!-- Ikon centang -->
-            {{ session('success') }}
-        </div>
-        @endif
+        <x-flash-alert class="stext-102" />
 
         <div class="row">
             <!-- Sidebar -->
@@ -103,15 +97,6 @@
 
 @push('scripts')
 <script>
-    // Menghilangkan pesan sukses setelah 5 detik
-    setTimeout(function() {
-        let alertElement = document.getElementById('success-alert');
-        if (alertElement) {
-            alertElement.style.transition = "opacity 0.5s ease";
-            alertElement.style.opacity = 0; // Perlahan menghilang
-            setTimeout(() => alertElement.remove(), 500); // Hapus setelah transisi selesai
-        }
-    }, 2000); // Waktu dalam milidetik
     $(document).ready(function() {
         // Menampilkan form edit setelah tombol "Edit Profile" diklik
         $('#edit-button').click(function() {

@@ -13,13 +13,7 @@
             Add Category
         </button>
 
-        <!-- Success message -->
-        @if (session('success'))
-            <div id="success-alert" class="alert alert-success">
-                <i class="fas fa-check-circle mr-2"></i> <!-- Ikon centang -->
-                {{ session('success') }}
-            </div>
-        @endif
+        <x-flash-alert />
 
         <!-- DataTales Example -->
         <div class="card shadow mb-4">
@@ -143,15 +137,6 @@
 
 @push('scripts')
     <script>
-        // Menghilangkan pesan sukses setelah 5 detik
-        setTimeout(function() {
-            let alertElement = document.getElementById('success-alert');
-            if (alertElement) {
-                alertElement.style.transition = "opacity 0.5s ease";
-                alertElement.style.opacity = 0; // Perlahan menghilang
-                setTimeout(() => alertElement.remove(), 500); // Hapus setelah transisi selesai
-            }
-        }, 2000); // Waktu dalam milidetik
 
         $('#categoryModal').on('show.bs.modal', function(event) {
             var button = $(event.relatedTarget); // Button yang men-trigger modal

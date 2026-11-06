@@ -89,18 +89,8 @@
     </div>
 </div>
 
-{{-- Toggle show/hide password (delegasi, 1 listener untuk semua field) --}}
-<script>
-    document.addEventListener('click', function (e) {
-        var btn = e.target.closest('.pass-toggle');
-        if (!btn) return;
-        var input = document.getElementById(btn.getAttribute('data-target'));
-        if (!input) return;
-        var show = input.type === 'password';
-        input.type = show ? 'text' : 'password';
-        btn.innerHTML = '<i class="fa ' + (show ? 'fa-eye-slash' : 'fa-eye') + '"></i>';
-        btn.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
-        input.focus({ preventScroll: true });
-    });
-</script>
+{{-- Toggle show/hide password (delegasi) — JS bersama di public/js/auth-forms.js --}}
+@push('scripts')
+    <script src="{{ asset('js/auth-forms.js') }}?v={{ filemtime(public_path('js/auth-forms.js')) }}"></script>
+@endpush
 @endsection

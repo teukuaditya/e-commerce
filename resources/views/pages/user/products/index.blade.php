@@ -36,8 +36,10 @@
             </div>
         </div>
 
-        <!-- Produk (grid di-render lewat partial — markup yang sama dengan AJAX live search) -->
-        <div class="row" id="productGrid">
+        <!-- Produk (grid di-render lewat partial — markup yang sama dengan AJAX live search).
+             class "isotope-grid" memungkinkan main.js (Isotope) menganimasikan filter kategori,
+             sama seperti homepage kategori & halaman hasil search. -->
+        <div class="row isotope-grid" id="productGrid">
             @include('pages.user.products._partials.grid-items', ['products' => $products])
         </div>
     </div>
@@ -47,33 +49,33 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        // Filter kategori — jQuery show/hide (tanpa Isotope agar Bootstrap grid tidak di-override)
-        $('.filter-tope-group button').click(function() {
-            var filterValue = $(this).attr('data-filter');
-
-            $('.filter-tope-group button').removeClass('how-active1');
-            $(this).addClass('how-active1');
-
-            if (filterValue === '*') {
-                $('#productGrid .isotope-item').show();
-            } else {
-                var cls = filterValue.replace('.', '');
-                $('#productGrid .isotope-item').each(function() {
-                    if ($(this).hasClass(cls)) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
-            }
-        });
-
         /* ==== LIVE SEARCH (filter langsung saat mengetik) ==== */
         var searchTimer = null;
         var searchXhr = null;
         var $input = $('#liveSearchInput');
         var $grid = $('#productGrid');
         var lastQuery = $input.val();
+
+        // Inisialisasi ulang Isotope setelah hasil live-search mengganti innerHTML,
+        // lalu terapkan ulang filter tombol yang sedang aktif — agar transisi
+        // tetap halus seperti halaman kategori.
+        function refreshIsotope() {
+            if ($grid.data('isotope')) {
+                $grid.isotope('destroy');
+            }
+
+            $grid.isotope({
+                itemSelector: '.isotope-item',
+                layoutMode: 'fitRows',
+                percentPosition: true,
+                transitionDuration: '0.35s'
+            });
+
+            var active = $('.filter-tope-group button.how-active1').attr('data-filter');
+            if (active && active !== '*') {
+                $grid.isotope({ filter: active });
+            }
+        }
 
         function liveSearch() {
             var q = $input.val().trim();
@@ -90,6 +92,7 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 success: function(res) {
                     $grid.html(res.html);
+                    refreshIsotope();
                 },
                 error: function(xhr) {
                     if (xhr.statusText === 'abort') return;

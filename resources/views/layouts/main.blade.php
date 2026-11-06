@@ -38,92 +38,6 @@
     <!-- Navbar floating glassmorphism (mudah dicabut: hapus baris ini) -->
     <link rel="stylesheet" href="{{ asset('css/navbar-floating.css') }}?v={{ filemtime(public_path('css/navbar-floating.css')) }}">
 
-    <!-- Global style override (Poppins + utilities) -->
-    <style>
-        :root {
-            --ff-sans: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto,
-                "Helvetica Neue", Arial, sans-serif;
-        }
-
-        /* Terapkan Poppins ke seluruh halaman */
-        html,
-        body {
-            font-family: var(--ff-sans) !important;
-        }
-
-        /* Paksa komponen umum ikut Poppins */
-        h1,h2,h3,h4,h5,h6,
-        .display-1,
-        .display-2,
-        .display-3,
-        .display-4,
-        .lead,
-        p,
-        a,
-        span,
-        small,
-        .btn,
-        .nav-link,
-        .dropdown-item,
-        .card,
-        .modal,
-        .alert,
-        input,
-        textarea,
-        select,
-        .form-control,
-        .form-select {
-            font-family: var(--ff-sans) !important;
-        }
-
-        /* Utilitas umum */
-        .breadcrumb {
-            background: transparent;
-            padding-left: 0;
-        }
-
-        .hover-scale {
-            transition: transform .3s ease;
-        }
-
-        .hover-scale:hover {
-            transform: scale(1.02);
-        }
-
-        .hover-shadow {
-            transition: box-shadow .3s ease;
-        }
-
-        .hover-shadow:hover {
-            box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
-        }
-
-        .feature-icon {
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background-color: rgba(113, 127, 224, .1);
-        }
-
-        .bg-light {
-            background-color: #f8f9fa !important;
-        }
-
-        /* Autocomplete dropdown */
-        .ui-autocomplete {
-            z-index: 99999 !important;
-            background: #fff;
-            border: 1px solid #ddd;
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 14px;
-        }
-
-        
-    </style>
 
     <!-- Slot CSS per-halaman (harus setelah style global agar bisa override) -->
     @stack('styles')
@@ -132,7 +46,7 @@
          membutuhkan (checkout, order) via @push('scripts'). --}}
 </head>
 
-<body @yield('body-class')>
+<body class="@yield('body-class')">
 
     <!-- Main Content -->
     <div id="content">

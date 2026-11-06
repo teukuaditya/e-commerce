@@ -166,9 +166,24 @@ header.header-v4 .tu-dd .dropdown-menu,
 /* ============================================================================
    2. OFFSET KONTEN — navbar fixed, jadi konten harus turun.
       Home dikecualikan (slider memang ingin lewat di bawah navbar kaca).
+      Khusus home (desktop): slider ditarik ke atas menutupi spacer header
+      yang tersisa di flow, sehingga tidak ada gap putih di bawah pill kaca.
+      (body.page-home kini benar-benar jadi CLASS — lihat @yield di layout.)
    ============================================================================ */
 body:not(.page-home) main {
     padding-top: calc(var(--fl-top) + var(--fl-height) + 16px); /* 100px */
+}
+
+body.page-home .section-slide {
+    /* fallback/medio mobile: tanpa penarikan agar tidak menabrak bar mobile */
+    margin-top: 0;
+}
+
+@media (min-width: 992px) {
+    body.page-home .section-slide {
+        /* tarik slider = tinggi nav (68px) + jarak atas (16px) = 84px */
+        margin-top: calc(-1 * (var(--fl-height) + var(--fl-top))) !important;
+    }
 }
 
 /* ============================================================================
