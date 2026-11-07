@@ -16,6 +16,23 @@
                 alertElement.style.opacity = 0;
                 setTimeout(function () { alertElement.remove(); }, 500);
             }
-        }, 2000);
+        }, 2500);
+    </script>
+@endif
+
+@if (session('error'))
+    <div id="error-alert" class="{{ $class }} alert alert-danger">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        {{ session('error') }}
+    </div>
+    <script>
+        setTimeout(function () {
+            var alertElement = document.getElementById('error-alert');
+            if (alertElement) {
+                alertElement.style.transition = 'opacity 0.5s ease';
+                alertElement.style.opacity = 0;
+                setTimeout(function () { alertElement.remove(); }, 500);
+            }
+        }, 3500);
     </script>
 @endif

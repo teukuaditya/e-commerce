@@ -1,7 +1,9 @@
 @extends('layouts.main')
 
+@section('title', 'Search Results | DRVN')
+
 @section('content')
-<div class="container search-hero">
+<div class="container search-hero p-b-100">
     <!-- Breadcrumb -->
     <div class="bread-crumb flex-w p-r-15 p-t-30 p-lr-0-lg">
         <a href="{{ route('user.products.index') }}" class="stext-109 cl8 hov-cl1 trans-04">
@@ -14,142 +16,138 @@
     </div>
 
     <!-- Search Info -->
-    <div class="p-t-30 p-b-30">
-        <h4 class="mtext-109 cl2" id="searchTitle">
-            Search Results for: "{{ $query }}"
+    <div class="p-t-30 p-b-20">
+        <h4 class="mtext-109 cl2 font-weight-bold" id="searchTitle">
+            Search Results for: "<span class="text-indigo-600">{{ $query }}</span>"
         </h4>
-        <p class="stext-102 cl3 p-t-10" id="searchCount">
+        <p class="stext-102 cl3 p-t-6" id="searchCount">
             Found {{ $total }} {{ Str::plural('product', $total) }}
         </p>
     </div>
 
-    <!-- Kotak filter: produk ter-filter langsung saat mengetik (live search) -->
-    <div class="flex-c-m flex-w p-b-25">
-        <input
-            class="plh3 stext-106 cl6 size-106 bor4 p-l-20 p-r-20"
-            type="text"
-            id="liveSearchInput"
-            name="query"
-            placeholder="Cari produk lain..."
-            value="{{ request('query', $query) }}"
-            autocomplete="off">
+    <!-- Kotak Live Search in-place -->
+    <div class="flex-c-m flex-w p-b-35">
+        <form action="{{ route('products.search') }}" method="GET" class="flex-w position-relative" id="searchResultForm">
+            <input
+                class="plh3 stext-106 cl6 size-106 bor4 p-l-20 p-r-20"
+                type="text"
+                id="liveSearchInput"
+                name="query"
+                placeholder="Cari produk lain..."
+                value="{{ request('query', $query) }}"
+                autocomplete="off"
+                style="border-radius: 999px; height: 44px; width: 320px;">
+            <button class="flex-c-m stext-106 cl0 size-105 bor4 hov-btn1 trans-04 m-l-8"
+                    type="submit"
+                    style="border-radius: 999px; height: 44px; padding: 0 20px; background-color: #6366F1; color: #FFFFFF; font-weight: 600; border: none;">
+                <i class="icon-search cl0 m-r-6 fs-15 zmdi zmdi-search"></i>
+                Cari
+            </button>
+        </form>
     </div>
 
-    <!-- Products (grid di-render lewat partial — markup yang sama dengan AJAX live search) -->
-    <div class="row isotope-grid" id="productGrid">
+    <!-- Products (4 Produk ke kanan di layar laptop/desktop) -->
+    <div class="row isotope-grid product-grid-transition" id="productGrid">
         @include('pages.user.products._partials.grid-items', ['products' => $products])
     </div>
 
-    <!-- Pagination -->
+    <!-- Fast AJAX Pagination -->
     <div id="paginationBlock" class="flex-c-m flex-w w-full p-t-45">
-        {{ $products->appends(['query' => $query])->links() }}
-    </div>
-
-    @if($products->count() === 0)
-    <!-- No Results (tampilan awal hasil server) -->
-    <div class="flex-c-m p-t-30 p-b-100">
-        <div class="text-center">
-            <i class="zmdi zmdi-search" style="font-size: 80px; color: #ccc;"></i>
-            <h4 class="mtext-109 cl2 p-t-20 p-b-10">No Products Found</h4>
-            <p class="stext-102 cl3">
-                Sorry, we couldn't find any products matching "{{ $query }}"
-            </p>
-            <a href="{{ route('user.home') }}" class="flex-c-m stext-101 cl0 size-107 bg3 bor2 hov-btn3 p-lr-15 trans-04 m-t-30">
-                Back to Home
-            </a>
-        </div>
-    </div>
-    @endif
-
-    <!-- No Results (dipakai juga oleh AJAX live search saat hasilnya 0) -->
-    <div id="emptyBlock" class="flex-c-m p-t-30 p-b-100" style="{{ $products->count() === 0 ? '' : 'display:none' }}">
-        <div class="text-center">
-            <i class="zmdi zmdi-search" style="font-size: 80px; color: #ccc;"></i>
-            <h4 class="mtext-109 cl2 p-t-20 p-b-10">No Products Found</h4>
-            <p class="stext-102 cl3">
-                Sorry, we couldn't find any products matching "<span class="empty-query">{{ $query }}</span>"
-            </p>
-            <a href="{{ route('user.home') }}" class="flex-c-m stext-101 cl0 size-107 bg3 bor2 hov-btn3 p-lr-15 trans-04 m-t-30">
-                Back to Home
-            </a>
-        </div>
+        @if ($products->hasPages())
+            {{ $products->appends(['query' => $query])->links() }}
+        @endif
     </div>
 </div>
 @endsection
+
 @push('scripts')
+<script src="{{ asset('vendor/isotope/isotope.pkgd.min.js') }}"></script>
 <script>
     $(document).ready(function() {
-        /* ==== LIVE SEARCH di halaman hasil pencarian ====
-           Grid tetap Bootstrap grid murni (tanpa Isotope) — sama seperti
-           halaman products — agar kolom tidak di-override jadi absolute. */
         var searchTimer = null;
         var searchXhr = null;
         var $input = $('#liveSearchInput');
+        var $form = $('#searchResultForm');
         var $grid = $('#productGrid');
         var $pagination = $('#paginationBlock');
-        var $empty = $('#emptyBlock');
-        var lastQuery = $input.val();
 
-        // Re-init Isotope setelah innerHTML hasil live-search di-replace
-        // agar filter tetap bisa dipakai setelahnya (item harus di-bind ulang).
-        function refreshIsotope() {
-            if ($grid.data('isotope')) {
-                $grid.isotope('destroy');
-            }
-
-            $grid.isotope({
-                itemSelector: '.isotope-item',
-                layoutMode: 'fitRows',
-                percentPosition: true,
-                transitionDuration: '0.35s'
-            });
-
-            var active = $('.filter-tope-group button.how-active1').attr('data-filter');
-            if (active && active !== '*') {
-                $grid.isotope({ filter: active });
-            }
-        }
-
-        function liveSearch() {
-            var q = $input.val().trim();
-
-            if (q === lastQuery) return;
-            lastQuery = q;
-
+        function fetchSearch(url, q, shouldScroll) {
             if (searchXhr) searchXhr.abort();
+            $grid.addClass('is-loading');
 
             searchXhr = $.ajax({
-                url: '{{ route("user.products.search") }}',
+                url: url || '{{ route("user.products.search") }}',
                 type: 'GET',
                 data: { query: q },
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 success: function(res) {
                     $grid.html(res.html);
-                    refreshIsotope();
                     $('#searchCount').text('Found ' + res.count + (res.count === 1 ? ' product' : ' products'));
+                    if (res.pagination) {
+                        $pagination.html(res.pagination);
+                    }
 
-                    // Hasil kosong lewat AJAX → tampilkan empty state
-                    if (res.count === 0) {
-                        $empty.find('.empty-query').text(q);
-                        $empty.show();
-                        $pagination.hide();
-                    } else {
-                        $empty.hide();
-                        $pagination.hide(); // hasil live search tidak dipaginasi
+                    if (shouldScroll) {
+                        $('html, body').animate({ scrollTop: $grid.offset().top - 120 }, 250);
                     }
                 },
                 error: function(xhr) {
                     if (xhr.statusText === 'abort') return;
-                    console.error('Live search gagal:', xhr.responseText);
+                },
+                complete: function() {
+                    $grid.removeClass('is-loading');
                 }
             });
         }
 
-        // Debounce 250 ms: tunggu user berhenti mengetik sebelum filter
-        $input.on('keyup input', function() {
+        $input.on('input keyup', function(e) {
+            if (e.key === 'Enter') return;
             clearTimeout(searchTimer);
-            searchTimer = setTimeout(liveSearch, 250);
+            searchTimer = setTimeout(function() {
+                var q = $input.val().trim();
+                fetchSearch('{{ route("user.products.search") }}', q, false);
+            }, 250);
+        });
+
+        $form.on('submit', function(e) {
+            e.preventDefault();
+            clearTimeout(searchTimer);
+            var q = $input.val().trim();
+            fetchSearch('{{ route("user.products.search") }}', q, false);
+        });
+
+        $(document).on('click', '#paginationBlock a', function(e) {
+            e.preventDefault();
+            var targetUrl = $(this).attr('href');
+            if (!targetUrl) return;
+            fetchSearch(targetUrl, $input.val().trim(), true);
         });
     });
 </script>
+@endpush
+
+@push('styles')
+<style>
+  .search-hero { margin-top: 24px; }
+  .product-grid-transition { transition: opacity 0.2s ease; }
+  .product-grid-transition.is-loading { opacity: 0.45; pointer-events: none; }
+
+  /* 4 produk per baris mulai md samaris dengan halaman catalog (permintaan user) */
+  @media (min-width: 768px) {
+    #productGrid .product-grid-item,
+    .isotope-grid .product-grid-item {
+      flex: 0 0 25% !important;
+      max-width: 25% !important;
+      width: 25% !important;
+    }
+  }
+  @media (max-width: 767.98px) {
+    #productGrid .product-grid-item,
+    .isotope-grid .product-grid-item {
+      flex: 0 0 50% !important;
+      max-width: 50% !important;
+      width: 50% !important;
+    }
+  }
+</style>
 @endpush

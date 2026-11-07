@@ -35,52 +35,75 @@
                 <p>Lengkapi data berikut — semuanya cepat.</p>
             </div>
 
+            {{-- Error Banner Alert --}}
+            @if ($errors->any())
+                <div class="app-auth__alert-error" role="alert">
+                    <div class="app-auth__alert-title">
+                        <i class="fa fa-exclamation-triangle"></i>
+                        <span>Pendaftaran Belum Berhasil</span>
+                    </div>
+                    <ul class="app-auth__alert-list">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <form method="POST" action="{{ route('register') }}">
                 @csrf
 
                 <div class="app-auth__field">
                     <label for="name">Nama Lengkap</label>
                     <input type="text" name="name" id="name" placeholder="Nama lengkap"
-                           value="{{ old('name') }}" required @error('name') class="is-invalid" @enderror>
+                           value="{{ old('name') }}" required class="@error('name') is-invalid @enderror">
                     @error('name')
-                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                        <span class="app-auth__error-msg" role="alert">
+                            <i class="fa fa-exclamation-circle"></i> {{ $message }}
+                        </span>
                     @enderror
                 </div>
 
                 <div class="app-auth__field">
                     <label for="email">Email</label>
                     <input type="email" name="email" id="email" placeholder="nama@email.com"
-                           value="{{ old('email') }}" required @error('email') class="is-invalid" @enderror>
+                           value="{{ old('email') }}" required class="@error('email') is-invalid @enderror">
                     @error('email')
-                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                        <span class="app-auth__error-msg" role="alert">
+                            <i class="fa fa-exclamation-circle"></i> {{ $message }}
+                        </span>
                     @enderror
                 </div>
 
                 <div class="app-auth__field">
                     <label for="password">Password</label>
                     <div class="pass-wrap">
-                        <input type="password" name="password" id="password" placeholder="Minimal 8 karakter" required>
+                        <input type="password" name="password" id="password" placeholder="Minimal 8 karakter" required class="@error('password') is-invalid @enderror">
                         <button type="button" class="pass-toggle" data-target="password"
                                 aria-label="Tampilkan password" title="Tampilkan password">
                             <i class="fa fa-eye"></i>
                         </button>
                     </div>
                     @error('password')
-                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                        <span class="app-auth__error-msg" role="alert">
+                            <i class="fa fa-exclamation-circle"></i> {{ $message }}
+                        </span>
                     @enderror
                 </div>
 
                 <div class="app-auth__field">
                     <label for="password-confirm">Ulangi Password</label>
                     <div class="pass-wrap">
-                        <input type="password" name="password_confirmation" id="password-confirm" required>
+                        <input type="password" name="password_confirmation" id="password-confirm" placeholder="Ketik ulang password" required class="@error('password_confirmation') is-invalid @enderror">
                         <button type="button" class="pass-toggle" data-target="password-confirm"
                                 aria-label="Tampilkan password" title="Tampilkan password">
                             <i class="fa fa-eye"></i>
                         </button>
                     </div>
                     @error('password_confirmation')
-                        <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                        <span class="app-auth__error-msg" role="alert">
+                            <i class="fa fa-exclamation-circle"></i> {{ $message }}
+                        </span>
                     @enderror
                 </div>
 

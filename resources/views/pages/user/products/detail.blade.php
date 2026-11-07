@@ -278,6 +278,9 @@
 @endpush
 
 @push('scripts')
+    {{-- slick3 galeri gambar produk (plugin dibutuhkan hanya di halaman ini) --}}
+    <script src="{{ asset('vendor/slick/slick.min.js') }}"></script>
+    <script src="{{ asset('js/slick-custom.js') }}"></script>
     {{-- select2: lib + init (dipindah dari layout agar tidak loading semua page) --}}
     <script src="{{ asset('vendor/select2/select2.min.js') }}"></script>
     <script>

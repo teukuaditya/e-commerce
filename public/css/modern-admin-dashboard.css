@@ -1,0 +1,414 @@
+/* ==========================================================================
+   DRVN Modern Developer Admin Dashboard Design System
+   ========================================================================== */
+
+@import url('https://fonts.cdnfonts.com/css/clash-grotesk');
+@import url('https://api.fontshare.com/v2/css?f[]=clash-grotesk@400,500,600,700,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+    --adm-primary: #6366F1;
+    --adm-primary-hover: #4F46E5;
+    --adm-primary-glow: rgba(99, 102, 241, 0.25);
+    --adm-success: #10B981;
+    --adm-warning: #F59E0B;
+    --adm-danger: #EF4444;
+    --adm-sidebar-bg: #1A1C29;
+    --adm-content-bg: #F7F9FC;
+    --adm-card-border: rgba(226, 232, 240, 0.8);
+    --font-heading: 'Clash Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbar Styling (5px width, rounded) */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94A3B8;
+}
+
+/* Base resets & typography */
+body {
+    font-family: var(--font-body);
+    background-color: var(--adm-content-bg) !important;
+    color: #1E293B;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+.font-clash {
+    font-family: var(--font-heading) !important;
+}
+
+.font-jakarta {
+    font-family: var(--font-body) !important;
+}
+
+.font-mono-code {
+    font-family: var(--font-mono) !important;
+}
+
+/* Labels: uppercase with tracking-widest */
+.adm-label {
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Layout Structure */
+#wrapper {
+    display: flex;
+    min-height: 100vh;
+    background-color: var(--adm-content-bg);
+}
+
+/* Sidebar */
+.adm-modern-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 16rem; /* w-64 */
+    background-color: var(--adm-sidebar-bg) !important;
+    z-index: 1040;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.adm-modern-content {
+    margin-left: 16rem;
+    width: calc(100% - 16rem);
+    min-height: 100vh;
+    background-color: var(--adm-content-bg);
+    display: flex;
+    flex-direction: column;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile Sidebar Drawer */
+@media (max-width: 767.98px) {
+    .adm-modern-sidebar {
+        transform: translateX(-100%);
+    }
+    .adm-modern-sidebar.is-open {
+        transform: translateX(0);
+    }
+    .adm-modern-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+    }
+}
+
+.adm-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1035;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.adm-drawer-backdrop.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Sidebar Navigation Items */
+.adm-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.75rem 1.25rem;
+    margin: 0.2rem 0.875rem;
+    border-radius: 0.875rem;
+    color: #94A3B8;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    border-left: 3px solid transparent;
+}
+
+.adm-nav-link:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateX(2px);
+}
+
+.adm-nav-link.active {
+    color: #FFFFFF;
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.18) 0%, rgba(99, 102, 241, 0.03) 100%);
+    border-left: 3px solid var(--adm-primary);
+    font-weight: 600;
+}
+
+.adm-nav-link iconify-icon {
+    font-size: 1.25rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+}
+
+.adm-nav-link:hover iconify-icon {
+    transform: scale(1.1);
+    color: #A5B4FC;
+}
+
+.adm-nav-link.active iconify-icon {
+    color: #818CF8;
+}
+
+/* Sidebar Heading */
+.adm-nav-heading {
+    font-family: var(--font-body);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #64748B;
+    padding: 1.25rem 1.5rem 0.5rem;
+}
+
+/* Topbar Header */
+.adm-modern-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+    padding: 0.875rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Refresh Button Spin Animation */
+@keyframes admSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.spin-1s {
+    animation: admSpin 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Notification Pulse Animation */
+@keyframes admPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.2); }
+}
+
+.pulse-badge {
+    animation: admPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Interactive Elements & Animations */
+.smooth-all {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-press:active {
+    transform: scale(0.95) !important;
+}
+
+.icon-scale:hover {
+    transform: scale(1.1);
+}
+
+/* Glassmorphism Cards */
+.adm-glass-card {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.85);
+    border-radius: 1.5rem; /* rounded-3xl / 24px */
+    box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.adm-glass-card:hover {
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.07), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+/* Gradient Stat Cards */
+.adm-stat-card {
+    position: relative;
+    border-radius: 1.5rem; /* rounded-3xl */
+    padding: 1.5rem;
+    overflow: hidden;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    background: #FFFFFF;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px -1px rgba(15, 23, 42, 0.03);
+}
+
+.adm-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
+}
+
+/* Decorative Blur Blobs */
+.adm-card-blob {
+    position: absolute;
+    right: -15px;
+    top: -15px;
+    width: 90px;
+    height: 90px;
+    border-radius: 9999px;
+    filter: blur(28px);
+    opacity: 0.65;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.adm-stat-card:hover .adm-card-blob {
+    opacity: 0.9;
+    transform: scale(1.15);
+}
+
+/* Stat Card Colors */
+.adm-stat-purple {
+    background: linear-gradient(135deg, #FFFFFF 0%, #F0E6FF 100%);
+}
+.adm-stat-purple .adm-card-blob {
+    background: #C084FC;
+}
+
+.adm-stat-teal {
+    background: linear-gradient(135deg, #FFFFFF 0%, #E6FFFA 100%);
+}
+.adm-stat-teal .adm-card-blob {
+    background: #5EEAD4;
+}
+
+.adm-stat-blue {
+    background: linear-gradient(135deg, #FFFFFF 0%, #EBF8FF 100%);
+}
+.adm-stat-blue .adm-card-blob {
+    background: #7DD3FC;
+}
+
+.adm-stat-orange {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFF5EB 100%);
+}
+.adm-stat-orange .adm-card-blob {
+    background: #FDBA74;
+}
+
+/* SVG Chart Path Animations */
+@keyframes svgPathDash {
+    from {
+        stroke-dashoffset: 1400;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.svg-animated-path {
+    stroke-dasharray: 1400;
+    stroke-dashoffset: 1400;
+    animation: svgPathDash 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Animated Donut Segments */
+@keyframes donutSpin {
+    from {
+        stroke-dashoffset: 600;
+    }
+    to {
+        stroke-dashoffset: var(--target-dashoffset, 0);
+    }
+}
+
+.donut-segment {
+    animation: donutSpin 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* Quick Action Buttons */
+.adm-action-card {
+    background: #FFFFFF;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 1.5rem; /* rounded-3xl */
+    padding: 1.25rem 1.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    text-decoration: none !important;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.adm-action-card:hover {
+    transform: translateY(-3px);
+    border-color: #CBD5E1;
+}
+
+.adm-action-card:active {
+    transform: scale(0.96);
+}
+
+.adm-action-indigo:hover {
+    box-shadow: 0 15px 25px -4px rgba(99, 102, 241, 0.18);
+    border-color: rgba(99, 102, 241, 0.4);
+}
+
+.adm-action-emerald:hover {
+    box-shadow: 0 15px 25px -4px rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+
+.adm-action-amber:hover {
+    box-shadow: 0 15px 25px -4px rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.adm-action-rose:hover {
+    box-shadow: 0 15px 25px -4px rgba(244, 63, 94, 0.18);
+    border-color: rgba(244, 63, 94, 0.4);
+}
+
+/* SVG Chart Tooltips */
+.chart-tooltip {
+    position: absolute;
+    background: rgba(15, 23, 42, 0.92);
+    backdrop-filter: blur(8px);
+    color: #FFFFFF;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    font-family: var(--font-body);
+    font-weight: 600;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 50;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+}
+
+.chart-tooltip.is-active {
+    opacity: 1;
+    transform: translateY(0);
+}

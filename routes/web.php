@@ -123,6 +123,9 @@ Route::prefix('user')->name('user.')->group(function () {
  */
 Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('dashboard/telemetry', [DashboardController::class, 'telemetry'])->name('dashboard.telemetry');
+    Route::get('dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
+    Route::get('quick-search', [DashboardController::class, 'quickSearch'])->name('quickSearch');
 
     /* CRUD Category & Product memakai modal di halaman index —
        create/show/edit tidak dipakai (tidak ada view-nya) */

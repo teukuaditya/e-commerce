@@ -100,3 +100,8 @@
   }
 </style>
 @endpush
+
+@push('scripts')
+{{-- isotope filter grid kategori (plugin dibutuhkan hanya di halaman ini) --}}
+<script src="{{ asset('vendor/isotope/isotope.pkgd.min.js') }}"></script>
+@endpush

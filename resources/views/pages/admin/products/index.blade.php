@@ -85,7 +85,7 @@
                                                     data-brand="{{ $product->brand }}" data-title="{{ $product->title }}"
                                                     data-description="{{ $product->description }}"
                                                     data-price="{{ $product->price }}"
-                                                    data-size="{{ implode(',', $product->size) }}"
+                                                    data-size="{{ is_array($product->size) ? implode(',', $product->size) : ($product->size ?? '') }}"
                                                     data-stock="{{ $product->stock }}"
                                                     data-weight="{{ $product->weight }}"
                                                     data-image="{{ is_array($product->image) ? implode(',', $product->image) : $product->image }}"><i
@@ -94,7 +94,7 @@
                                                 <!-- Button to delete product -->
                                                 <form action="{{ route('admin.products.destroy', $product->id) }}"
                                                     method="POST" style="display:inline"
-                                                    onsubmit="return confirm('Are you sure you want to delete this product?');">
+                                                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="dropdown-item text-danger">

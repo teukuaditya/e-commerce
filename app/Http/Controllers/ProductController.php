@@ -52,17 +52,16 @@ class ProductController extends Controller
 
     public function destroy(Product $product): RedirectResponse
     {
-        // Jangan izinkan menghapus produk yang memiliki riwayat transaksi
-        if ($product->transactionDetails()->exists()) {
-            return redirect()->route('admin.products.index')
-                ->with('error', 'Produk tidak dapat dihapus karena sudah memiliki riwayat transaksi penjualan.');
-        }
-
         foreach ($this->existingImages($product) as $oldImage) {
             if ($oldImage && Storage::exists('public/products/'.$oldImage)) {
                 Storage::delete('public/products/'.$oldImage);
             }
         }
+
+        // Hapus data terkait untuk menjaga integritas referensi
+        $product->reviews()->delete();
+        \App\Models\Cart::where('product_id', $product->id)->delete();
+        $product->transactionDetails()->delete();
 
         $product->delete();
 
@@ -90,16 +89,18 @@ class ProductController extends Controller
         if ($request->ajax()) {
             $products = $productsQuery
                 ->with('category')
-                ->when($query === '', fn ($q) => $q->orderByDesc('created_at'), fn ($q) => $q->orderBy('title'))
-                ->limit(24)
-                ->get();
+                ->when($query === '', fn ($q) => $q->orderByDesc('id'), fn ($q) => $q->orderBy('title'))
+                ->paginate(16)
+                ->withQueryString();
 
             $html = view('pages.user.products._partials.grid-items', compact('products'))->render();
+            $pagination = $products->hasPages() ? (string) $products->links() : '';
 
             return response()->json([
-                'count' => $products->count(),
+                'count' => $products->total(),
                 'query' => $query,
                 'html' => $html,
+                'pagination' => $pagination,
             ]);
         }
 

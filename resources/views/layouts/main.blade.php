@@ -75,11 +75,8 @@
     <!--===============================================================================================-->
     {{-- daterangepicker/moment, parallax100, MagnificPopup, perfect-scrollbar, sweetalert
         DIHAPUS — tidak ada satu view yang memakai plugin tersebut --}}
-    <!--===============================================================================================-->
-    <script src="{{ asset('vendor/slick/slick.min.js') }}"></script>
-    <script src="{{ asset('js/slick-custom.js') }}"></script>
-    <!--===============================================================================================-->
-    <script src="{{ asset('vendor/isotope/isotope.pkgd.min.js') }}"></script>
+    {{-- slick & isotope pindah kondisional: hanya halaman yang benar2 memakainya
+        (slick: detail produk; isotope: filter/search & halaman kategori) --}}
     <!--===============================================================================================-->
     <script src="{{ asset('js/main.js') }}"></script>
     <script>

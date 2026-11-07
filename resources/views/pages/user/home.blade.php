@@ -5,11 +5,11 @@
 @section('body-class', 'page-home')
 
 @section('content')
-<!-- Slider -->
+<!-- Slider: 2 gambar, crossfade mandiri (tanpa slick) -->
 <section class="section-slide">
-    <div class="wrap-slick1">
-        <div class="slick1">
-            <div class="item-slick1" style="background-image: url(images/slide-02.jpg);">
+    <div class="wrap-hero">
+        <div class="hero-track">
+            <div class="item-slick1 hero-slide is-active" style="background-image: url('{{ asset('images/slide-02.jpg') }}');">
                 <div class="container h-full">
                     <div class="flex-col-l-m h-full p-t-100 p-b-30 respon5">
                         <div class="layer-slick1 animated visible-false" data-appear="rollIn" data-delay="0">
@@ -34,7 +34,7 @@
                 </div>
             </div>
 
-            <div class="item-slick1" style="background-image: url(images/slide-01.jpg);">
+            <div class="item-slick1 hero-slide" style="background-image: url('{{ asset('images/slide-01.jpg') }}');">
                 <div class="container h-full">
                     <div class="flex-col-l-m h-full p-t-100 p-b-30 respon5">
                         <div class="layer-slick1 animated visible-false" data-appear="fadeInDown" data-delay="0">
@@ -59,34 +59,10 @@
                 </div>
             </div>
 
-            <div class="item-slick1" style="background-image: url(images/slide-03.jpg);;">
-                <div class="container h-full">
-                    <div class="flex-col-l-m h-full p-t-100 p-b-30 respon5">
-                        <div class="layer-slick1 animated visible-false" data-appear="rotateInDownLeft"
-                            data-delay="0">
-                            <span class="ltext-101 cl2 respon2">
-                                Men Collection 2025
-                            </span>
-                        </div>
-
-                        <div class="layer-slick1 animated visible-false" data-appear="rotateInUpRight"
-                            data-delay="800">
-                            <h2 class="ltext-201 cl2 p-t-19 p-b-43 respon1">
-                                New arrivals
-                            </h2>
-                        </div>
-
-                        <div class="layer-slick1 animated visible-false" data-appear="rotateIn"
-                            data-delay="1600">
-                            <a href="{{ route('user.products.index') }}"
-                                class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04">
-                                Shop Now
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
+
+        <button class="arrow-slick1 prev-slick1" type="button" aria-label="Slide sebelumnya"><i class="zmdi zmdi-caret-left"></i></button>
+        <button class="arrow-slick1 next-slick1" type="button" aria-label="Slide berikutnya"><i class="zmdi zmdi-caret-right"></i></button>
     </div>
 </section>
 
@@ -207,6 +183,61 @@
 </div>
 {{-- style navbar & grid ada di theme-upgrade.css dan main.css --}}
 
+@push('styles')
+<style>
+  /* ===== Hero slider mandiri (crossfade 2 gambar, tanpa slick) =====
+     Geometry mengikuti .section-slide yang sudah 100vh di navbar-floating.css,
+     media <=991px mengikuti aturan main.css (100vh - 70px utk navbar mobile). */
+  .wrap-hero {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .hero-track {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .hero-track .item-slick1 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    z-index: 1;
+    pointer-events: none;
+    transition: opacity 1s ease;
+  }
+
+  /* Slide aktif di depan & interaktif. Slide lama fade-out di belakangnya
+     sehingga transisi benar-benar crossfade (langsung gambar ke gambar). */
+  .hero-track .item-slick1.is-active {
+    opacity: 1;
+    z-index: 2;
+    pointer-events: auto;
+  }
+
+  @media (max-width: 991px) {
+    .wrap-hero,
+    .hero-track,
+    .hero-track .item-slick1 {
+      height: calc(100vh - 70px) !important;
+    }
+  }
+
+  /* Tombol panah (styling .arrow-slick1 dari main.css masih dipakai) */
+  .wrap-hero .arrow-slick1 {
+    cursor: pointer;
+    background-color: transparent;
+    border: none;
+  }
+</style>
+@endpush
+
 @push('scripts')
 <script>
     $(document).ready(function () {
@@ -222,6 +253,75 @@
         }
         $(window).on('scroll', updateNavbar);
         updateNavbar(); // cek langsung saat load
+
+        /* ===== Hero slider mandiri: crossfade + animasi layer (animate.css) =====
+           Markup memakai atribut sama dgn versi slick dulu:
+           data-appear = nama animasi animate.css utk layer
+           data-delay  = jeda muncul layer (ms)
+           visible-false/visible-true dari util.css menyembunyikan layer sblm anim. */
+        var $slides = $('.hero-track .hero-slide');
+        var heroCurrent = 0;
+        var heroTimer = null;
+        var layerTimers = [];
+
+        // Kumpulkan semua nama animasi utk dihapus dgn pasti saat reset layer
+        var $layers = $slides.find('.layer-slick1');
+        var allAppears = [];
+        $layers.each(function () {
+            var name = $(this).data('appear');
+            if (allAppears.indexOf(name) === -1) allAppears.push(name);
+        });
+
+        function clearLayerTimers() {
+            for (var i = 0; i < layerTimers.length; i++) clearTimeout(layerTimers[i]);
+            layerTimers = [];
+        }
+
+        // Set semua layer sembunyi, lalu mainkan animasi layer dlm slide aktif
+        function playLayers($activeSlide) {
+            clearLayerTimers();
+            $layers.each(function () {
+                $(this)
+                    .removeClass(allAppears.join(' ') + ' visible-true')
+                    .addClass('visible-false');
+                this.offsetWidth; // paksa reflow agar animasi animate.css bisa diputar ulang
+            });
+            $activeSlide.find('.layer-slick1').each(function () {
+                var $el = $(this);
+                var delay = parseInt($el.data('delay'), 10) || 0;
+                layerTimers.push(setTimeout(function () {
+                    $el.removeClass('visible-false')
+                       .addClass($el.data('appear') + ' visible-true');
+                }, delay));
+            });
+        }
+
+        function heroGo(idx) {
+            heroCurrent = (idx + $slides.length) % $slides.length;
+            var $active = $slides.eq(heroCurrent);
+            $slides.removeClass('is-active');
+            $active.addClass('is-active');
+            playLayers($active);
+        }
+
+        function restartAuto() {
+            if (heroTimer) clearInterval(heroTimer);
+            heroTimer = setInterval(function () {
+                heroGo(heroCurrent + 1);
+            }, 6000);
+        }
+
+        heroGo(0);      // animasi layer slide pertama saat load
+        restartAuto();  // autoplay 6s
+
+        $('.wrap-hero .next-slick1').on('click', function () {
+            heroGo(heroCurrent + 1);
+            restartAuto();
+        });
+        $('.wrap-hero .prev-slick1').on('click', function () {
+            heroGo(heroCurrent - 1);
+            restartAuto();
+        });
 
         // Filter kategori home — jQuery show/hide (tanpa Isotope)
         $('.filter-tope-group button').on('click', function () {
