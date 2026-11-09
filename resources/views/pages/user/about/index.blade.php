@@ -247,16 +247,20 @@
 
     /* ---- hero ---- */
     /* Hero ditarik ke atas (menutup padding main 100px) supaya navbar
-       floating kaca melayang di atas hero gelap — tanpa space putih. */
+       floating kaca melayang di atas hero gelap — tanpa space putih.
+       FULL SCREEN: gambar mengisi tepat 1 layar; konten dicenter vertikal. */
     .about-hero {
         background: linear-gradient(120deg, rgba(20,20,26,.92), rgba(20,20,26,.62) 55%, rgba(79,70,229,.28)),
                     url('{{ asset('images/about-01.jpg') }}') center/cover no-repeat;
         color: #fff;
         margin-top: -100px;               /* tandingi padding-top main (desktop) */
-        padding: 158px 0 96px;            /* 100 navbar + 58 jarak aman */
+        min-height: 100vh;                /* ← GAMBAR MEMENUHI LAYAR PENUH */
+        display: flex;
+        align-items: center;              /* konten vertical center, tidak mepet atas */
+        padding: 120px 0;                 /* udara nyaman, sisanya diisi gambar */
     }
     @media (max-width: 991.98px) {
-        .about-hero { margin-top: -86px; padding: 128px 0 80px; } /* tandingi padding main mobile */
+        .about-hero { margin-top: -86px; padding: 96px 0; } /* navbar mobile overlay */
     }
     .about-crumb { font-size: 13px; opacity: .72; margin-bottom: 26px; }
     .about-crumb a { color: #fff; text-decoration: none; }

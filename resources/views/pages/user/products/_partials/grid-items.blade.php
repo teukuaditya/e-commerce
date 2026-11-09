@@ -1,6 +1,7 @@
 {{-- Partial: daftar item kartu produk (4 produk ke kanan pada md/laptop/desktop) --}}
 @forelse ($products as $product)
-<div class="col-6 col-sm-6 col-md-3 p-b-35 product-grid-item isotope-item {{ strtolower($product->category->category_name ?? '') }}">
+<div class="col-6 col-sm-6 col-md-3 p-b-35 product-grid-item grid-enter isotope-item {{ strtolower($product->category->category_name ?? '') }}"
+    style="animation-delay:{{ $loop->index * 30 }}ms">
     <!-- Block2 -->
     <div class="block2">
         <div class="block2-pic hov-img0">

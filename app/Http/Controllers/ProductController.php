@@ -18,8 +18,9 @@ class ProductController extends Controller
     public function index(): View
     {
         $categories = Category::all();
-        // with('category') mencegah N+1: tiap baris tabel memakai $product->category
-        $products = Product::with('category')->get();
+        // with('category') + withCount('transactionDetails') mencegah N+1:
+        // tiap baris memakai $product->category & hitungan riwayat transaksi (badge proteksi delete).
+        $products = Product::with('category')->withCount('transactionDetails')->get();
 
         return view('pages.admin.products.index', compact('categories', 'products'));
     }

@@ -115,6 +115,18 @@
         // Grid kini layout CSS murni (server-side filter); AJAX mengganti
         // inner-HTML #productGrid — tidak ada plugin basis-data (isotope) lagi.
 
+        // Animasi masuk kartu (staggered) setelah AJAX mengganti isi grid —
+        // filter/search terasa HALUS (ease-out panjang + fade-up bertahap).
+        function playGridEnter() {
+            var $cards = $grid.children('.product-grid-item');
+            $cards.removeClass('grid-enter');
+            $cards.each(function (i, el) {
+                // stagger 30ms/kartu (maks 600ms) supaya gelombangnya lembut
+                el.style.animationDelay = Math.min(i * 30, 600) + 'ms';
+                el.classList.add('grid-enter');
+            });
+        }
+
         // Fungsi fetch data produk via AJAX (live search & pagination)
         function fetchProducts(targetUrl, query, category, shouldScroll) {
             if (searchXhr) searchXhr.abort();
@@ -132,6 +144,8 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 success: function(res) {
                     $grid.html(res.html);
+                    playGridEnter();
+
                     $pagination.html(res.pagination || '');
 
                     // Update info bar
@@ -238,12 +252,37 @@
     margin-top: 24px;
   }
   .product-grid-transition {
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .product-grid-transition.is-loading {
-    opacity: 0.45;
+    opacity: 0.35;
     pointer-events: none;
-    transform: scale(0.995);
+    transform: scale(0.99);
+  }
+
+  /* ---- Filter HALUS: kartu masuk fade-up bertahap (staggered) ----
+     Ditambahkan JS (playGridEnter) di setiap isi grid baru hasil
+     AJAX filter/search/pagination. `both` = delay ter-utamakan. */
+  .product-grid-item.grid-enter {
+    animation: productGridEnter 0.6s cubic-bezier(0.16, 0.84, 0.44, 1) both;
+  }
+
+  @keyframes productGridEnter {
+    from {
+      opacity: 0;
+      transform: translateY(22px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Hormati live setting user tdk animasi agar tidak memaksa motion */
+  @media (prefers-reduced-motion: reduce) {
+    .product-grid-item.grid-enter {
+      animation: none;
+    }
   }
 
   /* 4 Produk ke kanan di semua layar >= md (sesuai permintaan: harus 4 per baris) */

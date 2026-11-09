@@ -71,6 +71,17 @@
         var $grid = $('#productGrid');
         var $pagination = $('#paginationBlock');
 
+        // Animasi masuk kartu (staggered) setelah AJAX mengganti isi grid —
+        // sama dengan halaman catalog, supaya search terasa halus.
+        function playGridEnter() {
+            var $play = $('#productGrid .product-grid-item');
+            $play.removeClass('grid-enter');
+            $play.each(function (i, el) {
+                el.style.animationDelay = Math.min(i * 30, 600) + 'ms';
+                el.classList.add('grid-enter');
+            });
+        }
+
         function fetchSearch(url, q, shouldScroll) {
             if (searchXhr) searchXhr.abort();
             $grid.addClass('is-loading');
@@ -82,6 +93,7 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 success: function(res) {
                     $grid.html(res.html);
+                    playGridEnter();
                     $('#searchCount').text('Found ' + res.count + (res.count === 1 ? ' product' : ' products'));
                     if (res.pagination) {
                         $pagination.html(res.pagination);
@@ -129,8 +141,26 @@
 @push('styles')
 <style>
   .search-hero { margin-top: 24px; }
-  .product-grid-transition { transition: opacity 0.2s ease; }
-  .product-grid-transition.is-loading { opacity: 0.45; pointer-events: none; }
+  .product-grid-transition {
+    transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .product-grid-transition.is-loading { opacity: 0.35; pointer-events: none; transform: scale(0.99); }
+
+  /* ---- Filter HALUS: kartu masuk fade-up bertahap (staggered) —
+     sama dengan halaman catalog. CSS inline animation-delay di partial
+     dipakai untuk load pertama; playGridEnter mengatur ulang saat AJAX. */
+  .product-grid-item.grid-enter {
+    animation: productGridEnter 0.6s cubic-bezier(0.16, 0.84, 0.44, 1) both;
+  }
+
+  @keyframes productGridEnter {
+    from { opacity: 0; transform: translateY(22px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .product-grid-item.grid-enter { animation: none; }
+  }
 
   /* 4 produk per baris mulai md samaris dengan halaman catalog (permintaan user) */
   @media (min-width: 768px) {

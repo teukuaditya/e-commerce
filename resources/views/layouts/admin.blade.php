@@ -144,12 +144,12 @@
                     el.style.opacity = '1';
                 });
 
-                // Auto dismiss
+                // Auto dismiss (error lebih lama supaya jelas terbaca)
                 setTimeout(function () {
                     el.style.transform = 'translateX(20px)';
                     el.style.opacity = '0';
                     setTimeout(function () { el.remove(); }, 320);
-                }, 3200);
+                }, isErr ? 6000 : 3200);
             };
 
             // Session flash alerts
