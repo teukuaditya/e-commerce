@@ -55,8 +55,11 @@
                     style="width: 42px; height: 42px; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"
                     aria-label="Notifications">
                 <iconify-icon icon="lucide:bell" width="18" height="18"></iconify-icon>
-                <!-- Pulse Badge -->
-                <span class="position-absolute" style="top: 8px; right: 8px; width: 8px; height: 8px; display: inline-flex;">
+                @php
+                    $notifCount = isset($notifications) ? count($notifications) : 0;
+                @endphp
+                <!-- Pulse Badge (hanya muncul bila ada notifikasi) -->
+                <span id="notifPulseWrapper" class="position-absolute {{ $notifCount > 0 ? '' : 'd-none' }}" style="top: 8px; right: 8px; width: 8px; height: 8px; display: inline-flex;">
                     <span class="pulse-badge position-absolute" style="width: 100%; height: 100%; border-radius: 9999px; background: #6366F1; opacity: 0.75;"></span>
                     <span style="position: relative; width: 8px; height: 8px; border-radius: 9999px; background: #4F46E5;"></span>
                 </span>
@@ -65,11 +68,11 @@
                 <div class="px-3 py-2.5 border-bottom d-flex align-items-center justify-content-between" style="background: #F8FAFC;">
                     <span class="font-clash" style="font-weight: 700; font-size: 0.88rem; color: #0F172A;">Notifikasi Toko</span>
                     <span class="badge" id="notifBadgeCount" style="background: rgba(99, 102, 241, 0.1); color: #6366F1; font-size: 0.7rem; border-radius: 9999px; padding: 4px 8px;">
-                        {{ isset($notifications) ? count($notifications) : 3 }} Baru
+                        {{ $notifCount }} Baru
                     </span>
                 </div>
                 <div class="list-group list-group-flush" id="notifListContainer" style="max-height: 280px; overflow-y: auto;">
-                    @if(isset($notifications) && count($notifications) > 0)
+                    @if($notifCount > 0)
                         @foreach($notifications as $notif)
                             <a href="{{ $notif['url'] }}" class="list-group-item list-group-item-action p-3 border-bottom text-decoration-none">
                                 <div class="d-flex align-items-start gap-2">
@@ -84,28 +87,10 @@
                             </a>
                         @endforeach
                     @else
-                        <a href="{{ route('admin.transactions.index') }}" class="list-group-item list-group-item-action p-3 border-bottom text-decoration-none">
-                            <div class="d-flex align-items-start gap-2">
-                                <span class="p-1.5 rounded-circle text-white d-flex align-items-center justify-content-center" style="background: #10B981;">
-                                    <iconify-icon icon="lucide:shopping-bag" width="14" height="14"></iconify-icon>
-                                </span>
-                                <div class="flex-grow-1">
-                                    <p class="mb-0 font-weight-bold text-slate-800" style="font-size: 0.8rem;">Pesanan baru #DRVN-8942</p>
-                                    <span class="text-muted font-mono-code" style="font-size: 0.7rem;">Rp 850.000 &bull; baru saja</span>
-                                </div>
-                            </div>
-                        </a>
-                        <a href="{{ route('admin.transactions.index') }}" class="list-group-item list-group-item-action p-3 border-bottom text-decoration-none">
-                            <div class="d-flex align-items-start gap-2">
-                                <span class="p-1.5 rounded-circle text-white d-flex align-items-center justify-content-center" style="background: #6366F1;">
-                                    <iconify-icon icon="lucide:check-circle-2" width="14" height="14"></iconify-icon>
-                                </span>
-                                <div class="flex-grow-1">
-                                    <p class="mb-0 font-weight-bold text-slate-800" style="font-size: 0.8rem;">Pembayaran diverifikasi</p>
-                                    <span class="text-muted font-mono-code" style="font-size: 0.7rem;">Order #DRVN-8939 &bull; 15 mnt lalu</span>
-                                </div>
-                            </div>
-                        </a>
+                        <div class="p-4 text-center text-muted font-jakarta" style="font-size: 0.82rem;">
+                            <iconify-icon icon="lucide:bell-off" width="28" height="28" class="text-slate-400 mb-1 d-block mx-auto"></iconify-icon>
+                            Belum ada notifikasi pesanan
+                        </div>
                     @endif
                 </div>
                 <div class="p-2 text-center border-top" style="background: #F8FAFC;">

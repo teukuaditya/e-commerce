@@ -100,14 +100,14 @@
     $(document).ready(function() {
         // Menampilkan form edit setelah tombol "Edit Profile" diklik
         $('#edit-button').click(function() {
-            $('#user-info').hide(); // Sembunyikan data user
-            $('#edit-form').show(); // Tampilkan form untuk mengedit
+            $('#user-info').hide();
+            $('#edit-form').show();
         });
 
         // Membatalkan edit dan kembali ke tampilan data pengguna
         $('#cancel-button').click(function() {
-            $('#edit-form').hide(); // Sembunyikan form edit
-            $('#user-info').show(); // Tampilkan data user kembali
+            $('#edit-form').hide();
+            $('#user-info').show();
         });
     });
 </script>

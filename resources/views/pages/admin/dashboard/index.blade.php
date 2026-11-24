@@ -531,7 +531,7 @@
 
                 <!-- Activity Items List (Live from Database) -->
                 <div class="d-flex flex-column gap-3" id="liveActivityFeedContainer">
-                    @foreach($activityFeed as $item)
+                    @forelse($activityFeed as $item)
                         <div class="d-flex align-items-start align-items-sm-center justify-content-between flex-column flex-sm-row gap-3 p-3 rounded-2xl smooth-all border border-slate-100 hover:border-slate-200"
                              style="background: #FFFFFF; border-radius: 16px;">
                             <div class="d-flex align-items-center gap-3">
@@ -555,7 +555,12 @@
                                 <span class="text-slate-400 font-mono-code" style="font-size: 0.72rem;">{{ $item['time_ago'] }}</span>
                             </div>
                         </div>
-                    @endforeach
+                    @empty
+                        <div class="p-4 text-center text-muted font-jakarta" style="background: #FFFFFF; border-radius: 16px; border: 1px dashed #E2E8F0; font-size: 0.85rem;">
+                            <iconify-icon icon="lucide:inbox" width="32" height="32" class="text-slate-400 mb-2 d-block mx-auto"></iconify-icon>
+                            Belum ada aktivitas pesanan baru
+                        </div>
+                    @endforelse
                 </div>
 
             </div>

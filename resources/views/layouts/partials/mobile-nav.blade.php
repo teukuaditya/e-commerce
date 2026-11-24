@@ -35,9 +35,9 @@
                     </div>
                 </a>
 
-                <a href="#" class="dis-block icon-header-item cl2 hov-cl1 trans-04 p-r-11 p-l-10 icon-header-noti"
-                    data-notify="0">
-                    <i class="zmdi zmdi-favorite-outline"></i>
+                <a href="{{ route('user.wishlist.index') }}" class="dis-block icon-header-item cl2 hov-cl1 trans-04 p-r-11 p-l-10 icon-header-noti"
+                    data-notify="{{ $wishlistCount }}">
+                    <i class="zmdi {{ request()->routeIs('user.wishlist.*') ? 'zmdi-favorite' : 'zmdi-favorite-outline' }}"></i>
                 </a>
                 <!-- Dropdown User Info -->
                 <div class="tu-dd">

@@ -21,6 +21,18 @@ class OrderController extends Controller
             ->with(['details.product'])
             ->get();
 
+        // Auto-sinkronisasi status transaksi 'pending' dengan Midtrans API
+        // (Sangat membantu saat webhook belum tembus di lingkungan local dev)
+        foreach ($transactions as $transaction) {
+            if ($transaction->transaction_status === 'pending') {
+                $verifiedStatus = $this->verifyWithMidtrans($transaction->order_id);
+                if ($verifiedStatus && $verifiedStatus !== 'pending') {
+                    $transaction->transaction_status = $verifiedStatus;
+                    $transaction->save();
+                }
+            }
+        }
+
         return view('pages.user.order.index', compact('transactions'));
     }
 

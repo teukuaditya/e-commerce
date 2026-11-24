@@ -5,7 +5,9 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Wishlist;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
@@ -37,9 +39,17 @@ class ProductController extends Controller
         $products = $productsQuery->paginate(16)->withQueryString();
         $categories = Category::all();
 
+        $wishlistedIds = [];
+        if (Auth::check()) {
+            $wishlistedIds = Wishlist::where('user_id', Auth::id())
+                ->whereIn('product_id', $products->pluck('id'))
+                ->pluck('product_id')
+                ->all();
+        }
+
         // AJAX request: return partial HTML for instant live search & seamless pagination
         if ($request->ajax()) {
-            $gridHtml = view('pages.user.products._partials.grid-items', compact('products'))->render();
+            $gridHtml = view('pages.user.products._partials.grid-items', compact('products', 'wishlistedIds'))->render();
             $paginationHtml = $products->hasPages() ? (string) $products->links() : '';
 
             return response()->json([
@@ -51,7 +61,7 @@ class ProductController extends Controller
             ]);
         }
 
-        return view('pages.user.products.index', compact('products', 'categories', 'query'));
+        return view('pages.user.products.index', compact('products', 'categories', 'query', 'wishlistedIds'));
     }
 
     public function show($id)

@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Transaction;
+use App\Models\Wishlist;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
@@ -38,14 +40,42 @@ class AppServiceProvider extends ServiceProvider
          * untuk setiap view yang di-render (layout + tiap partial).
          */
         $cartCount = null;
-        view()->composer('*', function ($view) use (&$cartCount) {
+        $wishlistCount = null;
+        view()->composer('*', function ($view) use (&$cartCount, &$wishlistCount) {
             if ($cartCount === null) {
                 $cartCount = Auth::check()
                     ? (int) Cart::where('user_id', Auth::id())->sum('quantity')
                     : 0;
             }
+            if ($wishlistCount === null) {
+                $wishlistCount = Auth::check()
+                    ? (int) Wishlist::where('user_id', Auth::id())->count()
+                    : 0;
+            }
 
             $view->with('cartCount', $cartCount);
+            $view->with('wishlistCount', $wishlistCount);
+        });
+
+        /*
+         * Notifikasi toko di topbar admin (hanya query jika view topbar di-render).
+         */
+        view()->composer('layouts.partials.admin-topbar', function ($view) {
+            if (! $view->offsetExists('notifications')) {
+                $notifications = Transaction::latest('id')->limit(5)->get()->map(function ($nt) {
+                    $isPaid = $nt->transaction_status === 'settlement';
+                    $time = $nt->transaction_time ?? $nt->created_at;
+                    return [
+                        'title' => $isPaid ? 'Pembayaran #' . $nt->order_id : 'Pesanan Baru #' . $nt->order_id,
+                        'desc' => 'Rp ' . number_format($nt->gross_amount, 0, ',', '.') . ' • ' . ($nt->customer_name ?? 'Customer'),
+                        'time_ago' => $time ? \Carbon\Carbon::parse($time)->diffForHumans() : 'baru saja',
+                        'icon' => $isPaid ? 'lucide:check-circle-2' : 'lucide:shopping-bag',
+                        'icon_bg' => $isPaid ? '#6366F1' : '#10B981',
+                        'url' => route('admin.transactions.index'),
+                    ];
+                });
+                $view->with('notifications', $notifications);
+            }
         });
 
         /*

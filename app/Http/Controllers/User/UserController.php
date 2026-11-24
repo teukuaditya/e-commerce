@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AddressSaveRequest;
 use App\Http\Requests\AddressUpdateRequest;
 use App\Http\Requests\ProfileRequest;
+use App\Models\ActivityLog;
 use App\Support\AddressFormatter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -123,5 +125,52 @@ class UserController extends Controller
     public function showEditForm()
     {
         return view('pages.user.profile.index');
+    }
+
+    /**
+     * Hapus akun sendiri (permanen).
+     */
+    public function destroyAccount(Request $request)
+    {
+        $user = auth()->user();
+
+        if ($user->role === 'admin') {
+            return redirect()->back()->with('error', 'Akun admin tidak dapat dihapus dari sini.');
+        }
+
+        // Akun biasa: wajib konfirmasi password.
+        // Akun Google: sudah terautentikasi via Google (password acak tidak diketahui user).
+        if (empty($user->google_id)) {
+            $request->validate([
+                'password' => ['required', 'current_password'],
+            ], [
+                'password.required' => 'Masukkan password untuk konfirmasi hapus akun.',
+                'password.current_password' => 'Password yang Anda masukkan salah.',
+            ]);
+        }
+
+        $name = $user->name;
+        $email = $user->email;
+
+        Auth::logout();
+        $user->delete();
+
+        ActivityLog::create([
+            'type' => 'user_deleted',
+            'title' => 'Akun Dihapus: '.$name,
+            'details' => $email.' • akun dihapus oleh pemilik',
+            'badge' => 'Deleted',
+            'badge_color' => '#DC2626',
+            'badge_bg' => 'rgba(220, 38, 38, 0.12)',
+            'icon' => 'lucide:user-minus',
+            'icon_color' => '#DC2626',
+            'icon_bg' => 'rgba(220, 38, 38, 0.12)',
+            'occurred_at' => now(),
+        ]);
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/')->with('success', 'Akun Anda berhasil dihapus.');
     }
 }

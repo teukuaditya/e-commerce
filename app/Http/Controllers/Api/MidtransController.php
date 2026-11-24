@@ -135,13 +135,24 @@ class MidtransController extends Controller
                 'token' => $snapToken,
             ]);
         } catch (\Exception $e) {
+            $message = $e->getMessage();
+
             Log::error('Midtrans getSnapToken error', [
-                'message' => $e->getMessage(),
+                'message' => $message,
                 'params' => $params,
             ]);
 
+            $isUnauthorized = str_contains($message, '401')
+                || str_contains(strtolower($message), 'unauthorized');
+
+            if ($isUnauthorized) {
+                return response()->json([
+                    'error' => 'Kunci Midtrans ditolak (401 Unauthorized). Salin ulang Server Key & Client Key dari Midtrans Dashboard > Settings > Access Keys, lalu perbarui MIDTRANS_SERVER_KEY dan MIDTRANS_CLIENT_KEY di .env dan jalankan: php artisan config:clear. Jika IP Whitelist aktif, tambahkan IP publik server atau nonaktifkan untuk sandbox.',
+                ], 500);
+            }
+
             return response()->json([
-                'error' => 'Gagal membuat Snap Token. Cek konfigurasi Midtrans / payload order.',
+                'error' => 'Gagal membuat Snap Token: '.$message,
             ], 500);
         }
     }

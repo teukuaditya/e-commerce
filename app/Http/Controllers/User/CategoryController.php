@@ -15,14 +15,7 @@ class CategoryController extends Controller
         // untuk label jumlah produk ("24 Produk") di pojok kartu.
         $categories = Category::withCount('products')->get();
 
-        // 4 produk terbaru (dari DB) untuk section NEW ARRIVALS.
-        // with('category') mencegah N+1 saat kartu produk membaca kategori.
-        $newArrivals = Product::with('category')
-            ->latest('id')
-            ->take(4)
-            ->get();
-
-        return view('pages.user.categories.index', compact('categories', 'newArrivals'));
+        return view('pages.user.categories.index', compact('categories'));
     }
 
     // Menampilkan produk berdasarkan kategori

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Transaction;
@@ -157,18 +158,6 @@ class DashboardController extends Controller
         $monthlyTarget = 50000000; // Rp 50.000.000
         $earningsPercentage = $monthlyTarget > 0 ? ($earningsThisMonth / $monthlyTarget) * 100 : 0;
 
-        // Fallback to prompt baseline if database happens to be pristine empty
-        if ($earningsThisMonth <= 0) {
-            $earningsThisMonth = 12450000;
-            $earningsPercentage = 84.50;
-        }
-        if ($earningsThisYear <= 0) {
-            $earningsThisYear = 148200000;
-        }
-        if ($pendingRequests <= 0) {
-            $pendingRequests = 24;
-        }
-
         // 2. Weekly Telemetry (Mon - Sun of current week)
         $startOfWeek = $now->copy()->startOfWeek();
         $weeklyDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -179,12 +168,6 @@ class DashboardController extends Controller
             $dayRev = (float) Transaction::where('transaction_status', 'settlement')
                 ->whereDate('transaction_time', $day->toDateString())
                 ->sum('gross_amount');
-
-            // Fallback realistic curves if no transactions on that day
-            if ($dayRev <= 0) {
-                $defaults = [8200000, 11500000, 9800000, 14200000, 17800000, 19500000, 16000000];
-                $dayRev = $defaults[$i] ?? 10000000;
-            }
 
             $dayExp = round($dayRev * 0.38);
             $dayProfit = max(0, $dayRev - $dayExp);
@@ -207,11 +190,6 @@ class DashboardController extends Controller
                 ->whereYear('transaction_time', $currentYear)
                 ->whereMonth('transaction_time', $m)
                 ->sum('gross_amount');
-
-            if ($mRev <= 0) {
-                $defaultMonthly = [6200000, 7800000, 9400000, 8500000, 8800000, 10200000, 12500000, 14100000, 15600000, 17400000, 12450000, 21200000];
-                $mRev = $defaultMonthly[$m - 1] ?? 10000000;
-            }
 
             $mExp = round($mRev * 0.36);
             $mProfit = max(0, $mRev - $mExp);
@@ -262,51 +240,84 @@ class DashboardController extends Controller
         unset($cItem);
 
         // 5. Real Live Activities
-        $recentTransactions = Transaction::latest('transaction_time')->limit(4)->get();
-        $recentUsers = User::where('role', 'user')->latest('created_at')->limit(2)->get();
+        $recentTransactions = Transaction::latest('transaction_time')->limit(5)->get();
+        $recentUsers = User::where('role', 'user')->latest('created_at')->limit(3)->get();
+        try {
+            $recentLogs = ActivityLog::latest('occurred_at')->limit(5)->get();
+        } catch (\Throwable $e) {
+            $recentLogs = collect();
+        }
 
         $activityFeed = [];
         foreach ($recentTransactions as $rt) {
             $isPaid = $rt->transaction_status === 'settlement';
+            $ts = $rt->transaction_time ? Carbon::parse($rt->transaction_time) : $rt->created_at;
             $activityFeed[] = [
                 'type' => $isPaid ? 'payment' : 'order',
                 'title' => $isPaid ? 'Pembayaran Terverifikasi #' . $rt->order_id : 'Pesanan Baru Masuk #' . $rt->order_id,
                 'details' => 'Rp ' . number_format($rt->gross_amount, 0, ',', '.') . ' • Pelanggan: ' . $rt->customer_name . ' • ' . ($rt->courier ?? 'JNE') . ' ' . ($rt->courier_service ?? 'REG'),
-                'time_ago' => $rt->transaction_time ? Carbon::parse($rt->transaction_time)->diffForHumans() : 'baru saja',
+                'time_ago' => $ts ? $ts->diffForHumans() : 'baru saja',
                 'badge' => $isPaid ? 'Settlement' : 'New Order',
                 'badge_color' => $isPaid ? '#059669' : '#4F46E5',
                 'badge_bg' => $isPaid ? 'rgba(16, 185, 129, 0.12)' : 'rgba(99, 102, 241, 0.12)',
                 'icon' => $isPaid ? 'lucide:check' : 'lucide:shopping-bag',
                 'icon_color' => $isPaid ? '#059669' : '#4F46E5',
                 'icon_bg' => $isPaid ? 'rgba(16, 185, 129, 0.12)' : 'rgba(99, 102, 241, 0.12)',
+                '_ts' => $ts ? $ts->timestamp : 0,
             ];
         }
 
         foreach ($recentUsers as $ru) {
+            $ts = $ru->created_at ? Carbon::parse($ru->created_at) : null;
             $activityFeed[] = [
                 'type' => 'user',
                 'title' => 'Registrasi Pelanggan: ' . $ru->name,
                 'details' => $ru->email . ($ru->address ? ' • ' . substr($ru->address, 0, 30) . '...' : ''),
-                'time_ago' => $ru->created_at ? Carbon::parse($ru->created_at)->diffForHumans() : 'baru saja',
+                'time_ago' => $ts ? $ts->diffForHumans() : 'baru saja',
                 'badge' => 'Verified User',
                 'badge_color' => '#D97706',
                 'badge_bg' => 'rgba(245, 158, 11, 0.12)',
                 'icon' => 'lucide:user-plus',
                 'icon_color' => '#D97706',
                 'icon_bg' => 'rgba(245, 158, 11, 0.12)',
+                '_ts' => $ts ? $ts->timestamp : 0,
             ];
         }
 
-        // Sort activities by most recent
+        foreach ($recentLogs as $log) {
+            $ts = $log->occurred_at ? Carbon::parse($log->occurred_at) : $log->created_at;
+            $activityFeed[] = [
+                'type' => $log->type,
+                'title' => $log->title,
+                'details' => $log->details ?? '',
+                'time_ago' => $ts ? $ts->diffForHumans() : 'baru saja',
+                'badge' => $log->badge ?? 'Activity',
+                'badge_color' => $log->badge_color ?? '#64748B',
+                'badge_bg' => $log->badge_bg ?? 'rgba(100, 116, 139, 0.12)',
+                'icon' => $log->icon ?? 'lucide:activity',
+                'icon_color' => $log->icon_color ?? '#64748B',
+                'icon_bg' => $log->icon_bg ?? 'rgba(100, 116, 139, 0.12)',
+                '_ts' => $ts ? $ts->timestamp : 0,
+            ];
+        }
+
+        usort($activityFeed, function ($a, $b) {
+            return ($b['_ts'] ?? 0) <=> ($a['_ts'] ?? 0);
+        });
         $activityFeed = array_slice($activityFeed, 0, 5);
+        $activityFeed = array_map(function ($item) {
+            unset($item['_ts']);
+            return $item;
+        }, $activityFeed);
 
         // 6. Real Notifications
-        $notifications = Transaction::latest('transaction_time')->limit(5)->get()->map(function ($nt) {
+        $notifications = Transaction::latest('id')->limit(5)->get()->map(function ($nt) {
             $isPaid = $nt->transaction_status === 'settlement';
+            $time = $nt->transaction_time ?? $nt->created_at;
             return [
                 'title' => $isPaid ? 'Pembayaran #' . $nt->order_id : 'Pesanan Baru #' . $nt->order_id,
                 'desc' => 'Rp ' . number_format($nt->gross_amount, 0, ',', '.') . ' • ' . ($nt->customer_name ?? 'Customer'),
-                'time_ago' => $nt->transaction_time ? Carbon::parse($nt->transaction_time)->diffForHumans() : 'baru saja',
+                'time_ago' => $time ? Carbon::parse($time)->diffForHumans() : 'baru saja',
                 'icon' => $isPaid ? 'lucide:check-circle-2' : 'lucide:shopping-bag',
                 'icon_bg' => $isPaid ? '#6366F1' : '#10B981',
                 'url' => route('admin.transactions.index'),
@@ -318,6 +329,20 @@ class DashboardController extends Controller
             return (object) ['month' => $idx + 1, 'total' => $item['revenue']];
         });
         $productCountsByCategory = $categoriesQuery;
+
+        $latestTx = Transaction::latest('id')->first();
+        $latestTransaction = $latestTx ? [
+            'id' => $latestTx->id,
+            'order_id' => $latestTx->order_id,
+            'customer_name' => $latestTx->customer_name ?? 'Pelanggan',
+            'gross_amount' => (int) $latestTx->gross_amount,
+            'gross_amount_formatted' => 'Rp ' . number_format($latestTx->gross_amount, 0, ',', '.'),
+            'transaction_status' => $latestTx->transaction_status ?? 'pending',
+            'payment_type' => $latestTx->payment_type ?? 'online',
+            'courier' => trim(($latestTx->courier ?? '') . ' ' . ($latestTx->courier_service ?? '')),
+            'created_at' => $latestTx->created_at ? $latestTx->created_at->diffForHumans() : 'baru saja',
+        ] : null;
+        $totalTransactionsCount = Transaction::count();
 
         return compact(
             'earningsThisMonth',
@@ -332,7 +357,9 @@ class DashboardController extends Controller
             'activityFeed',
             'notifications',
             'earningsPerMonth',
-            'productCountsByCategory'
+            'productCountsByCategory',
+            'latestTransaction',
+            'totalTransactionsCount'
         );
     }
 }

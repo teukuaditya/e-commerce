@@ -66,121 +66,191 @@
     </div>
 </section>
 
+<script>document.documentElement.classList.add('js-reveal');</script>
 <!-- Category Banner -->
-<div class="sec-banner bg0 p-t-80 p-b-50">
+<div class="sec-banner bg0 p-t-80 p-b-50 home-section" id="home-categories">
     <div class="container">
-        <h3 class="ltext-103 cl5 mb-4">
-            CATEGORIES
-        </h3>  
+        <div class="home-sec-head p-b-30" data-reveal>
+            <span class="home-sec-eyebrow">Curated For You</span>
+            <h3 class="ltext-103 cl5 home-sec-title">
+                CATEGORIES
+            </h3>
+            <span class="home-sec-accent" aria-hidden="true"></span>
+        </div>
         <div class="row">
             @foreach ($categories as $category)
-            <div class="col-md-6 col-xl-4 p-b-30 m-lr-auto"> 
-                <div class="block1 wrap-pic-w">
-                    <img src="{{ asset('storage/categories/' . $category->image) }}"
-                        alt="{{ $category->category_name }}">
-                    <a href="{{ route('user.categories.products', $category->id) }}"
-                        class="block1-txt ab-t-l s-full flex-col-l-sb p-lr-38 p-tb-34 trans-03 respon3">
-                        <div class="block1-txt-child1 flex-col-l">
-                            <span class="block1-name ltext-102 trans-04 p-b-8">
-                                {{ $category->category_name }}
-                            </span>
-
-                            <span class="block1-info stext-102 trans-04">
-                                {{ $category->description }}
-                            </span>
-                        </div>
-
-                        <div class="block1-txt-child2 p-b-4 trans-05">
-                            <div class="block1-link stext-101 cl0 trans-09">
-                                Explore
-                            </div>
-                        </div>
-                    </a>
-                </div>
+            <div class="col-md-6 col-xl-4 p-b-30 m-lr-auto" data-reveal style="--rv-delay: {{ $loop->index * 90 }}ms">
+                <x-category-card :category="$category" :position="$loop->index" :show-count="false" />
             </div>
             @endforeach
         </div>
     </div>
 </div>
 
-<!-- Product Overview -->
-<div class="bg0 m-t-23 p-b-140">
+<!-- Promo Marquee -->
+<div class="promo-bar" data-reveal>
+    <div class="promo-track">
+        @for ($i = 0; $i < 6; $i++)
+            <span class="promo-item">
+                New Drop <span class="promo-dot">&bull;</span> Free Ongkir Min. Belanja Rp 300.000 <span class="promo-dot">&bull;</span> Streetwear &amp; Sportswear
+            </span>
+        @endfor
+    </div>
+</div>
+
+<!-- New Arrivals -->
+<div class="bg0 m-t-23 p-b-80 home-section" id="home-new-arrivals">
     <div class="container">
-        <div class="p-b-10">
-            <h3 class="ltext-103 cl5">
-                Product Overview
-            </h3>
-        </div>
-
-        <div class="flex-w flex-sb-m p-b-52">
-            <!-- Filter kategori -->
-            <div class="flex-w flex-l-m filter-tope-group m-tb-10">
-                <button class="stext-106 cl6 hov1 bor3 trans-04 m-r-32 m-tb-5 how-active1"
-                    data-filter="*">
-                    All Products
-                </button>
-                @foreach ($categories as $category)
-                <button class="stext-106 cl6 hov1 bor3 trans-04 m-r-32 m-tb-5"
-                    data-filter=".{{ strtolower($category->category_name) }}">
-                    {{ $category->category_name }}
-                </button>
-                @endforeach
+        <div class="flex-w flex-sb-m p-b-52 align-items-end home-newarrivals-head" data-reveal>
+            <div class="home-sec-head home-sec-head--left m-b-0">
+                <span class="home-sec-eyebrow">Just Dropped</span>
+                <h3 class="ltext-103 cl5 home-sec-title m-b-0">
+                    New Arrivals
+                </h3>
+                <span class="home-sec-accent home-sec-accent--left" aria-hidden="true"></span>
             </div>
-
-            {{-- Kalau mau nanti di sini bisa ditambah search seperti di halaman product --}}
+            <a href="{{ route('user.products.index') }}" class="home-newarrivals-link stext-101 cl2 hov-cl1 trans-04 m-tb-10">
+                Lihat Semua Produk <i class="zmdi zmdi-arrow-right m-l-4"></i>
+            </a>
         </div>
 
         <!-- Produk -->
         <div class="row" id="homeProductGrid">
             @foreach ($products as $product)
-            <div
-                class="col-6 col-md-3 p-b-35 product-item {{ strtolower($product->category->category_name) }}">
-                <div class="block2">
-                    <div class="block2-pic hov-img0">
+            @php
+                $img = is_array($product->image) ? ($product->image[0] ?? '') : $product->image;
+                $catName = optional($product->category)->category_name ?? '';
+            @endphp
+            <div class="col-6 col-md-3 p-b-35 product-item {{ strtolower($catName) }}" data-reveal style="--rv-delay: {{ ($loop->index % 4) * 70 }}ms">
+                <div class="block2 home-product-card">
+                    <div class="block2-pic hov-img0 home-prod-pic">
+                        <span class="home-prod-badge">New</span>
                         <a href="{{ route('user.products.show', $product->id) }}">
-                            <img src="{{ asset('storage/products/' . (is_array($product->image) ? $product->image[0] : $product->image)) }}"
-                                alt="{{ $product->title }}">
+                            <img src="{{ asset('storage/products/' . $img) }}"
+                                alt="{{ $product->title }}"
+                                loading="lazy"
+                                class="home-prod-img">
                         </a>
 
+                        {{-- Overlay aksi (selalu tampil) --}}
+                        <div class="home-prod-actions" aria-label="Aksi cepat">
+                            @auth
+                                @php $isWished = in_array($product->id, $wishlistedIds ?? []); @endphp
+                                <button type="button"
+                                    class="home-prod-action-btn js-wishlist-toggle {{ $isWished ? 'is-wishlisted' : '' }}"
+                                    data-url="{{ route('user.wishlist.toggle', $product->id) }}"
+                                    data-wishlisted="{{ $isWished ? '1' : '0' }}"
+                                    title="{{ $isWished ? 'Hapus dari Wishlist' : 'Tambah ke Wishlist' }}"
+                                    aria-label="{{ $isWished ? 'Hapus' : 'Simpan' }} {{ $product->title }} dari wishlist"
+                                    aria-pressed="{{ $isWished ? 'true' : 'false' }}">
+                                    <i class="zmdi {{ $isWished ? 'zmdi-favorite' : 'zmdi-favorite-outline' }}"></i>
+                                </button>
+                            @else
+                                <a href="{{ route('login') }}" class="home-prod-action-btn" title="Login untuk Wishlist" aria-label="Login untuk menyimpan {{ $product->title }}">
+                                    <i class="zmdi zmdi-favorite-outline"></i>
+                                </a>
+                            @endauth
+                            @auth
+                                <form action="{{ route('user.cart.add', $product->id) }}" method="POST" class="home-prod-action-form">
+                                    @csrf
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="home-prod-action-btn" title="Quick Add" aria-label="Tambah {{ $product->title }} ke keranjang">
+                                        <i class="zmdi zmdi-shopping-cart"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('user.products.show', $product->id) }}" class="home-prod-action-btn" title="Quick Add" aria-label="Lihat {{ $product->title }}">
+                                    <i class="zmdi zmdi-shopping-cart"></i>
+                                </a>
+                            @endauth
+                        </div>
+
+                        {{-- Tombol detail tetap ada (fitur lama), di-restyle via CSS --}}
                         <a href="{{ route('user.products.show', $product->id) }}"
-                            class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04">
-                            Add To Cart
+                            class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04 home-prod-quickview">
+                            Quick View
                         </a>
                     </div>
 
                     <div class="block2-txt flex-w flex-t p-t-14">
                         <div class="block2-txt-child1 flex-col-l">
-                            <a href="{{ route('user.products.show', $product->id) }}"
-                                class="stext-106 cl5 hov-cl1 trans-04 m-b-3" style="font-weight: bold;">
-                                {{ $product->brand }}
-                            </a>
+                            @if($catName)
+                                <span class="stext-106 cl6 trans-04 m-b-3 home-prod-cat">{{ strtoupper($catName) }}</span>
+                            @endif
 
                             <a href="{{ route('user.products.show', $product->id) }}"
-                                class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6">
+                                class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6 home-prod-title">
                                 {{ $product->title }}
                             </a>
 
                             <a href="{{ route('user.products.show', $product->id) }}"
-                                class="stext-105 cl5 hov-cl1 trans-04">
+                                class="stext-105 cl5 hov-cl1 trans-04 home-prod-price">
                                 Rp {{ number_format($product->price, 0, ',', '.') }}
                             </a>
                         </div>
-
-                        {{-- <div class="block2-txt-child2 flex-r p-t-3">
-                            <a href="#" class="btn-addwish-b2 dis-block pos-relative js-addwish-b2">
-                                <img class="icon-heart1 dis-block trans-04"
-                                    src="{{ asset('images/icons/icon-heart-01.png') }}" alt="ICON">
-                                <img class="icon-heart2 dis-block trans-04 ab-t-l"
-                                    src="{{ asset('images/icons/icon-heart-02.png') }}" alt="ICON">
-                            </a>
-                        </div> --}}
                     </div>
                 </div>
             </div>
             @endforeach
         </div>
+
     </div>
 </div>
+
+<!-- Editorial Banner -->
+<section class="home-section home-editorial-section" data-reveal>
+    <div class="container">
+        <div class="home-editorial">
+            <div class="home-editorial__bg" aria-hidden="true"></div>
+            <div class="home-editorial__overlay" aria-hidden="true"></div>
+            <div class="home-editorial__content">
+                <span class="home-sec-eyebrow" style="color: rgba(255,255,255,.72);">DRVN Lifestyle</span>
+                <h2 class="home-editorial__title">BUILT TO MOVE.<br><span>STYLED TO STAND OUT.</span></h2>
+                <p class="home-editorial__desc">Dari jalanan ke arena, temukan gear yang siap menemani setiap langkah dan gaya lo.</p>
+                <div class="home-editorial__actions">
+                    <a href="{{ route('user.products.index') }}" class="home-editorial__btn home-editorial__btn--primary">Explore Collection</a>
+                    <a href="#home-categories" class="home-editorial__btn home-editorial__btn--ghost">Lihat Kategori</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why DRVN / USP -->
+<section class="home-section home-usp-section" data-reveal>
+    <div class="container">
+        <div class="home-usp-grid">
+            <div class="home-usp-item">
+                <span class="home-usp-icon"><i class="zmdi zmdi-layers"></i></span>
+                <div class="home-usp-body">
+                    <h4 class="home-usp-title">Bahan Premium</h4>
+                    <p class="home-usp-desc">Material pilihan yang nyaman dipakai.</p>
+                </div>
+            </div>
+            <div class="home-usp-item">
+                <span class="home-usp-icon"><i class="zmdi zmdi-truck"></i></span>
+                <div class="home-usp-body">
+                    <h4 class="home-usp-title">Pengiriman Cepat</h4>
+                    <p class="home-usp-desc">Kirim ke seluruh Indonesia.</p>
+                </div>
+            </div>
+            <div class="home-usp-item">
+                <span class="home-usp-icon"><i class="zmdi zmdi-refresh"></i></span>
+                <div class="home-usp-body">
+                    <h4 class="home-usp-title">Retur 7 Hari</h4>
+                    <p class="home-usp-desc">Tukar ukuran tanpa ribet.</p>
+                </div>
+            </div>
+            <div class="home-usp-item">
+                <span class="home-usp-icon"><i class="zmdi zmdi-lock"></i></span>
+                <div class="home-usp-body">
+                    <h4 class="home-usp-title">Pembayaran Aman</h4>
+                    <p class="home-usp-desc">Transaksi terenkripsi & terpercaya.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {{-- style navbar & grid ada di theme-upgrade.css dan main.css --}}
 
 @push('styles')
@@ -234,6 +304,439 @@
     cursor: pointer;
     background-color: transparent;
     border: none;
+  }
+
+  /* ===== HOME POLISH (scoped) ===== */
+  .home-section { scroll-margin-top: 110px; }
+
+  .home-sec-head { margin-bottom: 8px; }
+  .home-sec-head--left { text-align: left; }
+  .home-sec-eyebrow {
+    display: inline-block;
+    font-family: Poppins-Medium, Poppins, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: #6b7280;
+    margin-bottom: 10px;
+  }
+  .home-sec-title {
+    letter-spacing: 0.04em;
+    margin-bottom: 0;
+  }
+  .home-sec-accent {
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: #222;
+    margin-top: 14px;
+  }
+  .home-sec-accent--left { margin-left: 0; margin-right: auto; }
+
+  .home-newarrivals-head { gap: 16px; }
+  .home-newarrivals-link {
+    display: inline-flex;
+    align-items: center;
+    font-family: Poppins-Medium, Poppins, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    color: #111827;
+    text-decoration: none;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #d1d5db;
+    transition: color .2s ease, border-color .2s ease;
+    white-space: nowrap;
+  }
+  .home-newarrivals-link:hover {
+    color: #4f46e5;
+    border-color: #4f46e5;
+    text-decoration: none;
+  }
+  .home-newarrivals-link i { font-size: 16px; transition: transform .2s ease; }
+  .home-newarrivals-link:hover i { transform: translateX(3px); }
+
+  /* --- Category card: samakan dengan halaman kategori (x-category-card) --- */
+  .cat-meta {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+    pointer-events: none;
+  }
+  .cat-meta__idx,
+  .cat-meta__count {
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    white-space: nowrap;
+    line-height: 1.5;
+  }
+  .cat-meta__idx {
+    color: #0A0A0A;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  .cat-meta__count {
+    color: #4F46E5;
+    border: 1px solid rgba(79, 70, 229, 0.18);
+  }
+  .cat-arrow {
+    display: inline-block;
+    margin-left: 7px;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .block1-txt:hover .cat-arrow {
+    transform: translateX(6px);
+  }
+
+  /* --- Product filter pills --- */
+  .home-filter-btn {
+    border: 1px solid #d1d5db !important;
+    border-radius: 999px;
+    padding: 9px 20px !important;
+    margin-right: 10px !important;
+    background: #fff;
+    color: #4b5563;
+    line-height: 1.2;
+  }
+  .home-filter-btn:hover {
+    border-color: #111827 !important;
+    color: #111827;
+  }
+  .home-filter-btn.how-active1 {
+    background: #111827 !important;
+    border-color: #111827 !important;
+    color: #fff !important;
+  }
+
+  /* --- Product card polish (dimensi kartu tetap) --- */
+  .page-home .home-prod-pic { background: #f3f4f6; overflow: hidden; position: relative; }
+  .page-home .home-prod-pic .home-prod-img {
+    transition: transform 0.35s ease;
+  }
+  .page-home .home-prod-pic:hover .home-prod-img {
+    transform: scale(1.05);
+  }
+  .home-prod-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #111827;
+    color: #fff;
+    font-family: Poppins-SemiBold, Poppins, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .home-prod-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 5;
+  }
+  .home-prod-action-form { margin: 0; }
+  .home-prod-action-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.96);
+    color: #111827;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+    text-decoration: none;
+    font-size: 18px;
+  }
+  .home-prod-action-btn i {
+    display: block;
+    line-height: 1;
+  }
+  .home-prod-action-btn:hover {
+    background: #4F46E5;
+    color: #fff;
+    transform: scale(1.04);
+    text-decoration: none;
+  }
+  .home-prod-action-btn.is-wishlisted {
+    color: #e53935;
+  }
+  .home-prod-action-btn.is-wishlisted:hover {
+    background: #e53935;
+    color: #fff;
+  }
+  .home-prod-action-btn:focus-visible {
+    outline: 2px solid #4F46E5;
+    outline-offset: 2px;
+  }
+  .home-prod-quickview {
+    z-index: 4;
+  }
+  .wishlist-inline-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    line-height: 1;
+    font-size: 20px;
+    color: #999;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+  .wishlist-inline-btn:hover { color: #e53935; transform: scale(1.08); }
+  .wishlist-inline-btn.is-wishlisted { color: #e53935; }
+  .wishlist-inline-btn i { display: block; line-height: 1; }
+  .home-prod-cat {
+    display: block;
+    font-family: Poppins-Medium, Poppins, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    color: #6b7280 !important;
+    line-height: 22px;
+    min-height: 22px;
+  }
+  .home-prod-title {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 41px;
+    font-family: Poppins-SemiBold, Poppins, sans-serif;
+    color: #1f2937 !important;
+  }
+  .home-prod-price {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+  }
+
+  /* --- Reveal animation (opacity+transform only) --- */
+  .js-reveal [data-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    transition-delay: var(--rv-delay, 0ms);
+  }
+  .js-reveal [data-reveal].is-revealed {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 767px) {
+    .home-filter-btn { margin-right: 8px !important; padding: 8px 14px !important; font-size: 12px; }
+    .home-sec-accent { width: 40px; }
+  }
+  @media (hover: none), (pointer: coarse) {
+    .home-prod-actions { opacity: 1; transform: none; }
+  }
+  .home-filter-btn:focus-visible {
+    outline: 2px solid #4F46E5;
+    outline-offset: 2px;
+  }
+
+  /* ===== Home Editorial Banner ===== */
+  .home-editorial-section { padding: 0 0 24px; }
+  .home-editorial {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    min-height: 360px;
+    display: flex;
+    align-items: center;
+    background: #111827;
+    isolation: isolate;
+  }
+  .home-editorial__bg {
+    position: absolute;
+    inset: 0;
+    background: url('{{ asset('images/bg-02.jpg') }}') center/cover no-repeat;
+    transform: scale(1.02);
+    transition: transform 0.8s ease;
+    z-index: -2;
+  }
+  .home-editorial:hover .home-editorial__bg { transform: scale(1.06); }
+  .home-editorial__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, rgba(17,24,39,.88) 0%, rgba(17,24,39,.72) 45%, rgba(17,24,39,.35) 100%);
+    z-index: -1;
+  }
+  .home-editorial__content {
+    position: relative;
+    padding: 56px;
+    max-width: 720px;
+  }
+  .home-editorial__title {
+    margin: 10px 0 16px;
+    font-family: Poppins-Bold, Poppins, sans-serif;
+    font-size: clamp(2rem, 4.6vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .home-editorial__title span { color: #a5b4fc; }
+  .home-editorial__desc {
+    margin: 0 0 28px;
+    max-width: 560px;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: rgba(255,255,255,.82);
+  }
+  .home-editorial__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .home-editorial__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 22px;
+    border-radius: 999px;
+    font-family: Poppins-Medium, Poppins, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: transform .25s ease, box-shadow .25s ease, background-color .25s ease, color .25s ease, border-color .25s ease;
+  }
+  .home-editorial__btn:hover { transform: translateY(-2px); }
+  .home-editorial__btn--primary { background: #fff; color: #111827; box-shadow: 0 10px 24px rgba(0,0,0,.18); }
+  .home-editorial__btn--primary:hover { background: #eef2ff; color: #3730a3; }
+  .home-editorial__btn--ghost { border: 1px solid rgba(255,255,255,.38); color: #fff; background: rgba(255,255,255,.04); }
+  .home-editorial__btn--ghost:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.65); color: #fff; }
+  @media (max-width: 767px) {
+    .home-editorial { min-height: 320px; border-radius: 18px; }
+    .home-editorial__content { padding: 32px 24px; }
+    .home-editorial__overlay { background: linear-gradient(180deg, rgba(17,24,39,.55) 0%, rgba(17,24,39,.82) 100%); }
+  }
+
+  /* ===== Home USP ===== */
+  .home-usp-section {
+    padding: 56px 0;
+    background: #f8fafc;
+    border-top: 1px solid #eef2f7;
+    border-bottom: 1px solid #eef2f7;
+  }
+  .home-usp-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+  .home-usp-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 20px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #e8edf3;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+  .home-usp-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(17, 24, 39, 0.06);
+    border-color: #c7d2fe;
+  }
+  .home-usp-icon {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #eef2ff;
+    color: #4f46e5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+  }
+  .home-usp-title {
+    margin: 0 0 4px;
+    font-family: Poppins-SemiBold, Poppins, sans-serif;
+    font-size: 14px;
+    color: #111827;
+    line-height: 1.3;
+  }
+  .home-usp-desc {
+    margin: 0;
+    font-family: Poppins-Regular, Poppins, sans-serif;
+    font-size: 12.5px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+  @media (max-width: 991px) {
+    .home-usp-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 575px) {
+    .home-usp-grid { grid-template-columns: 1fr; }
+    .home-usp-section { padding: 40px 0; }
+  }
+
+  /* ===== Promo Marquee ===== */
+  .promo-bar {
+    background: #111827;
+    color: #fff;
+    overflow: hidden;
+    padding-block: 15px;
+  }
+  .promo-track {
+    display: flex;
+    width: max-content;
+    animation: promoMarquee 26s linear infinite;
+  }
+  .promo-item {
+    white-space: nowrap;
+    padding-inline: 2.5rem;
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+  .promo-dot {
+    color: #818CF8;
+    padding-inline: 0.5rem;
+  }
+  @keyframes promoMarquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-home .home-prod-pic .home-prod-img,
+    .cat-arrow,
+    .home-prod-actions,
+    .home-prod-action-btn,
+    .home-usp-item,
+    .home-editorial__bg,
+    .home-editorial__btn,
+    .js-reveal [data-reveal] {
+      transition: none !important;
+      transform: none !important;
+    }
+    .js-reveal [data-reveal] { opacity: 1 !important; }
+    .promo-track { animation: none !important; }
+    .home-editorial:hover .home-editorial__bg { transform: none !important; }
   }
 </style>
 @endpush
@@ -323,21 +826,59 @@
             restartAuto();
         });
 
-        // Filter kategori home — jQuery show/hide (tanpa Isotope)
-        $('.filter-tope-group button').on('click', function () {
-            var filterValue = $(this).attr('data-filter');
-            $('.filter-tope-group button').removeClass('how-active1');
-            $(this).addClass('how-active1');
+        // Grid produk home (New Arrivals) — tidak ada filter kategori
 
-            if (filterValue === '*') {
-                $('#homeProductGrid .product-item').show();
-            } else {
-                var cls = filterValue.replace('.', '');
-                $('#homeProductGrid .product-item').each(function () {
-                    $(this).toggle($(this).hasClass(cls));
-                });
-            }
+        // Wishlist toggle (AJAX)
+        $(document).on('click', '.js-wishlist-toggle', function (e) {
+            e.preventDefault();
+            var $btn = $(this);
+            if ($btn.data('loading')) return;
+            $btn.data('loading', true);
+
+            $.ajax({
+                url: $btn.data('url'),
+                method: 'POST',
+                data: { _token: $('meta[name="csrf-token"]').attr('content') },
+                success: function (res) {
+                    var wished = !!res.wishlisted;
+                    $btn.toggleClass('is-wishlisted', wished);
+                    $btn.attr('data-wishlisted', wished ? '1' : '0');
+                    $btn.attr('aria-pressed', wished ? 'true' : 'false');
+                    $btn.attr('title', wished ? 'Hapus dari Wishlist' : 'Tambah ke Wishlist');
+                    $btn.find('i').attr('class', 'zmdi ' + (wished ? 'zmdi-favorite' : 'zmdi-favorite-outline'));
+                    $('a.icon-header-noti[href*="wishlist"]').each(function () {
+                        var n = parseInt($(this).attr('data-notify') || '0', 10) || 0;
+                        $(this).attr('data-notify', Math.max(0, n + (wished ? 1 : -1)));
+                    });
+                },
+                error: function (xhr) {
+                    if (xhr.status === 401) {
+                        window.location.href = '{{ route("login") }}';
+                        return;
+                    }
+                },
+                complete: function () {
+                    $btn.data('loading', false);
+                }
+            });
         });
+
+        // Reveal on scroll (IntersectionObserver, opacity+transform saja)
+        document.documentElement.classList.add('js-reveal');
+        var revealEls = document.querySelectorAll('[data-reveal]');
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) {
+            for (var i = 0; i < revealEls.length; i++) revealEls[i].classList.add('is-revealed');
+        } else {
+            var revealObs = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-revealed');
+                        revealObs.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+            for (var j = 0; j < revealEls.length; j++) revealObs.observe(revealEls[j]);
+        }
     });
 </script>
 @endpush

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Wishlist;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
@@ -15,9 +17,17 @@ class HomeController extends Controller
         // with('category') mencegah N+1: tiap kartu memakai $product->category.
         $products = Cache::rememberForever(
             'home.products',
-            fn () => Product::with('category')->get()
+            fn () => Product::with('category')->latest()->take(4)->get()
         );
 
-        return view('pages.user.home', compact('products'));
+        $wishlistedIds = [];
+        if (Auth::check()) {
+            $wishlistedIds = Wishlist::where('user_id', Auth::id())
+                ->whereIn('product_id', $products->pluck('id'))
+                ->pluck('product_id')
+                ->all();
+        }
+
+        return view('pages.user.home', compact('products', 'wishlistedIds'));
     }
 }

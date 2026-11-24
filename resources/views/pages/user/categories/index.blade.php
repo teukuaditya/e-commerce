@@ -9,7 +9,7 @@
          1. HERO HEADER  [BARU]
          ============================================================ --}}
     <header class="cat-hero">
-        <div class="cat-container">
+        <div class="container">
             <p class="cat-hero__eyebrow cat-hero-anim" style="--d: 0ms">
                 DRVN &mdash; Streetwear &amp; Sportswear
             </p>
@@ -26,41 +26,37 @@
          2. CARDS KATEGORI  (hover LAMA tidak diubah)
          1 kolom mobile / 2 tablet / 3 desktop
          ============================================================ --}}
-    <section class="cat-section cat-section--tight">
-        <div class="cat-container">
-            <div class="cat-grid">
+    <section class="cat-section cat-section--tight" id="cat-cards">
+        <div class="container">
+            <div class="row">
                 @foreach ($categories as $category)
-                    <x-category-card
-                        :category="$category"
-                        :position="$loop->index"
-                        :delay="$loop->index * 100" />
+                    <div class="col-md-6 col-xl-4 p-b-30 m-lr-auto" data-reveal style="--reveal-delay: {{ $loop->index * 100 }}ms">
+                        <x-category-card
+                            :category="$category"
+                            :position="$loop->index" />
+                    </div>
                 @endforeach
             </div>
         </div>
     </section>
 
     {{-- ============================================================
-         3a. NEW ARRIVALS  [BARU]
+         3a. EDITORIAL BANNER  [BARU]
          ============================================================ --}}
     <section class="cat-section">
         <div class="cat-container">
-            <div class="cat-sec-head" data-reveal>
-                <div class="cat-sec-head__left">
-                    <span class="cat-eyebrow">Baru Minggu Ini</span>
-                    <h2 class="cat-sec-title">New Arrivals</h2>
+            <div class="cat-editorial" data-reveal>
+                <div class="cat-editorial__bg" aria-hidden="true"></div>
+                <div class="cat-editorial__overlay" aria-hidden="true"></div>
+                <div class="cat-editorial__content">
+                    <span class="cat-eyebrow cat-eyebrow--light">DRVN Lifestyle</span>
+                    <h2 class="cat-editorial__title">BUILT TO MOVE.<br><span>STYLED TO STAND OUT.</span></h2>
+                    <p class="cat-editorial__desc">Dari jalanan ke arena, temukan gear yang siap menemani setiap langkah dan gaya lo.</p>
+                    <div class="cat-editorial__actions">
+                        <a href="{{ route('user.products.index') }}" class="cat-editorial__btn cat-editorial__btn--primary">Explore Collection</a>
+                        <a href="#cat-cards" class="cat-editorial__btn cat-editorial__btn--ghost">Lihat Kategori</a>
+                    </div>
                 </div>
-
-                <a href="{{ route('user.products.index') }}" class="cat-see-all">
-                    Lihat Semua <span class="cat-see-all__arrow" aria-hidden="true">&rarr;</span>
-                </a>
-            </div>
-
-            <div class="na-grid">
-                @forelse ($newArrivals as $i => $product)
-                    <x-product-card :product="$product" :delay="$i * 100" />
-                @empty
-                    <p class="na-empty">Belum ada produk baru saat ini.</p>
-                @endforelse
             </div>
         </div>
     </section>
@@ -146,19 +142,16 @@
 }
 
 /* ---------- 1. HERO HEADER ---------- */
-/* Sebelumnya: p-t-80 (80px) + margin-top 24px = 104px.
-   Navbar melayang menempel di top:16px dengan tinggi 68px (bottom = 84px),
-   jadi 96px tetap aman namun terasa lebih rapat. */
 .cat-hero {
-    padding-top: 96px;
-    padding-bottom: 4px;
+    padding-top: 88px;
+    padding-bottom: 28px;
 }
 
 .cat-hero__eyebrow {
-    margin: 0 0 14px;
-    font-size: 0.72rem;
+    margin: 0 0 10px;
+    font-size: 0.7rem;
     font-weight: 600;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.24em;
     text-transform: uppercase;
     color: var(--drvn-muted);
 }
@@ -166,17 +159,18 @@
 .cat-hero__title {
     margin: 0;
     font-family: 'Poppins', sans-serif;
-    font-weight: 600;                        /* diminta: 600 */
-    font-size: clamp(2.3rem, 7.2vw, 5.75rem); /* responsif clamp */
-    line-height: 0.98;
-    letter-spacing: 0.045em;                  /* tracking lebar */
+    font-weight: 600;
+    font-size: clamp(2rem, 4.8vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: 0.02em;
     text-transform: uppercase;
     color: var(--drvn-ink);
 }
 
 .cat-hero__sub {
-    margin: 18px 0 0;
-    font-size: clamp(0.95rem, 1.5vw, 1.15rem);
+    margin: 14px 0 0;
+    font-size: clamp(0.92rem, 1.3vw, 1rem);
+    line-height: 1.6;
     color: var(--drvn-muted);
 }
 
@@ -204,27 +198,9 @@
     .cat-section--tight { padding-top: 3rem; padding-bottom: 6rem; }
 }
 
-/* ---------- 2. GRID KARTU: 1 / 2 / 3 kolom ---------- */
-.cat-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-}
-@media (min-width: 768px) {
-    .cat-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (min-width: 1200px) {
-    .cat-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-/* Kartu seragam: rasio 4/5 agar tinggi sama rata (premium look) */
-.cat-card {
-    aspect-ratio: 4 / 5;
-}
-.cat-card img {
-    height: 100%;
-    object-fit: cover;
-}
+/* ---------- 2. GRID KARTU — samakan dengan home (Bootstrap row/col) ---------- */
+/* Ukuran/kolom mengikuti: col-md-6 col-xl-4 p-b-30 m-lr-auto + block1 wrap-pic-w
+   Tinggi kartu mengikuti rasio natural gambar, sama seperti home. */
 
 /* [BARU] Meta pojok kartu: nomor index + jumlah produk */
 .cat-meta {
@@ -322,6 +298,13 @@
     text-transform: uppercase;
     color: var(--drvn-ink);
 }
+.cat-sec-accent {
+    display: block;
+    width: 48px;
+    height: 3px;
+    background: var(--drvn-ink);
+    margin-top: 14px;
+}
 .cat-see-all {
     font-size: 0.85rem;
     font-weight: 600;
@@ -333,8 +316,8 @@
     transition: color 0.3s ease, border-color 0.3s ease;
 }
 .cat-see-all:hover {
-    color: var(--drvn-indigo);
-    border-color: var(--drvn-indigo);
+    color: #555;
+    border-color: #555;
 }
 .cat-see-all__arrow {
     display: inline-block;
@@ -344,23 +327,89 @@
     transform: translateX(5px);
 }
 
-/* Grid produk: 1 / 2 / 4 kolom.
-   4 kolom di desktop agar 4 produk baru muat sebaris (tanpa yatim di baris 2). */
-.na-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 2rem 1.5rem;
+/* ---------- 3a. EDITORIAL BANNER ---------- */
+.cat-editorial {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    min-height: 360px;
+    display: flex;
+    align-items: center;
+    background: #111827;
+    isolation: isolate;
 }
-@media (min-width: 640px) {
-    .na-grid { grid-template-columns: repeat(2, 1fr); }
+.cat-editorial__bg {
+    position: absolute;
+    inset: 0;
+    background: url('{{ asset('images/bg-02.jpg') }}') center/cover no-repeat;
+    transform: scale(1.02);
+    transition: transform 0.8s ease;
+    z-index: -2;
 }
-@media (min-width: 1200px) {
-    .na-grid { grid-template-columns: repeat(4, 1fr); }
+.cat-editorial:hover .cat-editorial__bg { transform: scale(1.06); }
+.cat-editorial__overlay {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(100deg, rgba(17,24,39,.88) 0%, rgba(17,24,39,.72) 45%, rgba(17,24,39,.35) 100%);
+    z-index: -1;
 }
-.na-empty {
-    grid-column: 1 / -1;
-    margin: 0;
-    color: var(--drvn-muted);
+.cat-editorial__content {
+    position: relative;
+    padding: 56px;
+    max-width: 720px;
+}
+.cat-eyebrow--light { color: rgba(255,255,255,.72); }
+.cat-editorial__title {
+    margin: 10px 0 16px;
+    font-family: Poppins-Bold, Poppins, sans-serif;
+    font-size: clamp(2rem, 4.6vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    color: #fff;
+}
+.cat-editorial__title span { color: #a5b4fc; }
+.cat-editorial__desc {
+    margin: 0 0 28px;
+    max-width: 560px;
+    font-size: 1rem;
+    line-height: 1.7;
+    color: rgba(255,255,255,.82);
+}
+.cat-editorial__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.cat-editorial__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 22px;
+    border-radius: 999px;
+    font-family: Poppins-Medium, Poppins, sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: transform .25s ease, box-shadow .25s ease, background-color .25s ease, color .25s ease, border-color .25s ease;
+}
+.cat-editorial__btn:hover { transform: translateY(-2px); }
+.cat-editorial__btn--primary {
+    background: #fff;
+    color: #111827;
+    box-shadow: 0 10px 24px rgba(0,0,0,.18);
+}
+.cat-editorial__btn--primary:hover { background: #eef2ff; color: #3730a3; }
+.cat-editorial__btn--ghost {
+    border: 1px solid rgba(255,255,255,.38);
+    color: #fff;
+    background: rgba(255,255,255,.04);
+}
+.cat-editorial__btn--ghost:hover { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.65); color: #fff; }
+
+@media (max-width: 767px) {
+    .cat-editorial { min-height: 320px; border-radius: 18px; }
+    .cat-editorial__content { padding: 32px 24px; }
+    .cat-editorial__overlay {
+        background: linear-gradient(180deg, rgba(17,24,39,.55) 0%, rgba(17,24,39,.82) 100%);
+    }
 }
 
 /* ---------- 3b. BANNER PROMO MARQUEE ---------- */
@@ -464,8 +513,12 @@
     .promo-track { animation: none !important; }
     .cat-arrow,
     .cat-see-all__arrow,
+    .cat-editorial__bg,
+    .cat-editorial__btn,
     .usp { transition: none !important; }
-    .usp:hover { transform: none !important; }
+    .usp:hover,
+    .cat-editorial__btn:hover { transform: none !important; }
+    .cat-editorial:hover .cat-editorial__bg { transform: none !important; }
 }
 </style>
 @endpush

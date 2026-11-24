@@ -111,9 +111,10 @@
         <iconify-icon icon="lucide:arrow-up" width="20" height="20"></iconify-icon>
     </a>
 
-    <!-- Overlay drawer mobile + container toast -->
+    <!-- Overlay drawer mobile + container toast & live alert cards -->
     <div class="adm-drawer-backdrop" id="admOverlay" aria-hidden="true"></div>
     <div id="adm-toasts" style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px;"></div>
+    <div id="adm-live-alerts" style="position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: calc(100vw - 32px); pointer-events: none;"></div>
 
     <!-- Core JavaScript (Bootstrap v4 required by sb-admin-2 modals & dropdowns) -->
     <script src="{{ asset('libs/jquery/jquery.min.js') }}"></script>
@@ -311,6 +312,223 @@
                     }
                 });
             }
+
+            /* ==== REAL-TIME POLLING & ACTIVE ORDER NOTIFICATIONS ==== */
+            (function () {
+                var lastTxId = null;
+                var lastTxStatus = null;
+                var isFirstPoll = true;
+
+                // Web Audio API Synthesized Chime (Tanpa butuh file mp3 eksternal)
+                function playNotificationSound(isSettlement) {
+                    try {
+                        var AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (!AudioCtx) return;
+                        var ctx = new AudioCtx();
+                        if (ctx.state === 'suspended') {
+                            ctx.resume();
+                        }
+                        var now = ctx.currentTime;
+                        if (isSettlement) {
+                            // 3-note celebration chime (C5 -> E5 -> G5)
+                            [523.25, 659.25, 783.99].forEach(function (freq, i) {
+                                var osc = ctx.createOscillator();
+                                var gain = ctx.createGain();
+                                osc.type = 'sine';
+                                osc.frequency.setValueAtTime(freq, now + (i * 0.11));
+                                gain.gain.setValueAtTime(0.2, now + (i * 0.11));
+                                gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.11) + 0.35);
+                                osc.connect(gain);
+                                gain.connect(ctx.destination);
+                                osc.start(now + (i * 0.11));
+                                osc.stop(now + (i * 0.11) + 0.35);
+                            });
+                        } else {
+                            // 2-tone pleasant alert (D5 -> A5)
+                            var osc1 = ctx.createOscillator();
+                            var gain1 = ctx.createGain();
+                            osc1.type = 'sine';
+                            osc1.frequency.setValueAtTime(587.33, now);
+                            osc1.frequency.exponentialRampToValueAtTime(880, now + 0.12);
+                            gain1.gain.setValueAtTime(0.25, now);
+                            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                            osc1.connect(gain1);
+                            gain1.connect(ctx.destination);
+                            osc1.start(now);
+                            osc1.stop(now + 0.5);
+                        }
+                    } catch (e) {
+                        // Audio autoplay restricted before user interaction
+                    }
+                }
+
+                // Tampilkan Popup Alert Pesanan Aktif di Layar
+                function showLiveOrderPopup(tx, isSettlement) {
+                    var container = document.getElementById('adm-live-alerts');
+                    if (!container) return;
+
+                    var card = document.createElement('div');
+                    card.style.cssText = 'pointer-events: auto; background: #FFFFFF; border-radius: 18px; padding: 16px 18px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2), 0 0 0 1px ' + (isSettlement ? 'rgba(16,185,129,0.35)' : 'rgba(99,102,241,0.35)') + '; border-left: 5px solid ' + (isSettlement ? '#10B981' : '#6366F1') + '; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); transform: translateX(110%); opacity: 0; position: relative; overflow: hidden;';
+
+                    var titleText = isSettlement ? 'Pembayaran Berhasil Diverifikasi!' : 'Pesanan Baru Masuk!';
+                    var titleColor = isSettlement ? '#059669' : '#4F46E5';
+                    var iconName = isSettlement ? 'lucide:badge-check' : 'lucide:shopping-bag';
+                    var iconBg = isSettlement ? 'rgba(16,185,129,0.12)' : 'rgba(99,102,241,0.12)';
+                    var badgeText = isSettlement ? 'Settlement' : 'Pending Payment';
+                    var badgeBg = isSettlement ? '#DCFCE7' : '#FEF3C7';
+                    var badgeColor = isSettlement ? '#15803D' : '#B45309';
+
+                    card.innerHTML =
+                        '<div class="d-flex align-items-start justify-content-between gap-3">' +
+                            '<div class="d-flex align-items-start gap-3">' +
+                                '<div class="d-flex align-items-center justify-content-center flex-shrink-0" style="width: 44px; height: 44px; border-radius: 14px; background: ' + iconBg + '; color: ' + titleColor + ';">' +
+                                    '<iconify-icon icon="' + iconName + '" width="24" height="24"></iconify-icon>' +
+                                '</div>' +
+                                '<div>' +
+                                    '<div class="font-jakarta font-weight-bold" style="font-size: 0.95rem; color: #0F172A;">' + titleText + '</div>' +
+                                    '<div class="font-mono-code mt-0.5" style="font-size: 0.8rem; font-weight: 700; color: #334155;">#' + (tx.order_id || 'ORDER') + '</div>' +
+                                    '<div class="text-slate-500 font-jakarta mt-1" style="font-size: 0.78rem;">' +
+                                        '<span class="font-weight-bold text-slate-700">' + (tx.customer_name || 'Pelanggan') + '</span> &bull; ' +
+                                        '<span class="font-mono-code font-weight-bold text-slate-900">' + (tx.gross_amount_formatted || ('Rp ' + tx.gross_amount)) + '</span>' +
+                                    '</div>' +
+                                    '<div class="d-flex align-items-center gap-1.5 mt-2">' +
+                                        '<span class="badge" style="background: ' + badgeBg + '; color: ' + badgeColor + '; font-size: 0.68rem; padding: 3px 7px; border-radius: 6px;">' + badgeText + '</span>' +
+                                        (tx.payment_type ? '<span class="badge" style="background: #F1F5F9; color: #475569; font-size: 0.68rem; padding: 3px 7px; border-radius: 6px;">' + tx.payment_type.toUpperCase() + '</span>' : '') +
+                                        (tx.courier ? '<span class="badge" style="background: #F1F5F9; color: #475569; font-size: 0.68rem; padding: 3px 7px; border-radius: 6px;">' + tx.courier + '</span>' : '') +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<button type="button" class="btn p-1 text-slate-400 hover:text-slate-600 smooth-all close-alert-btn" style="border: none; background: transparent; line-height: 1;" aria-label="Close">' +
+                                '<iconify-icon icon="lucide:x" width="18" height="18"></iconify-icon>' +
+                            '</button>' +
+                        '</div>' +
+                        '<div class="d-flex align-items-center justify-content-between mt-3 pt-2 border-top border-slate-100">' +
+                            '<span class="text-slate-400 font-mono-code" style="font-size: 0.68rem;">Real-time Telemetry</span>' +
+                            '<a href="{{ route("admin.transactions.index") }}" class="btn btn-sm py-1 px-3 rounded-lg font-jakarta font-weight-bold text-decoration-none smooth-all" style="background: ' + (isSettlement ? '#10B981' : '#6366F1') + '; color: #fff; font-size: 0.75rem; border-radius: 8px;">' +
+                                'Lihat Transaksi &rarr;' +
+                            '</a>' +
+                        '</div>';
+
+                    container.appendChild(card);
+
+                    // Slide in animation
+                    requestAnimationFrame(function () {
+                        card.style.transform = 'translateX(0)';
+                        card.style.opacity = '1';
+                    });
+
+                    function dismissCard() {
+                        card.style.transform = 'translateX(110%)';
+                        card.style.opacity = '0';
+                        setTimeout(function () { card.remove(); }, 400);
+                    }
+
+                    var closeBtn = card.querySelector('.close-alert-btn');
+                    if (closeBtn) closeBtn.addEventListener('click', dismissCard);
+
+                    // Auto dismiss setelah 10 detik
+                    setTimeout(dismissCard, 10000);
+
+                    // Putar nada notifikasi
+                    playNotificationSound(isSettlement);
+                }
+
+                // Update List & Badge Notifikasi Topbar secara Real-time
+                function updateTopbarNotifications(notifications) {
+                    var badgeEl = document.getElementById('notifBadgeCount');
+                    var pulseEl = document.getElementById('notifPulseWrapper');
+                    var listContainer = document.getElementById('notifListContainer');
+
+                    var count = notifications ? notifications.length : 0;
+
+                    if (badgeEl) {
+                        badgeEl.textContent = count + ' Baru';
+                    }
+                    if (pulseEl) {
+                        if (count > 0) {
+                            pulseEl.classList.remove('d-none');
+                        } else {
+                            pulseEl.classList.add('d-none');
+                        }
+                    }
+
+                    if (listContainer) {
+                        if (count > 0) {
+                            var html = '';
+                            notifications.forEach(function (notif) {
+                                html += '<a href="' + notif.url + '" class="list-group-item list-group-item-action p-3 border-bottom text-decoration-none">' +
+                                    '<div class="d-flex align-items-start gap-2">' +
+                                        '<span class="p-1.5 rounded-circle text-white d-flex align-items-center justify-content-center flex-shrink-0" style="background: ' + notif.icon_bg + '; width: 28px; height: 28px;">' +
+                                            '<iconify-icon icon="' + notif.icon + '" width="14" height="14"></iconify-icon>' +
+                                        '</span>' +
+                                        '<div class="flex-grow-1">' +
+                                            '<p class="mb-0 font-weight-bold text-slate-800" style="font-size: 0.8rem;">' + notif.title + '</p>' +
+                                            '<span class="text-muted font-mono-code" style="font-size: 0.7rem;">' + notif.desc + ' &bull; ' + notif.time_ago + '</span>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</a>';
+                            });
+                            listContainer.innerHTML = html;
+                        } else {
+                            listContainer.innerHTML =
+                                '<div class="p-4 text-center text-muted font-jakarta" style="font-size: 0.82rem;">' +
+                                    '<iconify-icon icon="lucide:bell-off" width="28" height="28" class="text-slate-400 mb-1 d-block mx-auto"></iconify-icon>' +
+                                    'Belum ada notifikasi pesanan' +
+                                '</div>';
+                        }
+                    }
+                }
+
+                // Loop Polling Telemetry Real-time (tiap 3.5 detik)
+                function pollTelemetry() {
+                    fetch('{{ route("admin.dashboard.telemetry") }}')
+                        .then(function (res) { return res.json(); })
+                        .then(function (payload) {
+                            if (payload.status !== 'ok' || !payload.data) return;
+                            var data = payload.data;
+
+                            // 1. Jika sedang berada di dashboard, perbarui KPI & charts seketika
+                            if (typeof window.updateDashboardTelemetry === 'function') {
+                                window.updateDashboardTelemetry(data);
+                            }
+
+                            // 2. Selalu update notifikasi lonceng di topbar
+                            if (data.notifications) {
+                                updateTopbarNotifications(data.notifications);
+                            }
+
+                            // 3. Deteksi transaksi baru atau perubahan status
+                            var latest = data.latestTransaction;
+                            if (latest) {
+                                if (!isFirstPoll) {
+                                    if (lastTxId !== null && latest.id > lastTxId) {
+                                        // Ada pesanan baru masuk!
+                                        showLiveOrderPopup(latest, latest.transaction_status === 'settlement');
+                                    } else if (lastTxId !== null && latest.id === lastTxId && latest.transaction_status !== lastTxStatus && latest.transaction_status === 'settlement') {
+                                        // Status transaksi baru saja berubah jadi lunas!
+                                        showLiveOrderPopup(latest, true);
+                                    }
+                                }
+                                lastTxId = latest.id;
+                                lastTxStatus = latest.transaction_status;
+                            } else {
+                                lastTxId = null;
+                                lastTxStatus = null;
+                            }
+
+                            isFirstPoll = false;
+                        })
+                        .catch(function () {
+                            // Abaikan kegagalan jaringan sementara
+                        })
+                        .finally(function () {
+                            setTimeout(pollTelemetry, 3500);
+                        });
+                }
+
+                // Mulai polling otomatis
+                setTimeout(pollTelemetry, 1500);
+            })();
         })();
     </script>
 

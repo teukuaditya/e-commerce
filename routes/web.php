@@ -9,6 +9,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransactionDetailController;
 use App\Http\Controllers\User\AboutController as UserAboutController;
 use App\Http\Controllers\User\CartController as UserCartController;
+use App\Http\Controllers\User\WishlistController as UserWishlistController;
 use App\Http\Controllers\User\CategoryController as UserCategoryController;
 use App\Http\Controllers\User\CheckoutController as UserCheckoutController;
 use App\Http\Controllers\User\HomeController as UserHomeController;
@@ -75,6 +76,11 @@ Route::prefix('user')->name('user.')->group(function () {
             Route::post('/bulk-remove', [UserCartController::class, 'removeSelectedItems'])->name('bulkRemove');
         });
 
+        // Wishlist
+        Route::get('/wishlist', [UserWishlistController::class, 'index'])->name('wishlist.index');
+        Route::post('/wishlist/toggle/{product}', [UserWishlistController::class, 'toggle'])
+            ->name('wishlist.toggle')->whereNumber('product');
+
         // Review produk (butuh login)
         Route::post('/products/{product}/reviews', [UserReviewController::class, 'store'])
             ->name('reviews.store')->whereNumber('product');
@@ -100,6 +106,7 @@ Route::prefix('user')->name('user.')->group(function () {
             Route::get('/edit', [UserUserController::class, 'showEditForm'])->name('edit');
             Route::put('/update', [UserUserController::class, 'editUser'])->name('update');
             Route::get('/update', [UserUserController::class, 'showEditForm'])->name('update.get');
+            Route::delete('/destroy', [UserUserController::class, 'destroyAccount'])->name('destroy');
         });
 
         // Address

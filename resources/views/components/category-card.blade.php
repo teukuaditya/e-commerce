@@ -11,14 +11,14 @@
       3. data-reveal    -> scroll reveal bertahap (IntersectionObserver)
       4. .fade-img      -> lazy load + fade-in gambar
 --}}
-@props(['category', 'position' => 0, 'delay' => 0])
+@props(['category', 'position' => 0, 'showCount' => true])
 
 @php
     $indexNo = str_pad(((int) $position) + 1, 2, '0', STR_PAD_LEFT);
     $productCount = (int) ($category->products_count ?? 0);
 @endphp
 
-<div class="block1 wrap-pic-w cat-card" data-reveal style="--reveal-delay: {{ (int) $delay }}ms">
+<div class="block1 wrap-pic-w cat-card">
     {{-- [LAMA, ditambah .fade-img] Gambar kategori --}}
     <img class="fade-img"
          src="{{ asset('storage/categories/' . $category->image) }}"
@@ -45,6 +45,8 @@
          diteruskan ke link .block1-txt di bawahnya. --}}
     <div class="cat-meta" aria-hidden="true">
         <span class="cat-meta__idx">{{ $indexNo }}</span>
-        <span class="cat-meta__count">{{ $productCount }} Produk</span>
+        @if($showCount)
+            <span class="cat-meta__count">{{ $productCount }} Produk</span>
+        @endif
     </div>
 </div>

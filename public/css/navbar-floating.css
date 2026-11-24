@@ -274,3 +274,15 @@ body.page-home .item-slick1 .flex-col-l-m {
         transition: none !important;
     }
 }
+
+/* ----------------------------------------------------------------------------
+   5. Modal Bootstrap harus di atas navbar floating
+      Navbar floating: z-index 1100, dropdown: 1200.
+      Default Bootstrap modal: 1050 / backdrop: 1040 → tertutup navbar.
+   ---------------------------------------------------------------------------- */
+.modal {
+    z-index: 1305 !important;
+}
+.modal-backdrop {
+    z-index: 1300 !important;
+}

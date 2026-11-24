@@ -40,7 +40,17 @@
                                     <td>{{ $transaction->courier_service }}</td>
                                     <td>{{ $transaction->transaction_time }}</td>
                                     <td>{{ $transaction->payment_type }}</td>
-                                    <td>{{ ucfirst($transaction->transaction_status) }}</td>
+                                    <td>
+                                        @if($transaction->transaction_status === 'settlement')
+                                            <span class="badge badge-success px-2 py-1" style="font-size: 0.8rem; background-color: #10B981; color: #fff;">Settlement</span>
+                                        @elseif($transaction->transaction_status === 'pending')
+                                            <span class="badge badge-warning px-2 py-1" style="font-size: 0.8rem; background-color: #F59E0B; color: #fff;">Pending</span>
+                                        @elseif(in_array($transaction->transaction_status, ['expire', 'cancel', 'failure']))
+                                            <span class="badge badge-danger px-2 py-1" style="font-size: 0.8rem; background-color: #EF4444; color: #fff;">{{ ucfirst($transaction->transaction_status) }}</span>
+                                        @else
+                                            <span class="badge badge-secondary px-2 py-1" style="font-size: 0.8rem;">{{ ucfirst($transaction->transaction_status ?? '-') }}</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr><td colspan="10">

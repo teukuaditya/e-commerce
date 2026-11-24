@@ -910,8 +910,18 @@ body:has(.app-auth) {
     color: var(--tu-ink-3, #9ca3af);
     cursor: pointer;
     transition: color .18s ease, background .18s ease;
+    outline: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
 }
 .pass-toggle:hover { color: var(--tu-accent); background: rgba(79, 70, 229, .08); }
+.pass-toggle:focus,
+.pass-toggle:active,
+.pass-toggle:focus-visible {
+    outline: none;
+    box-shadow: none;
+    transform: translateY(-50%);
+}
 .pass-toggle i { font-size: 14px; }
 
 .app-auth__row {

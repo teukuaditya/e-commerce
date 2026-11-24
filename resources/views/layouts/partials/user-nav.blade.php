@@ -36,6 +36,10 @@
             onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
             <i class="fas fa-sign-out-alt fa-fw mr-2"></i> Sign Out
         </a>
+        <a href="#" class="list-group-item stext-104 hover-effect delete-account-link"
+            data-toggle="modal" data-target="#deleteAccountModal">
+            <i class="fas fa-user-times fa-fw mr-2"></i> Hapus Akun Saya
+        </a>
     </ul>
     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
         @csrf
@@ -69,4 +73,78 @@
         color: #333;
         /* Warna teks saat aktif */
     }
+
+    .delete-account-link {
+        color: #e53935 !important;
+    }
+
+    .delete-account-link:hover {
+        color: #c62828 !important;
+        background-color: rgba(229, 57, 53, 0.08) !important;
+    }
 </style>
+
+<!-- Modal Konfirmasi Hapus Akun -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1" role="dialog" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header" style="border-bottom: 1px solid #eee;">
+                <h5 class="modal-title mtext-109 cl2" id="deleteAccountModalLabel" style="font-size: 18px;">Hapus Akun</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form action="{{ route('user.profile.destroy') }}" method="POST">
+                @csrf
+                @method('DELETE')
+                <div class="modal-body" style="padding: 24px;">
+                    <p class="stext-102 cl6" style="line-height: 1.7; margin-bottom: 16px;">
+                        Apakah Anda yakin ingin menghapus akun <strong>{{ auth()->user()->name }}</strong>?
+                        Semua data akun akan dihapus permanen dan Anda akan keluar dari sesi ini.
+                    </p>
+
+                    @if(empty(auth()->user()->google_id))
+                        <div class="form-group mb-0">
+                            <label class="stext-102 cl2" for="delete-account-password" style="font-weight: 600;">
+                                Masukkan password untuk konfirmasi
+                            </label>
+                            <input type="password"
+                                   id="delete-account-password"
+                                   name="password"
+                                   class="form-control @error('password') is-invalid @enderror"
+                                   autocomplete="current-password"
+                                   required>
+                            @error('password')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    @else
+                        <p class="stext-102" style="color: #888; margin-bottom: 0;">
+                            Anda login menggunakan Google, jadi konfirmasi password tidak diperlukan.
+                        </p>
+                    @endif
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #eee;">
+                    <button type="button" class="btn btn-light stext-102" data-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn stext-102" style="background: #e53935; color: #fff; font-weight: 600;">
+                        Ya, Hapus Akun Saya
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    $(document).ready(function () {
+        var $modal = $('#deleteAccountModal');
+        if ($modal.length && $modal.parent()[0].tagName !== 'BODY') {
+            $modal.appendTo('body');
+        }
+        @if($errors->has('password') && old('_method') === 'DELETE')
+            $modal.modal('show');
+        @endif
+    });
+</script>
+@endpush

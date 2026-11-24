@@ -815,7 +815,10 @@
                 },
                 error: function(xhr) {
                     console.error('Error:', xhr.responseText);
-                    alert('Failed to connect to the server. Please try again.');
+                    var msg = (xhr.responseJSON && xhr.responseJSON.error)
+                        ? xhr.responseJSON.error
+                        : 'Failed to connect to the server. Please try again.';
+                    alert(msg);
                 }
             });
         });
