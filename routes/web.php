@@ -144,6 +144,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
 
 /**
  * -------------------------------------------------------
+ * GOOGLE OAUTH LOGIN
+ * -------------------------------------------------------
+ */
+Route::get('auth/google', [\App\Http\Controllers\Auth\GoogleLoginController::class, 'redirectToGoogle'])
+    ->name('google.login');
+Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleLoginController::class, 'handleGoogleCallback'])
+    ->name('google.callback');
+
+/**
+ * -------------------------------------------------------
  * AUTH scaffolding
  * -------------------------------------------------------
  * Auth::routes() biasanya sudah memuat POST /logout (name: logout).

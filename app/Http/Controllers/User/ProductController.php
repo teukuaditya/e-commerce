@@ -11,8 +11,10 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = trim((string) $request->input('query', ''));
+        // Dukung ?q= (format URL baru) dan ?query= (link lama tetap berfungsi)
+        $query = trim((string) $request->input('q', $request->input('query', '')));
         $categoryFilter = $request->input('category');
+        $categoryFilter = is_string($categoryFilter) ? trim($categoryFilter) : null;
 
         $productsQuery = Product::with('category')
             ->when($query !== '', function ($q) use ($query) {
@@ -24,7 +26,8 @@ class ProductController extends Controller
             })
             ->when($categoryFilter && $categoryFilter !== '*', function ($q) use ($categoryFilter) {
                 $q->whereHas('category', function ($sub) use ($categoryFilter) {
-                    $sub->where('category_name', $categoryFilter)
+                    // LIKE -> tidak peka huruf besar/kecil (?category=baju tetap cocok "Baju")
+                    $sub->where('category_name', 'LIKE', $categoryFilter)
                         ->orWhere('id', $categoryFilter);
                 });
             })
@@ -42,6 +45,7 @@ class ProductController extends Controller
             return response()->json([
                 'count' => $products->total(),
                 'query' => $query,
+                'category' => $categoryFilter ?? '',
                 'html' => $gridHtml,
                 'pagination' => $paginationHtml,
             ]);

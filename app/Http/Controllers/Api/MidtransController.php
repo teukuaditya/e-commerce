@@ -159,13 +159,15 @@ class MidtransController extends Controller
         $signatureKey = $request->input('signature_key');
         // Temuan audit K5: baca lewat config, BUKAN env() (rusak setelah config:cache)
         $serverKey = config('midtrans.server_key');
+        $signatureSecretKey = config('midtrans.signature_key') ?: $serverKey;
 
         // ===========================
-        //  Validasi signature
+        //  Validasi signature (mendukung Signature Secret Key & Server Key)
         // ===========================
-        $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
+        $expectedSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$signatureSecretKey);
+        $fallbackSignature = hash('sha512', $orderId.$statusCode.$grossAmount.$serverKey);
 
-        if ($signatureKey !== $expectedSignature) {
+        if ($signatureKey !== $expectedSignature && $signatureKey !== $fallbackSignature) {
             Log::warning('Invalid Signature Key:', ['order_id' => $orderId]);
 
             return response()->json([

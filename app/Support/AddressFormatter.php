@@ -62,42 +62,72 @@ class AddressFormatter
             'street_address' => null,
             'destination_name' => null,
             'destination_id' => null,
+            'recipientName' => null,
+            'recipientPhone' => null,
+            'streetAddress' => null,
+            'destinationName' => null,
+            'destinationId' => null,
         ];
 
         if (! $address) {
             return $empty;
         }
 
-        // Format kanonikal (indonesia)
+        // Format kanonikal (indonesia) — dengan modifier /s agar mendukung baris baru (\n)
         if (preg_match(
-            '/'.self::LABEL_NAME.': (.*?), '.self::LABEL_PHONE.': (.*?), '.self::LABEL_ADDRESS.': (.*?), '.self::LABEL_DESTINATION.': (.*?), '.self::LABEL_DESTINATION_ID.': (.*)$/',
+            '/'.self::LABEL_NAME.': (.*?), '.self::LABEL_PHONE.': (.*?), '.self::LABEL_ADDRESS.': (.*?), '.self::LABEL_DESTINATION.': (.*?), '.self::LABEL_DESTINATION_ID.': (.*)$/s',
             $address,
             $m
         )) {
+            $name = trim($m[1] ?? '');
+            $phone = trim($m[2] ?? '');
+            $street = trim($m[3] ?? '');
+            $destName = trim($m[4] ?? '');
+            $destId = trim($m[5] ?? '');
+
             return [
-                'recipient_name' => trim($m[1] ?? ''),
-                'recipient_phone' => trim($m[2] ?? ''),
-                'street_address' => trim($m[3] ?? ''),
-                'destination_name' => trim($m[4] ?? ''),
-                'destination_id' => trim($m[5] ?? ''),
+                'recipient_name' => $name,
+                'recipient_phone' => $phone,
+                'street_address' => $street,
+                'destination_name' => $destName,
+                'destination_id' => $destId,
+                'recipientName' => $name,
+                'recipientPhone' => $phone,
+                'streetAddress' => $street,
+                'destinationName' => $destName,
+                'destinationId' => $destId,
             ];
         }
 
         // Format legacy berbahasa inggris (dipakai CheckoutController lama)
         if (preg_match(
-            '/Recipient Name: (.*?), Phone: (.*?), Address: (.*?), Destination: (.*?), Destination ID: (.*?)(,|$)/',
+            '/Recipient Name: (.*?), Phone: (.*?), Address: (.*?), Destination: (.*?), Destination ID: (.*?)(,|$)/s',
             $address,
             $m
         )) {
+            $name = trim($m[1] ?? '');
+            $phone = trim($m[2] ?? '');
+            $street = trim($m[3] ?? '');
+            $destName = trim($m[4] ?? '');
+            $destId = trim($m[5] ?? '');
+
             return [
-                'recipient_name' => trim($m[1] ?? ''),
-                'recipient_phone' => trim($m[2] ?? ''),
-                'street_address' => trim($m[3] ?? ''),
-                'destination_name' => trim($m[4] ?? ''),
-                'destination_id' => trim($m[5] ?? ''),
+                'recipient_name' => $name,
+                'recipient_phone' => $phone,
+                'street_address' => $street,
+                'destination_name' => $destName,
+                'destination_id' => $destId,
+                'recipientName' => $name,
+                'recipientPhone' => $phone,
+                'streetAddress' => $street,
+                'destinationName' => $destName,
+                'destinationId' => $destId,
             ];
         }
 
-        return $empty;
+        return array_merge($empty, [
+            'street_address' => trim($address),
+            'streetAddress' => trim($address),
+        ]);
     }
 }

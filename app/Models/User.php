@@ -20,10 +20,15 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'email_verified_at',
         'password',
         'phone',
         'address',
         'role',
+        'google_id',
+        'google_token',
+        'google_refresh_token',
+        'google_token_expires_at',
     ];
 
     /**
@@ -34,6 +39,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'google_token',
+        'google_refresh_token',
     ];
 
     public function reviews()

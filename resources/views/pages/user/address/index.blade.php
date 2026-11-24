@@ -16,14 +16,14 @@
                 </div>
 
                 <div class="bor10 p-lr-40 p-t-30 p-b-30 m-lr-0-xl p-lr-15-sm">
-                    <div id="address-display">
+                    <div id="address-display" style="{{ $errors->any() ? 'display:none;' : '' }}">
                         <div class="d-flex flex-column align-items-start">
                             @if (auth()->user()->address)
                             <h6 class="mtext-106 cl2 mb-2" style="font-weight: bold;">
                                 {{ $recipientName ?? 'N/A' }}
                             </h6>
                             <p class="stext-101 cl2 mb-2">{{ $recipientPhone ?? 'N/A' }}</p>
-                            <p class="stext-104 cl2 mb-2">{{ $streetAddress ?? 'N/A' }}</p>
+                            <p class="stext-104 cl2 mb-2">{!! nl2br(e($streetAddress ?? 'N/A')) !!}</p>
                             <p class="stext-102 cl3">{{ $destinationName ?? 'N/A' }}</p>
                             @else
                             <div class="stext-102 cl2">
@@ -35,36 +35,36 @@
 
                     <button id="edit-address-btn"
                         class="flex-c-m stext-102 cl0 size-127 bg1 mt-3 bor14 hov-btn5 p-lr-15 trans-04 pointer"
-                        style="font-size: 12px; min-width: 10%; height: 30px">
+                        style="font-size: 12px; min-width: 10%; height: 30px; {{ $errors->any() ? 'display:none;' : '' }}">
                         {{ auth()->user()->address ? 'Edit Address' : 'Add Address' }}
                     </button>
 
-                    <div id="address-form" style="display:none;">
+                    <div id="address-form" style="{{ $errors->any() ? 'display:block;' : 'display:none;' }}">
                         <form action="{{ route('user.address.update') }}" method="POST">
                             @csrf
                             <div class="form-group mb-4">
                                 <label for="recipient_name" class="mtext-102">Recipient Name</label>
                                 <input type="text" id="recipient_name" name="recipient_name" class="form-control"
-                                    value="{{ $recipientName ?? '' }}" required>
+                                    value="{{ old('recipient_name', $recipientName ?? '') }}" required>
                             </div>
 
                             <div class="form-group mb-4">
                                 <label for="recipient_phone" class="mtext-102">Recipient Phone</label>
                                 <input type="text" id="recipient_phone" name="recipient_phone" class="form-control"
-                                    value="{{ $recipientPhone ?? '' }}" required>
+                                    value="{{ old('recipient_phone', $recipientPhone ?? '') }}" required>
                             </div>
 
                             <div class="form-group mb-4">
                                 <label for="address" class="mtext-102">Address</label>
-                                <textarea id="address" name="address" class="form-control" rows="4" required>{{ $streetAddress ?? '' }}</textarea>
+                                <textarea id="address" name="address" class="form-control" rows="4" required>{{ old('address', $streetAddress ?? '') }}</textarea>
                             </div>
 
                             <div class="form-group mb-4">
                                 <label for="destination_name" class="mtext-102">Destination</label>
                                 <input type="text" id="destination_name" name="destination_name" class="form-control"
-                                    value="{{ $destinationName ?? '' }}" required autocomplete="off">
+                                    value="{{ old('destination_name', $destinationName ?? '') }}" required autocomplete="off">
                                 <input type="hidden" id="destination_id" name="destination_id"
-                                    value="{{ $destinationId ?? '' }}">
+                                    value="{{ old('destination_id', $destinationId ?? '') }}">
                             </div>
 
                             <div class="d-flex justify-content-start gap-2">
@@ -143,10 +143,14 @@
                                 data: item
                             };
                         }));
+                    },
+                    error: function() {
+                        response([]);
                     }
                 });
             },
-            minLength: 2,
+            minLength: 1,
+            delay: 400,
             select: function(event, ui) {
                 $('#destination_name').val(ui.item.label);
                 $('#destination_id').val(ui.item.data.id);

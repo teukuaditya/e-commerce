@@ -16,31 +16,25 @@
     </div>
     <section class="bg0 m-t-45 p-b-60">
         <div class="container">
+            <x-flash-alert class="stext-102 mb-4" />
             <div class="row">
                 <!-- Kolom Kiri: Alamat dan Shipping -->
                 <div class="col-lg-7">
                     <div class="bor10 p-lr-40 p-t-30 p-b-30 m-lr-0-xl p-lr-15-sm">
                         <h3 class="mtext-109 cl2 p-b-30">Delivery</h3>
-                        <form action="#" id="address-form">
+                        <div id="address-form">
                             <!-- Alamat Pengiriman -->
                             <div class="size-204 respon6-next">
 
                                 <!-- Menampilkan Alamat yang Tersimpan -->
                                 @if (auth()->user()->address)
                                     @php
-                                        $address = auth()->user()->address;
-
-                                        preg_match(
-                                            '/Nama Penerima: (.*?), No\. Telepon: (.*?), Alamat: (.*?), Destination: (.*?), Destination ID: (.*)/',
-                                            $address,
-                                            $matches,
-                                        );
-
-                                        $recipientName = $matches[1] ?? '';
-                                        $recipientPhone = $matches[2] ?? '';
-                                        $streetAddress = $matches[3] ?? '';
-                                        $destinationName = $matches[4] ?? '';
-                                        $destinationId = $matches[5] ?? '';
+                                        $parsedAddress = \App\Support\AddressFormatter::parse(auth()->user()->address);
+                                        $recipientName = $parsedAddress['recipient_name'] ?? '';
+                                        $recipientPhone = $parsedAddress['recipient_phone'] ?? '';
+                                        $streetAddress = $parsedAddress['street_address'] ?? '';
+                                        $destinationName = $parsedAddress['destination_name'] ?? '';
+                                        $destinationId = $parsedAddress['destination_id'] ?? '';
                                     @endphp
                                     <div class="d-flex flex-column align-items-start">
                                         <h6 class="mtext-106 cl2 mb-2" style="font-weight: bold; font-size: 16px;">
@@ -50,7 +44,7 @@
                                             {{ $recipientPhone }}
                                         </p>
                                         <p class="stext-104 cl2 mb-2">
-                                            {{ $streetAddress }}
+                                            {!! nl2br(e($streetAddress)) !!}
                                         </p>
                                         <p class="stext-102 cl3">
                                             {{ $destinationName }}
@@ -65,236 +59,39 @@
                                 @endif
                             </div>
 
-                            <!-- Tampilkan tombol untuk menambah alamat jika belum ada -->
-                            @if (!auth()->user()->address)
-                                <button type="button" id="add-address-btn"
-                                    class="flex-c-m stext-102 cl0 size-127 bg1 mt-3 bor14 hov-btn5 p-lr-15 trans-04 pointer"
-                                    style="font-size: 12px; min-width: 10%; height: 30px" data-toggle="modal"
-                                    data-target="#addAddressModal">
-                                    Add Address
-                                </button>
-                            @endif
+                            <div class="d-flex align-items-center gap-2 mt-3 flex-wrap">
+                                <!-- Tampilkan tombol untuk menambah alamat jika belum ada -->
+                                @if (!auth()->user()->address)
+                                    <button type="button" id="add-address-btn"
+                                        class="flex-c-m stext-102 cl0 size-127 bg1 bor14 hov-btn5 p-lr-15 trans-04 pointer"
+                                        style="font-size: 12px; min-width: 10%; height: 30px" data-toggle="modal"
+                                        data-target="#addAddressModal">
+                                        Add Address
+                                    </button>
+                                @endif
 
-                            @if (auth()->user()->address)
-                                <button type="button" id="edit-address-btn"
-                                    class="flex-c-m stext-102 cl0 size-127 bg1 mt-3 bor14 hov-btn5 p-lr-15 trans-04 pointer"
-                                    style="font-size: 12px; min-width: 10%; height: 30px" data-toggle="modal"
-                                    data-target="#editAddressModal">
-                                    Edit Address
-                                </button>
-                            @endif
+                                @if (auth()->user()->address)
+                                    <button type="button" id="edit-address-btn"
+                                        class="flex-c-m stext-102 cl0 size-127 bg1 bor14 hov-btn5 p-lr-15 trans-04 pointer"
+                                        style="font-size: 12px; min-width: 10%; height: 30px" data-toggle="modal"
+                                        data-target="#editAddressModal">
+                                        Edit Address
+                                    </button>
 
-                            <!-- Tombol Hapus Alamat -->
-                            @if (auth()->user()->address)
-                                <button type="button" id="delete-address-btn"
-                                    class="flex-c-m stext-102 cl0 size-127 bg10 mt-3 bor14 hov-btn4 p-lr-15 trans-04 pointer"
-                                    style="font-size: 12px; min-width: 10%; height: 30px">
-                                    Delete Address
-                                </button>
-                            @endif
-
-                            <!-- Modal Edit Address -->
-                            <div class="modal fade" id="editAddressModal" tabindex="-1" role="dialog"
-                                aria-labelledby="editAddressModalLabel" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content">
-
-                                        <div class="modal-header">
-                                            <h5 class="modal-title mtext-103 cl2" id="editAddressModalLabel">Edit Address
-                                            </h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-
-                                        <div class="modal-body stext-102 cl2">
-                                            <form id="edit-address-form" action="{{ route('user.address.update') }}"
-                                                method="POST">
-                                                @csrf
-                                                <!-- Recipient Name -->
-                                                <div class="form-group">
-                                                    <label for="edit-recipient-name">Recipient Name</label>
-                                                    <input type="text" class="form-control" id="edit-recipient-name"
-                                                        name="recipient_name" value="{{ $recipientName ?? '' }}">
-                                                </div>
-
-                                                <!-- Phone Number -->
-                                                <div class="form-group">
-                                                    <label for="edit-recipient-phone">Phone Number</label>
-                                                    <input type="text" class="form-control" id="edit-recipient-phone"
-                                                        name="recipient_phone" value="{{ $recipientPhone ?? '' }}">
-                                                </div>
-
-                                                <!-- Street Address -->
-                                                <div class="form-group">
-                                                    <label for="edit-address">Full Address</label>
-                                                    <textarea class="form-control" id="edit-address" name="address" rows="2">{{ $streetAddress ?? '' }}</textarea>
-                                                </div>
-
-                                                <!-- Destination -->
-                                                <div class="form-group mb-4">
-                                                    <label for="edit-destination-name" class="mtext-102">Destination</label>
-                                                    <input type="text" id="edit-destination-name" name="destination_name"
-                                                        class="form-control" value="{{ $destinationName ?? '' }}" required
-                                                        autocomplete="off">
-                                                    <input type="hidden" id="edit-destination-id" name="destination_id"
-                                                        value="{{ $destinationId ?? '' }}">
-                                                </div>
-                                            </form>
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button type="button"
-                                                class="flex-c-m stext-102 cl0 size-304 bg10 bor14 hov-btn4 p-lr-15 trans-04 pointer"
-                                                data-dismiss="modal">Cancel</button>
-                                            <button type="submit" id="save-edit-address-btn"
-                                                class="flex-c-m stext-102 cl0 size-304 bg1 bor14 hov-btn5 p-lr-15 trans-04 pointer"
-                                                form="edit-address-form">Save Changes</button>
-                                        </div>
-
-                                    </div>
-                                </div>
+                                    <!-- Tombol Hapus Alamat -->
+                                    <form id="delete-address-form" action="/user/address/delete" method="POST" style="display:inline-block; margin-left: 8px;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" id="delete-address-btn"
+                                            class="flex-c-m stext-102 cl0 size-127 bg10 bor14 hov-btn4 p-lr-15 trans-04 pointer"
+                                            style="font-size: 12px; min-width: 10%; height: 30px"
+                                            onclick="return confirm('Are you sure you want to delete this address?');">
+                                            Delete Address
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
-
-
-                            <!-- Modal Add Address -->
-                            <div class="modal fade" id="addAddressModal" tabindex="-1" role="dialog"
-                                aria-labelledby="addAddressModalLabel" aria-hidden="true">
-                                <div class="modal-dialog" role="document">
-                                    <div class="modal-content">
-
-                                        <div class="modal-header">
-                                            <h5 class="modal-title mtext-103 cl2" id="addAddressModalLabel">Add Address
-                                            </h5>
-                                            <button type="button" class="close" data-dismiss="modal"
-                                                aria-label="Close">
-                                                <span aria-hidden="true">&times;</span>
-                                            </button>
-                                        </div>
-
-                                        <div class="modal-body stext-102 cl2">
-                                            <form id="new-address-form">
-                                                <div class="form-group">
-                                                    <label for="recipient-name">Recipient Name</label>
-                                                    <input type="text" class="form-control" id="recipient-name"
-                                                        name="recipient_name">
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label for="recipient-phone">Phone Number</label>
-                                                    <input type="text" class="form-control" id="recipient-phone"
-                                                        name="recipient_phone">
-                                                </div>
-
-                                                <div class="form-group">
-                                                    <label for="new-address">Full Address</label>
-                                                    <textarea class="form-control" id="new-address" name="address" rows="2"></textarea>
-                                                </div>
-
-                                                <div class="form-group mb-4">
-                                                    <label for="new-destination-name"
-                                                        class="mtext-102">Destination</label>
-                                                    <input type="text" id="new-destination-name"
-                                                        name="destination_name" class="form-control" required
-                                                        autocomplete="off">
-                                                    <input type="hidden" id="new-destination-id" name="destination_id">
-                                                </div>
-                                            </form>
-                                        </div>
-
-                                        <div class="modal-footer">
-                                            <button type="button"
-                                                class="flex-c-m stext-102 cl0 size-304 bg10 bor14 hov-btn4 p-lr-15 trans-04 pointer"
-                                                data-dismiss="modal">Cancel</button>
-                                            <button type="button" id="save-address-btn"
-                                                class="flex-c-m stext-102 cl0 size-304 bg1 bor14 hov-btn5 p-lr-15 trans-04 pointer">Save
-                                                Address</button>
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-
-
-
-                            <!-- Style untuk menonaktifkan tombol -->
-                            <style>
-                                /* Mengubah tombol save edit addres saat dinonaktifkan */
-                                #save-edit-address-btn:disabled {
-                                    opacity: 0.5;
-                                    /* Membuat tombol tampak lebih transparan */
-                                    cursor: not-allowed;
-                                    /* Menonaktifkan pointer */
-                                    pointer-events: none;
-                                    /* Tidak bisa diklik */
-                                }
-
-                                /* Menimpa efek hover dan pointer saat tombol sedang dalam status "Menyimpan..." */
-                                #save-edit-address-btn.saving {
-                                    opacity: 0.5;
-                                    /* Membuat tombol tampak transparan */
-                                    cursor: not-allowed;
-                                    /* Menonaktifkan pointer */
-                                    pointer-events: none;
-                                    /* Tidak bisa diklik */
-                                    background-color: #dcdcdc;
-                                    /* Ganti warna latar belakang saat sedang menyimpan */
-                                }
-
-                                /* Menimpa hover saat tombol sedang menyimpan */
-                                #save-edit-address-btn.saving:hover {
-                                    background-color: #f0f0f0;
-                                    /* Menjaga warna latar belakang */
-                                }
-
-                                /* Mengubah tombol save addres saat dinonaktifkan */
-                                #save-address-btn:disabled {
-                                    opacity: 0.5;
-                                    /* Membuat tombol tampak lebih transparan */
-                                    cursor: not-allowed;
-                                    /* Menonaktifkan pointer */
-                                    pointer-events: none;
-                                    /* Tidak bisa diklik */
-                                }
-
-                                /* Menimpa efek hover dan pointer saat tombol sedang dalam status "Menyimpan..." */
-                                #save-address-btn.saving {
-                                    opacity: 0.5;
-                                    /* Membuat tombol tampak transparan */
-                                    cursor: not-allowed;
-                                    /* Menonaktifkan pointer */
-                                    pointer-events: none;
-                                    /* Tidak bisa diklik */
-                                    background-color: #dcdcdc;
-                                    /* Ganti warna latar belakang saat sedang menyimpan */
-                                }
-
-                                /* Menimpa hover saat tombol sedang menyimpan */
-                                #save-address-btn.saving:hover {
-                                    background-color: #f0f0f0;
-                                    /* Menjaga warna latar belakang */
-                                }
-                            </style>
-
-                            <style>
-                                /* CSS untuk Modal */
-                                .modal-backdrop {
-                                    z-index: 1200 !important;
-                                    /* Pastikan backdrop lebih tinggi dari top bar */
-                                }
-
-                                .modal {
-                                    z-index: 1300 !important;
-                                    /* Modal harus berada di atas backdrop */
-                                }
-
-                                /* Memberikan margin atas pada modal */
-                                .modal-dialog {
-                                    margin-top: 80px;
-                                    /* Atur sesuai dengan kebutuhan, semakin besar maka semakin ke bawah */
-                                }
-                            </style>
-                    </div>
+                        </div>
 
                     <!-- Shipping Method -->
                     <div class="bor10 p-lr-40 p-t-30 p-b-30 m-lr-0-xl p-lr-15-sm m-t-30">
@@ -322,7 +119,7 @@
                                 <div class="dropDownSelect2"></div>
                             </div>
                         </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -385,14 +182,109 @@
             </div>
         </div>
     </section>
+
+    {{-- ============================================================
+         MODAL ADD ADDRESS
+         ============================================================ --}}
+    <div class="modal fade" id="addAddressModal" tabindex="-1" role="dialog" aria-labelledby="addAddressModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title mtext-103 cl2" id="addAddressModalLabel">Add Address</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body stext-102 cl2">
+                    <div class="form-group">
+                        <label for="recipient-name">Recipient Name</label>
+                        <input type="text" class="form-control" id="recipient-name" name="recipient_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="recipient-phone">Phone Number</label>
+                        <input type="text" class="form-control" id="recipient-phone" name="recipient_phone">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-address">Full Address</label>
+                        <textarea class="form-control" id="new-address" name="address" rows="2"></textarea>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label for="new-destination-name" class="mtext-102">Destination</label>
+                        <input type="text" id="new-destination-name" name="destination_name" class="form-control" required autocomplete="off">
+                        <input type="hidden" id="new-destination-id" name="destination_id">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="flex-c-m stext-102 cl0 size-304 bg10 bor14 hov-btn4 p-lr-15 trans-04 pointer" data-dismiss="modal">Cancel</button>
+                    <button type="button" id="save-address-btn" class="flex-c-m stext-102 cl0 size-304 bg1 bor14 hov-btn5 p-lr-15 trans-04 pointer">Save Address</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ============================================================
+         MODAL EDIT ADDRESS (hanya bila sudah ada alamat)
+         ============================================================ --}}
+    @if (auth()->user()->address)
+        <div class="modal fade" id="editAddressModal" tabindex="-1" role="dialog" aria-labelledby="editAddressModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title mtext-103 cl2" id="editAddressModalLabel">Edit Address</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body stext-102 cl2">
+                        <div class="form-group">
+                            <label for="edit-recipient-name">Recipient Name</label>
+                            <input type="text" class="form-control" id="edit-recipient-name" name="recipient_name" value="{{ $recipientName ?? '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-recipient-phone">Phone Number</label>
+                            <input type="text" class="form-control" id="edit-recipient-phone" name="recipient_phone" value="{{ $recipientPhone ?? '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-address">Full Address</label>
+                            <textarea class="form-control" id="edit-address" name="address" rows="2">{{ $streetAddress ?? '' }}</textarea>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label for="edit-destination-name" class="mtext-102">Destination</label>
+                            <input type="text" id="edit-destination-name" name="destination_name" class="form-control" value="{{ $destinationName ?? '' }}" required autocomplete="off">
+                            <input type="hidden" id="edit-destination-id" name="destination_id" value="{{ $destinationId ?? '' }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="flex-c-m stext-102 cl0 size-304 bg10 bor14 hov-btn4 p-lr-15 trans-04 pointer" data-dismiss="modal">Cancel</button>
+                        <button type="button" id="save-edit-address-btn" class="flex-c-m stext-102 cl0 size-304 bg1 bor14 hov-btn5 p-lr-15 trans-04 pointer">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 @endsection
 
 @push('styles')
-    {{-- select2 hanya di halaman ini --}}
+    {{-- jQuery UI (autocomplete destinasi) & select2 --}}
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="{{ asset('vendor/select2/select2.min.css') }}">
+    <style>
+        /* Autocomplete destinasi harus tampil DI ATAS modal Bootstrap */
+        .ui-autocomplete {
+            z-index: 2000 !important;
+            max-height: 240px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        .modal { z-index: 1300 !important; }
+        .modal-backdrop { z-index: 1200 !important; }
+        .modal-dialog { margin-top: 80px; }
+    </style>
 @endpush
 
 @push('scripts')
+    {{-- jQuery UI untuk autocomplete destinasi alamat --}}
+    <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.min.js"></script>
     {{-- Midtrans Snap SDK — hanya di halaman yang memanggil snap.pay --}}
     <script src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
         data-client-key="{{ config('midtrans.client_key') }}"></script>
@@ -409,6 +301,11 @@
     <script>
         // Menghitung total berat produk dalam keranjang
         $(document).ready(function() {
+            // PENTING: pindahkan modal ke <body> agar lolos dari stacking context
+            // ancestor (navbar glass / animasi <main> punya transform & backdrop-filter).
+            // Tanpa ini, backdrop tampil tapi modal tersembunyi di baliknya → layar gelap.
+            $('#addAddressModal, #editAddressModal').appendTo('body');
+
             const origin = 17549; // ID Kota Jakarta
             const userCityId = $('#destination_id').val(); // ID Kota pengguna
             let totalWeight = 0;
@@ -433,10 +330,14 @@
                                     data: item
                                 };
                             }));
+                        },
+                        error: function() {
+                            response([]);
                         }
                     });
                 },
-                minLength: 2,
+                minLength: 1,
+                delay: 400,
                 select: function(event, ui) {
                     $('#new-destination-name').val(ui.item.label);
                     $('#new-destination-id').val(ui.item.data.id);
@@ -460,18 +361,33 @@
                                     data: item
                                 };
                             }));
+                        },
+                        error: function() {
+                            response([]);
                         }
                     });
                 },
-                minLength: 2,
+                minLength: 1,
+                delay: 400,
                 select: function(event, ui) {
                     $('#edit-destination-name').val(ui.item.label);
                     $('#edit-destination-id').val(ui.item.data.id);
                     return false;
                 }
             });
+
+            // Jika user mengetik ulang destinasi (bukan memilih dari autocomplete),
+            // kosongkan ID lama supaya tidak memakai ID yang tidak cocok dengan nama baru.
+            $('#new-destination-name').on('input', function() {
+                $('#new-destination-id').val('');
+            });
+            $('#edit-destination-name').on('input', function() {
+                $('#edit-destination-id').val('');
+            });
+
             // Simpan alamat baru
-            $('#save-address-btn').on('click', function() {
+            $('#save-address-btn').on('click', function(e) {
+                e.preventDefault();
                 console.log('Save Address button clicked');
                 const name = $('#recipient-name').val();
                 const phone = $('#recipient-phone').val();
@@ -479,7 +395,12 @@
                 const destinationName = $('#new-destination-name').val();
                 const destinationId = $('#new-destination-id').val();
 
-                if (name && phone && address && destinationName && destinationId) {
+                if (name && phone && address && destinationName && !destinationId) {
+                    alert('Silakan PILIH destinasi dari dropdown autocomplete (jangan hanya mengetik), agar ongkir bisa dihitung.');
+                    return;
+                }
+
+                if (name && phone && address && destinationName) {
                     $(this).html('Saving...').attr('disabled', true);
 
                     $.ajax({
@@ -491,7 +412,7 @@
                             recipient_phone: phone,
                             address: address,
                             destination_name: destinationName,
-                            destination_id: destinationId
+                            destination_id: destinationId || ''
                         },
                         success: function(response) {
                             if (response.success) {
@@ -514,12 +435,18 @@
             });
 
             //Mengupdate Alamat
-            $('#save-edit-address-btn').on('click', function() {
+            $('#save-edit-address-btn').on('click', function(e) {
+                e.preventDefault();
                 const name = $('#edit-recipient-name').val();
                 const phone = $('#edit-recipient-phone').val();
                 const address = $('#edit-address').val();
                 const destinationName = $('#edit-destination-name').val();
                 const destinationId = $('#edit-destination-id').val();
+
+                if (name && phone && address && destinationName && !destinationId) {
+                    alert('Silakan PILIH destinasi dari dropdown autocomplete (jangan hanya mengetik), agar ongkir bisa dihitung.');
+                    return;
+                }
 
                 if (name && phone && address && destinationName) {
                     $(this).html('Saving...').attr('disabled', true);
@@ -533,7 +460,7 @@
                             recipient_phone: phone,
                             address: address,
                             destination_name: destinationName,
-                            destination_id: destinationId
+                            destination_id: destinationId || ''
                         },
                         success: function(response) {
                             if (response.success) {
@@ -565,46 +492,62 @@
             // Event listener untuk memilih kurir
             $('#courier').on('change', function() {
                 const courier = $(this).val();
+                // Baca ulang destinasi saat kurir dipilih (bukan hanya saat load)
+                const destinationId = $('#destination_id').val();
 
-                if (courier && userCityId) {
-                    $('#shipping-service').html('<option value="">Loading...</option>').prop('disabled',
-                        true);
+                if (!courier) {
+                    return;
+                }
 
-                    $.ajax({
-                        url: '/api/cost',
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}',
-                            origin: 17549,
-                            destination: userCityId,
-                            weight: totalWeight,
-                            courier: courier
-                        },
-                        success: function(data) {
-                            let servicesOptions = '<option value="">Select Service</option>';
+                if (!destinationId) {
+                    alert('Destinasi pengiriman belum memiliki ID. Klik "Edit Address", lalu PILIH destinasi dari dropdown autocomplete (jangan hanya mengetik), kemudian Save.');
+                    return;
+                }
 
-                            if (data.services && data.services.length > 0) {
-                                data.services.forEach(function(service) {
-                                    servicesOptions += `<option
+                // Set status loading + beritahu select2 agar UI ikut ter-update
+                $('#shipping-service').html('<option value="">Loading...</option>')
+                    .prop('disabled', true).trigger('change');
+
+                $.ajax({
+                    url: '/api/cost',
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        origin: 17549,
+                        destination: destinationId,
+                        weight: totalWeight,
+                        courier: courier
+                    },
+                    success: function(data) {
+                        let servicesOptions = '<option value="">Select Service</option>';
+
+                        if (data.services && data.services.length > 0) {
+                            data.services.forEach(function(service) {
+                                servicesOptions += `<option
                             value="${service.service}"
                             data-cost="${service.cost}"
                             data-etd="${service.etd}">
                             ${service.service} - Rp ${service.cost} - Est ${service.etd}
                         </option>`;
-                                });
-                            } else {
-                                servicesOptions +=
-                                    '<option value="">No shipping services available</option>';
-                            }
-
-                            $('#shipping-service').html(servicesOptions).prop('disabled',
-                                false);
-                        },
-                        error: function(xhr, status, error) {
-                            console.error('AJAX Error:', status, error);
+                            });
+                        } else {
+                            servicesOptions +=
+                                '<option value="">No shipping services available</option>';
                         }
-                    });
-                }
+
+                        // PENTING: .trigger('change') supaya select2 me-render ulang
+                        // opsi baru & status enabled. Tanpa ini dropdown terlihat
+                        // masih disabled/kosong walau <select> asli sudah terisi.
+                        $('#shipping-service').html(servicesOptions)
+                            .prop('disabled', false).trigger('change');
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', status, error);
+                        $('#shipping-service').html('<option value="">Gagal memuat ongkir</option>')
+                            .prop('disabled', true).trigger('change');
+                        alert('Gagal memuat ongkos kirim. Coba lagi.');
+                    }
+                });
             });
 
 

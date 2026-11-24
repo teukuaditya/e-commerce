@@ -24,7 +24,7 @@ class UserController extends Controller
         ]));
         $user->save();
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true]);
         }
 
@@ -71,7 +71,7 @@ class UserController extends Controller
         $user->save();
 
         // Cek jika request AJAX
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true]);
         }
 
@@ -88,14 +88,14 @@ class UserController extends Controller
         if ($user->address) {
             $user->address = null;
             $user->save();
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => true]);
             }
 
             return redirect()->back()->with('success', 'Address deleted successfully.');
         }
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => false, 'message' => 'Address not found.']);
         }
 

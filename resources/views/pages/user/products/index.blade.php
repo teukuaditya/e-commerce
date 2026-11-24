@@ -10,12 +10,14 @@
         <div class="flex-w flex-sb-m p-b-40 flex-column flex-md-row gap-3">
 
             <!-- Tombol Filter Kategori -->
+            @php($activeCategory = is_string(request('category')) ? trim(request('category')) : '')
             <div class="flex-w flex-l-m filter-tope-group m-tb-10" id="categoryFilterGroup">
-                <button class="stext-106 cl6 hov1 bor3 trans-04 m-r-24 m-tb-5 how-active1" data-filter="*" data-category="">
+                <button class="stext-106 cl6 hov1 bor3 trans-04 m-r-24 m-tb-5 {{ $activeCategory === '' ? 'how-active1' : '' }}"
+                        data-filter="*" data-category="">
                     All Products
                 </button>
                 @foreach ($categories as $category)
-                <button class="stext-106 cl6 hov1 bor3 trans-04 m-r-24 m-tb-5"
+                <button class="stext-106 cl6 hov1 bor3 trans-04 m-r-24 m-tb-5 {{ ($activeCategory !== '' && strcasecmp($activeCategory, $category->category_name) === 0) ? 'how-active1' : '' }}"
                         data-filter=".{{ strtolower($category->category_name) }}"
                         data-category="{{ $category->category_name }}">
                     {{ $category->category_name }}
@@ -33,14 +35,14 @@
                             id="liveSearchInput"
                             name="query"
                             placeholder="Cari produk di sini..."
-                            value="{{ request('query', $query ?? '') }}"
+                            value="{{ $query ?? '' }}"
                             autocomplete="off"
                             style="border-radius: 999px; height: 44px; width: 280px; transition: all 0.25s ease;">
 
                         <!-- Tombol Clear Search (x) -->
                         <button type="button"
                                 id="btnClearSearch"
-                                class="position-absolute {{ request('query') ? '' : 'd-none' }}"
+                                class="position-absolute {{ ($query ?? '') !== '' ? '' : 'd-none' }}"
                                 style="right: 14px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94A3B8; font-size: 16px; cursor: pointer; padding: 2px 6px;"
                                 title="Hapus pencarian">
                             <i class="zmdi zmdi-close"></i>
@@ -61,10 +63,10 @@
         </div>
 
         <!-- Info Hasil Pencarian Aktif -->
-        <div id="searchInfoBar" class="p-b-20 {{ request('query') ? '' : 'd-none' }}">
+        <div id="searchInfoBar" class="p-b-20 {{ ($query ?? '') !== '' ? '' : 'd-none' }}">
             <div class="d-flex align-items-center justify-content-between p-3 rounded-2xl" style="background: #F1F5F9; border-radius: 14px;">
                 <span class="stext-102 cl2 font-weight-bold" id="searchInfoText">
-                    Menampilkan hasil untuk: "<span class="text-indigo-600" id="searchQueryLabel">{{ request('query') }}</span>"
+                    Menampilkan hasil untuk: "<span class="text-indigo-600" id="searchQueryLabel">{{ $query ?? '' }}</span>"
                 </span>
                 <button type="button" class="btn btn-sm text-muted font-weight-bold btn-reset-search" style="font-size: 0.8rem;">
                     Reset Filter &times;
@@ -73,9 +75,14 @@
         </div>
 
         <!-- Produk Grid: 4 kolom CSS murni, animasi filter via fade -->
-        <div class="row product-item-grid product-grid-transition" id="productGrid">
+        <div class="row product-item-grid product-grid-transition" id="productGrid" aria-live="polite" aria-busy="false">
             @include('pages.user.products._partials.grid-items', ['products' => $products])
         </div>
+
+        <!-- Skeleton / shimmer loader (ditampilkan selama request AJAX berlangsung) -->
+        <template id="gridSkeletonTemplate">
+            @include('pages.user.products._partials.skeleton')
+        </template>
 
         <!-- Seamless AJAX Pagination Container (Perpindahan Halaman Instan) -->
         <div id="paginationBlock" class="flex-c-m flex-w w-full p-t-45">
@@ -90,159 +97,266 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
-        /* ==== IN-PLACE LIVE SEARCH & SEAMLESS AJAX PAGINATION ==== */
-        var searchTimer = null;
-        var searchXhr = null;
-        var $input = $('#liveSearchInput');
-        var $btnClear = $('#btnClearSearch');
-        var $form = $('#productSearchForm');
-        var $grid = $('#productGrid');
-        var $pagination = $('#paginationBlock');
-        var $infoBar = $('#searchInfoBar');
-        var $queryLabel = $('#searchQueryLabel');
-        var activeCategory = '';
+(function () {
+    'use strict';
 
-        // Toggle tombol clear (x)
-        function toggleClearBtn() {
-            if ($input.val().trim().length > 0) {
-                $btnClear.removeClass('d-none');
-            } else {
-                $btnClear.addClass('d-none');
+    /* =====================================================================
+       FILTER KATEGORI & SEARCH TANPA RELOAD (AJAX)
+       - fetch + AbortController : request lama dibatalkan (anti race condition)
+       - debounce pencarian 300ms
+       - URL selalu sinkron via pushState/replaceState -> tombol back & refresh aman
+       - state awal dibaca dari URL (?category=Baju&q=tee)
+       - skeleton shimmer tampil selama memuat
+       - hormati prefers-reduced-motion
+       ===================================================================== */
+
+    var DEBOUNCE_MS = 300;   // jeda pencarian saat mengetik
+    var FADE_MS     = 250;   // durasi fade-out grid lama (lalu skeleton fade-in)
+    // Path saja (tanpa origin) -> selalu same-origin apa pun host yang dibuka
+    var INDEX_URL   = '{{ parse_url(route('user.products.index'), PHP_URL_PATH) }}';
+
+    var grid       = document.getElementById('productGrid');
+    var form       = document.getElementById('productSearchForm');
+    var input      = document.getElementById('liveSearchInput');
+    var btnClear   = document.getElementById('btnClearSearch');
+    var pagination = document.getElementById('paginationBlock');
+    var infoBar    = document.getElementById('searchInfoBar');
+    var queryLabel = document.getElementById('searchQueryLabel');
+    var catGroup   = document.getElementById('categoryFilterGroup');
+    var skeleton   = document.getElementById('gridSkeletonTemplate');
+
+    if (!grid || !form || !catGroup) return;
+
+    // main.js memanggil plugin isotope yang TIDAK dimuat di halaman ini.
+    // Beri padanan kosong supaya klik kategori tidak melempar TypeError di console.
+    if (window.jQuery && !window.jQuery.fn.isotope) {
+        window.jQuery.fn.isotope = function () { return this; };
+    }
+
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var controller    = null;   // AbortController yang sedang aktif
+    var debounceTimer = null;
+    var skeletonTimer = null;
+
+    var state = { q: '', category: '' };   // filter yang sedang aktif
+
+    /* ---------------------------- util URL ---------------------------- */
+    function buildUrl() {
+        var p = new URLSearchParams();
+        if (state.q) p.set('q', state.q);
+        if (state.category) p.set('category', state.category);
+        var qs = p.toString();
+        return INDEX_URL + (qs ? '?' + qs : '');
+    }
+
+    function pushUrl(url, push) {
+        try {
+            var s = { q: state.q, category: state.category };
+            if (push) history.pushState(s, '', url);
+            else history.replaceState(s, '', url);
+        } catch (e) { /* noop */ }
+    }
+
+    function readUrlIntoState() {
+        var p = new URLSearchParams(window.location.search);
+        state.q = (p.get('q') || p.get('query') || '').trim();
+        state.category = (p.get('category') || '').trim();
+    }
+
+    function setActiveTab(btn) {
+        if (!btn) return;
+        var buttons = catGroup.querySelectorAll('button');
+        for (var i = 0; i < buttons.length; i++) buttons[i].classList.remove('how-active1');
+        btn.classList.add('how-active1');
+    }
+
+    function allButton() {
+        return catGroup.querySelector('button[data-filter="*"]') || catGroup.querySelector('button');
+    }
+
+    function toggleClear() {
+        if (!btnClear) return;
+        btnClear.classList.toggle('d-none', input.value.trim().length === 0);
+    }
+
+    /* --------------------- sinkron UI dari URL ------------------------ */
+    function syncUiFromUrl() {
+        readUrlIntoState();
+        input.value = state.q;
+        toggleClear();
+
+        var target = null;
+        if (state.category) {
+            var buttons = catGroup.querySelectorAll('button');
+            for (var i = 0; i < buttons.length; i++) {
+                var c = (buttons[i].getAttribute('data-category') || '').trim();
+                if (c.toLowerCase() === state.category.toLowerCase()) { target = buttons[i]; break; }
             }
         }
+        if (!target) target = allButton();
+        setActiveTab(target);
 
-        // Grid kini layout CSS murni (server-side filter); AJAX mengganti
-        // inner-HTML #productGrid — tidak ada plugin basis-data (isotope) lagi.
+        if (state.q) { queryLabel.textContent = state.q; infoBar.classList.remove('d-none'); }
+        else infoBar.classList.add('d-none');
+    }
 
-        // Animasi masuk kartu (staggered) setelah AJAX mengganti isi grid —
-        // filter/search terasa HALUS (ease-out panjang + fade-up bertahap).
-        function playGridEnter() {
-            var $cards = $grid.children('.product-grid-item');
-            $cards.removeClass('grid-enter');
-            $cards.each(function (i, el) {
-                // stagger 30ms/kartu (maks 600ms) supaya gelombangnya lembut
-                el.style.animationDelay = Math.min(i * 30, 600) + 'ms';
+    /* --------------------------- animasi grid ------------------------- */
+    function playEnter() {
+        if (reduceMotion) return;
+        var cards = grid.querySelectorAll('.product-grid-item');
+        for (var i = 0; i < cards.length; i++) {
+            (function (el, idx) {
+                el.classList.remove('grid-enter');
+                void el.offsetWidth;                          // reflow -> animasi diulang
+                el.style.animationDelay = Math.min(idx * 30, 600) + 'ms';
                 el.classList.add('grid-enter');
-            });
+            })(cards[i], i);
         }
+    }
 
-        // Fungsi fetch data produk via AJAX (live search & pagination)
-        function fetchProducts(targetUrl, query, category, shouldScroll) {
-            if (searchXhr) searchXhr.abort();
+    function showSkeleton() {
+        if (skeleton) grid.innerHTML = skeleton.innerHTML;
+        grid.classList.remove('is-fading');   // skeleton tampil dengan fade-in halus
+        grid.setAttribute('aria-busy', 'true');
+    }
 
-            $grid.addClass('is-loading');
+    function startLoading() {
+        clearTimeout(skeletonTimer);
+        grid.setAttribute('aria-busy', 'true');
+        if (reduceMotion || !skeleton) { showSkeleton(); return; }
+        grid.classList.add('is-fading');       // fade-out grid LAMA (~250ms)
+        skeletonTimer = setTimeout(showSkeleton, FADE_MS);
+    }
 
-            var params = {};
-            if (query !== undefined) params.query = query;
-            if (category !== undefined) params.category = category;
+    /* --------------------------- fetch produk ------------------------- */
+    function fetchProducts(url, push) {
+        if (controller) controller.abort();              // batalkan request lama
+        controller = new AbortController();
+        var mine = controller;
 
-            searchXhr = $.ajax({
-                url: targetUrl || '{{ route("user.products.index") }}',
-                type: 'GET',
-                data: params,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                success: function(res) {
-                    $grid.html(res.html);
-                    playGridEnter();
+        startLoading();
 
-                    $pagination.html(res.pagination || '');
-
-                    // Update info bar
-                    if (res.query && res.query.length > 0) {
-                        $queryLabel.text(res.query);
-                        $infoBar.removeClass('d-none');
-                    } else {
-                        $infoBar.addClass('d-none');
-                    }
-
-                    // Update URL browser tanpa refresh (history pushState)
-                    var newUrl = new URL(window.location.href);
-                    if (res.query) {
-                        newUrl.searchParams.set('query', res.query);
-                    } else {
-                        newUrl.searchParams.delete('query');
-                    }
-                    if (category) {
-                        newUrl.searchParams.set('category', category);
-                    } else {
-                        newUrl.searchParams.delete('category');
-                    }
-                    window.history.replaceState({}, '', newUrl.toString());
-
-                    if (shouldScroll) {
-                        $('html, body').animate({
-                            scrollTop: $grid.offset().top - 120
-                        }, 300);
-                    }
-                },
-                error: function(xhr) {
-                    if (xhr.statusText === 'abort') return;
-                    console.error('Gagal memuat produk:', xhr.responseText);
-                },
-                complete: function() {
-                    $grid.removeClass('is-loading');
-                }
+        fetch(url, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            signal: mine.signal
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
+                if (mine !== controller) return;         // sudah ada request lebih baru
+                render(data);
+                pushUrl(url, push === true);
+            })
+            .catch(function (err) {
+                if (err && err.name === 'AbortError') return;   // dibatalkan -> diam
+                if (mine !== controller) return;
+                clearTimeout(skeletonTimer);
+                grid.classList.remove('is-fading');       // jangan biarkan grid transparan
+                grid.setAttribute('aria-busy', 'false');
+                console.error('Gagal memuat produk:', err);
             });
-        }
+    }
 
-        // 1. Live search saat mengetik (debounced 250ms)
-        $input.on('input keyup', function(e) {
-            toggleClearBtn();
-            if (e.key === 'Enter') return; // ditangani oleh form submit
+    function render(data) {
+        clearTimeout(skeletonTimer);
+        grid.innerHTML = data.html || '';
+        grid.classList.remove('is-fading');     // fade-in konten baru
+        grid.setAttribute('aria-busy', 'false');
+        playEnter();
 
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(function() {
-                var q = $input.val().trim();
-                fetchProducts('{{ route("user.products.index") }}', q, activeCategory, false);
-            }, 250);
-        });
+        pagination.innerHTML = data.pagination || '';
 
-        // 2. Cegah redirect form! Eksekusi in-place saat tombol Cari ditekan atau Enter
-        $form.on('submit', function(e) {
-            e.preventDefault();
-            clearTimeout(searchTimer);
-            var q = $input.val().trim();
-            fetchProducts('{{ route("user.products.index") }}', q, activeCategory, false);
-        });
+        if (data.query) { queryLabel.textContent = data.query; infoBar.classList.remove('d-none'); }
+        else infoBar.classList.add('d-none');
+    }
 
-        // 3. Tombol Clear Search (x)
-        $btnClear.on('click', function() {
-            $input.val('').focus();
-            toggleClearBtn();
-            fetchProducts('{{ route("user.products.index") }}', '', activeCategory, false);
-        });
+    /* --------------------------- aksi filter -------------------------- */
+    function applyFilters(push) {
+        state.q = input.value.trim();
+        fetchProducts(buildUrl(), push === true);
+    }
 
-        // 4. Reset search & filter
-        $(document).on('click', '.btn-reset-search', function() {
-            $input.val('');
-            toggleClearBtn();
-            $('#categoryFilterGroup button').removeClass('how-active1');
-            $('#categoryFilterGroup button[data-filter="*"]').addClass('how-active1');
-            activeCategory = '';
-            fetchProducts('{{ route("user.products.index") }}', '', '', true);
-        });
+    /* ============================ EVENT =============================== */
 
-        // 5. Category filter button
-        $('#categoryFilterGroup button').on('click', function(e) {
-            e.preventDefault();
-            $('#categoryFilterGroup button').removeClass('how-active1');
-            $(this).addClass('how-active1');
-
-            activeCategory = $(this).attr('data-category') || '';
-            var q = $input.val().trim();
-            fetchProducts('{{ route("user.products.index") }}', q, activeCategory, false);
-        });
-
-        // 6. Seamless AJAX Pagination (Perpindahan halaman instan tanpa reload!)
-        $(document).on('click', '#paginationBlock a', function(e) {
-            e.preventDefault();
-            var targetPageUrl = $(this).attr('href');
-            if (!targetPageUrl) return;
-
-            fetchProducts(targetPageUrl, undefined, undefined, true);
-        });
+    // 1) Search: debounce 300ms (ganti URL via replaceState supaya history tidak penuh)
+    input.addEventListener('input', function () {
+        toggleClear();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () { applyFilters(false); }, DEBOUNCE_MS);
     });
+
+    // 2) Submit (Enter / tombol Cari) -> pushState
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        clearTimeout(debounceTimer);
+        applyFilters(true);
+    });
+
+    // 3) Tombol Clear (x)
+    if (btnClear) {
+        btnClear.addEventListener('click', function () {
+            input.value = '';
+            toggleClear();
+            input.focus();
+            clearTimeout(debounceTimer);
+            applyFilters(true);
+        });
+    }
+
+    // 4) Reset (info bar & empty state)
+    document.addEventListener('click', function (e) {
+        if (!e.target || !e.target.closest) return;
+        var btn = e.target.closest('.btn-reset-search');
+        if (!btn) return;
+
+        input.value = '';
+        state.q = '';
+        state.category = '';
+        toggleClear();
+        infoBar.classList.add('d-none');
+        setActiveTab(allButton());
+        clearTimeout(debounceTimer);
+        applyFilters(true);
+    });
+
+    // 5) Tab kategori -> pushState
+    catGroup.addEventListener('click', function (e) {
+        if (!e.target || !e.target.closest) return;
+        var btn = e.target.closest('button');
+        if (!btn || !catGroup.contains(btn)) return;
+        e.preventDefault();
+        clearTimeout(debounceTimer);
+        setActiveTab(btn);
+        state.category = (btn.getAttribute('data-category') || '').trim();
+        applyFilters(true);
+    });
+
+    // 6) Pagination AJAX (perpindahan halaman instan tanpa reload)
+    pagination.addEventListener('click', function (e) {
+        if (!e.target || !e.target.closest) return;
+        var a = e.target.closest('a');
+        if (!a) return;
+        e.preventDefault();
+        var href = a.getAttribute('href');
+        if (!href) return;
+        clearTimeout(debounceTimer);
+        fetchProducts(href, true);
+    });
+
+    // 7) Tombol back / forward browser
+    window.addEventListener('popstate', function () {
+        clearTimeout(debounceTimer);
+        syncUiFromUrl();
+        fetchProducts(window.location.href, false);
+    });
+
+    /* ======================= INIT DARI URL ============================ */
+    // Konten sudah dirender server sesuai URL, jadi cukup sinkronkan UI saja.
+    syncUiFromUrl();
+})();
 </script>
 @endpush
 
@@ -251,38 +365,65 @@
   .product-hero {
     margin-top: 24px;
   }
-  .product-grid-transition {
-    transition: opacity 0.28s cubic-bezier(0.4, 0, 0.2, 1), transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ============ GRID: transisi fade + cegah layout shift ============ */
+  #productGrid {
+    min-height: 420px;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    will-change: opacity, transform;
   }
-  .product-grid-transition.is-loading {
-    opacity: 0.35;
+  #productGrid.is-fading {
+    opacity: 0;
+    transform: translateY(-8px);
     pointer-events: none;
-    transform: scale(0.99);
   }
 
-  /* ---- Filter HALUS: kartu masuk fade-up bertahap (staggered) ----
-     Ditambahkan JS (playGridEnter) di setiap isi grid baru hasil
-     AJAX filter/search/pagination. `both` = delay ter-utamakan. */
+  /* ============ KARTU MASUK: fade + translateY bertahap ============ */
   .product-grid-item.grid-enter {
-    animation: productGridEnter 0.6s cubic-bezier(0.16, 0.84, 0.44, 1) both;
+    animation: productGridEnter 0.35s cubic-bezier(0.16, 0.84, 0.44, 1) both;
   }
-
   @keyframes productGridEnter {
-    from {
-      opacity: 0;
-      transform: translateY(22px) scale(0.97);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
+    from { opacity: 0; transform: translateY(18px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
   }
 
-  /* Hormati live setting user tdk animasi agar tidak memaksa motion */
-  @media (prefers-reduced-motion: reduce) {
-    .product-grid-item.grid-enter {
-      animation: none;
-    }
+  /* ============ EMPTY STATE: fade-up halus ============ */
+  .empty-products-state {
+    animation: emptyStateEnter 0.3s ease both;
+  }
+  @keyframes emptyStateEnter {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* ============ SKELETON / SHIMMER ============ */
+  .product-skeleton .skeleton-pic {
+    display: block;
+    height: 260px;
+    border-radius: 8px;
+  }
+  .product-skeleton .skeleton-line {
+    display: block;
+    border-radius: 6px;
+  }
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+    background: #E9EDF4;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0) 0%,
+      rgba(255,255,255,0.75) 50%,
+      rgba(255,255,255,0) 100%);
+    animation: shimmerSweep 1.2s linear infinite;
+  }
+  @keyframes shimmerSweep {
+    100% { transform: translateX(100%); }
   }
 
   /* 4 Produk ke kanan di semua layar >= md (sesuai permintaan: harus 4 per baris) */
@@ -345,6 +486,16 @@
     opacity: 0.4;
     pointer-events: none;
     background: #F8FAFC;
+  }
+
+  /* ============ HORMATI prefers-reduced-motion ====================== */
+  @media (prefers-reduced-motion: reduce) {
+    #productGrid { transition: none !important; }
+    #productGrid.is-fading { opacity: 1 !important; transform: none !important; }
+    .product-grid-item.grid-enter { animation: none !important; }
+    .empty-products-state { animation: none !important; }
+    .shimmer::after { animation: none !important; }
+    #paginationBlock .page-item .page-link { transition: none; }
   }
 </style>
 @endpush

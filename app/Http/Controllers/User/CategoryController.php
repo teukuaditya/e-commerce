@@ -11,9 +11,18 @@ class CategoryController extends Controller
     // Menampilkan daftar kategori
     public function index()
     {
-        $categories = Category::all();
+        // withCount('products') -> menyediakan $category->products_count
+        // untuk label jumlah produk ("24 Produk") di pojok kartu.
+        $categories = Category::withCount('products')->get();
 
-        return view('pages.user.categories.index', compact('categories'));
+        // 4 produk terbaru (dari DB) untuk section NEW ARRIVALS.
+        // with('category') mencegah N+1 saat kartu produk membaca kategori.
+        $newArrivals = Product::with('category')
+            ->latest('id')
+            ->take(4)
+            ->get();
+
+        return view('pages.user.categories.index', compact('categories', 'newArrivals'));
     }
 
     // Menampilkan produk berdasarkan kategori

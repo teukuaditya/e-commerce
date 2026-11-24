@@ -110,14 +110,24 @@
                         <!-- Cart Items -->
                         <div class="cart-items">
                             @foreach ($cartItems->sortByDesc('created_at') as $item)
+                                @php
+                                    $isOutOfStock = $item->product->stock <= 0;
+                                    $availableStock = max(0, $item->product->stock);
+                                @endphp
                                 <div
-                                    class="cart-item d-flex align-items-center justify-content-between mb-4 p-3 shadow-sm rounded">
+                                    class="cart-item d-flex align-items-center justify-content-between mb-4 p-3 shadow-sm rounded {{ $isOutOfStock ? 'opacity-50 bg-light' : '' }}">
                                     <!-- Checkbox -->
                                     <div class="cart-item-checkbox">
                                         <input type="checkbox"
                                             style="cursor: pointer; accent-color: #4F46E5; transform: scale(1.2);"
                                             class="item-checkbox" value="{{ $item->id }}"
-                                            data-price="{{ $item->product->price }}" style="transform: scale(1.2);">
+                                            data-price="{{ $item->product->price }}"
+                                            data-stock="{{ $item->product->stock }}"
+                                            {{ $isOutOfStock ? 'disabled' : '' }}
+                                            style="transform: scale(1.2);">
+                                        @if ($isOutOfStock)
+                                            <span class="badge bg-danger ms-2" style="font-size: 11px; padding: 4px 8px;">Out of Stock</span>
+                                        @endif
                                     </div>
                                     <!-- Product Image -->
                                     <div class="cart-item-img"
@@ -141,15 +151,19 @@
 
                                     <!-- Quantity Selector -->
                                     <div class="cart-item-quantity d-flex align-items-center">
-                                        <div class="btn-num-product-down cl8 hov-btn3 trans-02 flex-c-m">
+                                        <div class="btn-num-product-down cl8 hov-btn3 trans-02 flex-c-m {{ $isOutOfStock ? 'disabled' : '' }}">
                                             <i class="fs-16 zmdi zmdi-minus"></i>
                                         </div>
                                         <input class="mtext-104 cl3 txt-center num-product" type="number" name="quantity"
                                             data-item-id="{{ $item->id }}" value="{{ $item->quantity }}" min="1"
-                                            max="{{ $item->product->stock }}">
-                                        <div class="btn-num-product-up cl8 hov-btn3 trans-02 flex-c-m">
+                                            max="{{ $availableStock }}"
+                                            {{ $isOutOfStock ? 'disabled readonly' : '' }}>
+                                        <div class="btn-num-product-up cl8 hov-btn3 trans-02 flex-c-m {{ $isOutOfStock ? 'disabled' : '' }}">
                                             <i class="fs-16 zmdi zmdi-plus"></i>
                                         </div>
+                                        @if ($isOutOfStock)
+                                            <span class="text-danger ms-2 small">(Stok habis)</span>
+                                        @endif
                                     </div>
                                     <!-- Remove Button -->
                                     <div class="cart-item-remove"> 
@@ -261,14 +275,26 @@
             selectAllCheckbox.addEventListener('change', () => {
                 const isChecked = selectAllCheckbox.checked;
                 itemCheckboxes.forEach(checkbox => {
-                    checkbox.checked = isChecked;
+                    // Skip disabled (out of stock) checkboxes
+                    if (!checkbox.disabled) {
+                        checkbox.checked = isChecked;
+                    }
                 });
                 updateTotals();
             });
 
             // Event untuk memperbarui status *select all* jika ada perubahan di item checkbox
             itemCheckboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', updateTotals);
+                checkbox.addEventListener('change', () => {
+                    updateTotals();
+                    // Update select-all checkbox state based on enabled checkboxes only
+                    const enabledCheckboxes = Array.from(itemCheckboxes).filter(cb => !cb.disabled);
+                    const checkedEnabledCheckboxes = enabledCheckboxes.filter(cb => cb.checked);
+                    selectAllCheckbox.checked = enabledCheckboxes.length > 0 && 
+                        checkedEnabledCheckboxes.length === enabledCheckboxes.length;
+                    selectAllCheckbox.indeterminate = checkedEnabledCheckboxes.length > 0 && 
+                        checkedEnabledCheckboxes.length < enabledCheckboxes.length;
+                });
             });
 
             // Event untuk form checkout saat disubmit
@@ -406,6 +432,14 @@
 
             // Pastikan cart total di-update saat halaman dimuat
             updateTotals();
+
+            // Initialize select-all checkbox state on page load
+            const enabledCheckboxes = Array.from(itemCheckboxes).filter(cb => !cb.disabled);
+            const checkedEnabledCheckboxes = enabledCheckboxes.filter(cb => cb.checked);
+            selectAllCheckbox.checked = enabledCheckboxes.length > 0 &&
+                checkedEnabledCheckboxes.length === enabledCheckboxes.length;
+            selectAllCheckbox.indeterminate = checkedEnabledCheckboxes.length > 0 &&
+                checkedEnabledCheckboxes.length < enabledCheckboxes.length;
         });
 
         function confirmDelete(event) {

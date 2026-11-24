@@ -49,6 +49,19 @@ class AddressFormatterTest extends TestCase
         $this->assertSame('4421', $parsed['destination_id']);
     }
 
+    public function test_parses_multiline_address_and_empty_destination_id(): void
+    {
+        $raw = "Nama Penerima: Aditya, No. Telepon: 087883623555, Alamat: Jl. Raya No. 10\nRT 01 / RW 02\nKel. Menteng, Destination: Jakarta Pusat, Destination ID: ";
+        $parsed = AddressFormatter::parse($raw);
+
+        $this->assertSame('Aditya', $parsed['recipient_name']);
+        $this->assertSame('087883623555', $parsed['recipient_phone']);
+        $this->assertSame("Jl. Raya No. 10\nRT 01 / RW 02\nKel. Menteng", $parsed['street_address']);
+        $this->assertSame('Jakarta Pusat', $parsed['destination_name']);
+        $this->assertSame('', $parsed['destination_id']);
+        $this->assertSame('Aditya', $parsed['recipientName']);
+    }
+
     public function test_returns_empty_on_null_or_empty_address(): void
     {
         $parsed = AddressFormatter::parse(null);

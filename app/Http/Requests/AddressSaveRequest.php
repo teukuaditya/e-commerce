@@ -22,7 +22,7 @@ class AddressSaveRequest extends FormRequest
             'recipient_phone' => 'required|string|max:20',
             'address' => 'required|string',
             'destination_name' => 'required|string',
-            'destination_id' => 'required|string|max:50',
+            'destination_id' => 'nullable|string|max:50',
         ];
     }
 }
