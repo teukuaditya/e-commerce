@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CheckoutAddressRequest;
 use App\Models\Cart;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\TransactionDetail;
 use App\Support\AddressFormatter;
@@ -81,6 +82,9 @@ class CheckoutController extends Controller
 
             $productIds = collect($items)->pluck('id')->unique()->values()->all();
 
+            // 3. SIMPAN TRANSAKSI + DETAIL + UPDATE STOK (DALAM DB TRANSACTION)
+            DB::beginTransaction();
+
             /**
              * KUNCI BARIS (temuan audit T3): lockForUpdate mencegah oversell
              * ketika dua request membeli item terakhir bersamaan.
@@ -98,6 +102,7 @@ class CheckoutController extends Controller
                 $qty = (int) ($item['quantity'] ?? 0);
 
                 if (! $productId || $qty <= 0) {
+                    DB::rollBack();
                     return response()->json([
                         'success' => false,
                         'message' => 'Data item tidak valid.',
@@ -108,6 +113,7 @@ class CheckoutController extends Controller
                 $product = $products->get($productId);
 
                 if (! $product) {
+                    DB::rollBack();
                     return response()->json([
                         'success' => false,
                         'message' => "Produk dengan ID {$productId} tidak ditemukan.",
@@ -115,6 +121,7 @@ class CheckoutController extends Controller
                 }
 
                 if ($product->stock < $qty) {
+                    DB::rollBack();
                     return response()->json([
                         'success' => false,
                         'message' => "Stok untuk produk '{$product->title}' tidak mencukupi. Sisa stok: {$product->stock}",
@@ -128,17 +135,39 @@ class CheckoutController extends Controller
                 $lines[] = ['product' => $product, 'qty' => $qty, 'price' => $price];
             }
 
-            // 2. GROSS AMOUNT harus sama dengan total Midtrans; bila client mengirim
-            //    gross_amount berbeda (mis. karena ongkir), pakai yang terbesar
-            //    supaya jumlah yang tersimpan tidak lebih rendah dari SNap.
-            //    (Idealnya ongkir ikut disimpan server-side — lihat catatan audit.)
-            //
+            // 2. GROSS AMOUNT dihitung server-side (item DB + ongkir dari quote tersimpan)
+            $courier = strtolower(trim((string) $request->input('courier', '')));
+            $courierService = strtolower(trim((string) $request->input('courier_service', '')));
+            $shippingCost = 0;
+            if ($courier !== '' || $courierService !== '') {
+                $quote = session('checkout_shipping_quote');
+                $quoteOk = is_array($quote)
+                    && ($quote['courier'] ?? '') === $courier
+                    && isset($quote['services'][$courierService])
+                    && (int) ($quote['created_at'] ?? 0) >= now()->subHours(2)->timestamp;
+                $cartSignature = sha1(collect($lines)->map(fn ($l) => $l['product']->id.':'.$l['qty'])->sort()->implode('|'));
+                if ($quoteOk && ! empty($quote['cart_signature']) && $quote['cart_signature'] !== $cartSignature) {
+                    $quoteOk = false;
+                }
+                if (! $quoteOk) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Quote ongkir tidak valid/kadaluarsa. Silakan pilih layanan pengiriman lagi.',
+                    ], 422);
+                }
+                $shippingCost = max(0, (int) ($quote['services'][$courierService]['cost_raw'] ?? 0));
+            }
+            $storedGross = $grossAmount + $shippingCost;
 
-            $clientGross = (int) ($request->gross_amount ?? 0);
-            $storedGross = max($grossAmount, $clientGross > 0 ? $clientGross : 0);
-
-            // 3. SIMPAN TRANSAKSI + DETAIL + UPDATE STOK (DALAM DB TRANSACTION)
-            DB::beginTransaction();
+            $minOrder = (int) Setting::getValue('min_order_amount', 0);
+            if ($minOrder > 0 && $storedGross < $minOrder) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Minimum pembelian adalah Rp ' . number_format($minOrder, 0, ',', '.') . '.',
+                ], 422);
+            }
 
             $transaction = Transaction::create([
                 'order_id' => $request->order_id,
@@ -150,8 +179,8 @@ class CheckoutController extends Controller
                 'transaction_status' => 'pending',
                 'transaction_time' => now(),
                 'customer_name' => $request->customer_name,
-                'courier' => $this->normalizeCourier($request->courier),
-                'courier_service' => $request->courier_service,
+                'courier' => $this->normalizeCourier($courier),
+                'courier_service' => $courierService !== '' ? strtoupper($courierService) : $request->courier_service,
                 'snap_token' => $request->snap_token,
             ]);
 
@@ -178,6 +207,7 @@ class CheckoutController extends Controller
             }
 
             DB::commit();
+            session()->forget('checkout_shipping_quote');
 
             return response()->json([
                 'success' => true,

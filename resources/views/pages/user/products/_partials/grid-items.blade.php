@@ -4,6 +4,7 @@
     $img = is_array($product->image) ? ($product->image[0] ?? '') : $product->image;
     $catName = optional($product->category)->category_name ?? '';
     $isWished = in_array($product->id, $wishlistedIds ?? []);
+    $isOutOfStock = (int) ($product->stock ?? 0) <= 0;
 @endphp
 <div class="col-6 col-sm-6 col-md-3 p-b-35 product-grid-item grid-enter isotope-item {{ strtolower($catName) }}"
     style="animation-delay:{{ $loop->index * 30 }}ms">
@@ -12,6 +13,9 @@
             <a href="{{ route('user.products.show', $product->id) }}">
                 <img src="{{ asset('storage/products/' . $img) }}" alt="{{ $product->title }}" loading="lazy" class="home-prod-img">
             </a>
+            @if($isOutOfStock)
+                <span style="position:absolute;top:12px;left:12px;z-index:3;background:#DC2626;color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;letter-spacing:.02em;">Out of Stock</span>
+            @endif
 
             <div class="home-prod-actions" aria-label="Aksi cepat">
                 @auth
@@ -30,17 +34,33 @@
                     </a>
                 @endauth
                 @auth
-                    <form action="{{ route('user.cart.add', $product->id) }}" method="POST" class="m-0">
-                        @csrf
-                        <input type="hidden" name="quantity" value="1">
-                        <button type="submit" class="home-prod-action-btn" title="Tambah ke Keranjang" aria-label="Tambah {{ $product->title }} ke keranjang">
+                    @if($isOutOfStock)
+                        <button type="button" class="home-prod-action-btn" title="Stok Habis" aria-label="{{ $product->title }} stok habis"
+                            onclick="window.tuToast ? window.tuToast('Produk ini sedang habis stok', 'err') : alert('Produk ini sedang habis stok');"
+                            style="opacity:.55;cursor:not-allowed;">
                             <i class="zmdi zmdi-shopping-cart"></i>
                         </button>
-                    </form>
+                    @else
+                        <form action="{{ route('user.cart.add', $product->id) }}" method="POST" class="m-0">
+                            @csrf
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="home-prod-action-btn" title="Tambah ke Keranjang" aria-label="Tambah {{ $product->title }} ke keranjang">
+                                <i class="zmdi zmdi-shopping-cart"></i>
+                            </button>
+                        </form>
+                    @endif
                 @else
-                    <a href="{{ route('user.products.show', $product->id) }}" class="home-prod-action-btn" title="Lihat Detail" aria-label="Lihat {{ $product->title }}">
-                        <i class="zmdi zmdi-shopping-cart"></i>
-                    </a>
+                    @if($isOutOfStock)
+                        <button type="button" class="home-prod-action-btn" title="Stok Habis" aria-label="{{ $product->title }} stok habis"
+                            onclick="window.tuToast ? window.tuToast('Produk ini sedang habis stok', 'err') : alert('Produk ini sedang habis stok');"
+                            style="opacity:.55;cursor:not-allowed;">
+                            <i class="zmdi zmdi-shopping-cart"></i>
+                        </button>
+                    @else
+                        <a href="{{ route('user.products.show', $product->id) }}" class="home-prod-action-btn" title="Lihat Detail" aria-label="Lihat {{ $product->title }}">
+                            <i class="zmdi zmdi-shopping-cart"></i>
+                        </a>
+                    @endif
                 @endauth
             </div>
 
@@ -59,9 +79,12 @@
                     {{ $product->title }}
                 </a>
 
-                <a href="{{ route('user.products.show', $product->id) }}" class="stext-105 cl5 hov-cl1 trans-04 home-prod-price" style="font-weight:700; color:#111827;">
-                    Rp {{ number_format($product->price, 0, ',', '.') }}
-                </a>
+                <div class="d-flex align-items-center justify-content-between" style="gap:8px;width:100%;">
+                    <a href="{{ route('user.products.show', $product->id) }}" class="stext-105 cl5 hov-cl1 trans-04 home-prod-price" style="font-weight:700; color:#111827;">
+                        Rp {{ number_format($product->price, 0, ',', '.') }}
+                    </a>
+                    <span class="stext-106 cl6" style="font-size:12px;white-space:nowrap;text-align:right;">{{ (int) ($product->sold_count ?? 0) }} terjual</span>
+                </div>
             </div>
         </div>
     </div>

@@ -68,9 +68,12 @@
     <!-- End of Page Wrapper -->
 
     <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top">
+    <a class="scroll-to-top rounded" href="#page-top" style="opacity:0;visibility:hidden;transition:opacity .25s ease,visibility .25s ease,transform .25s ease;transform:translateY(8px);">
         <i class="fas fa-angle-up"></i>
     </a>
+    <script>
+        (function(){var btn=document.querySelector('.scroll-to-top');if(!btn)return;function toggle(){var show=window.scrollY>200;btn.style.opacity=show?'1':'0';btn.style.visibility=show?'visible':'hidden';btn.style.transform=show?'translateY(0)':'translateY(8px)';}window.addEventListener('scroll',toggle,{passive:true});toggle();btn.addEventListener('click',function(e){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});});})();
+    </script>
 
     <!-- Logout Modal-->
     <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"

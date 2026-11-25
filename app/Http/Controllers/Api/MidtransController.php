@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Midtrans\Config;
 use Midtrans\Snap;
@@ -66,6 +69,29 @@ class MidtransController extends Controller
             ], 422);
         }
 
+        // Pastikan request berasal dari user yang login dan item milik cart-nya.
+        $user = $request->user() ?? Auth::user();
+        if (! $user) {
+            return response()->json(['error' => 'Unauthenticated.'], 401);
+        }
+
+        $productIds = collect($items)->pluck('id')->filter()->unique()->values()->all();
+        $cartItems = Cart::where('user_id', $user->id)
+            ->whereIn('product_id', $productIds)
+            ->get()
+            ->keyBy('product_id');
+
+        foreach ($items as $item) {
+            $productId = $item['id'] ?? null;
+            $qty = max(1, (int) ($item['quantity'] ?? 1));
+            $cartItem = $cartItems->get($productId);
+            if (! $cartItem || $qty > (int) $cartItem->quantity) {
+                return response()->json([
+                    'error' => 'Item checkout tidak valid atau tidak sesuai keranjang.',
+                ], 422);
+            }
+        }
+
         $productIds = collect($items)->pluck('id')->filter()->unique()->values()->all();
         $products = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
@@ -93,18 +119,39 @@ class MidtransController extends Controller
         }
 
         // ===========================
-        //  Tambah Ongkir (optional)
+        //  Tambah Ongkir (server-side dari quote tersimpan)
         // ===========================
-        $shippingCost = max(0, (int) $request->input('shipping_cost', 0));
+        $courier = strtolower(trim((string) $request->input('courier', '')));
+        $service = strtolower(trim((string) $request->input('service', '')));
+        $shippingCost = 0;
 
-        if ($shippingCost > 0) {
-            $courier = $request->input('courier', '');
-            $service = $request->input('service', '');
+        if ($courier !== '' || $service !== '') {
+            $quote = session('checkout_shipping_quote');
+            $quoteOk = is_array($quote)
+                && ($quote['courier'] ?? '') === $courier
+                && isset($quote['services'][$service])
+                && (int) ($quote['created_at'] ?? 0) >= now()->subHours(2)->timestamp;
 
+            $cartSignature = sha1(collect($items)->map(function ($item) use ($cartItems) {
+                $pid = $item['id'] ?? null;
+                $qty = max(1, (int) ($item['quantity'] ?? 1));
+                return $pid.':'.$qty;
+            })->sort()->implode('|'));
+            if ($quoteOk && ! empty($quote['cart_signature']) && $quote['cart_signature'] !== $cartSignature) {
+                $quoteOk = false;
+            }
+
+            if (! $quoteOk) {
+                return response()->json([
+                    'error' => 'Quote ongkir tidak valid/kadaluarsa. Silakan pilih layanan pengiriman lagi.',
+                ], 422);
+            }
+
+            $shippingCost = max(0, (int) ($quote['services'][$service]['cost_raw'] ?? 0));
             $itemDetails[] = [
                 'id' => 'shipping',
                 'quantity' => 1,
-                'name' => mb_substr('Shipping ('.$courier.' - '.$service.')', 0, 50),
+                'name' => mb_substr('Shipping ('.strtoupper($courier).' - '.strtoupper($service).')', 0, 50),
                 'price' => $shippingCost,
             ];
         }
@@ -112,20 +159,34 @@ class MidtransController extends Controller
         // Total gross amount yang diverifikasi di server
         $verifiedGrossAmount = $calculatedItemsTotal + $shippingCost;
 
+        $minOrder = (int) Setting::getValue('min_order_amount', 0);
+        if ($minOrder > 0 && $verifiedGrossAmount < $minOrder) {
+            return response()->json([
+                'error' => 'Minimum pembelian adalah Rp ' . number_format($minOrder, 0, ',', '.') . '.',
+            ], 422);
+        }
+
         // ===========================
         //  Build payload ke Midtrans
         // ===========================
+        $finishUrl = url('/user/orders/order-history');
+
         $params = [
             'transaction_details' => [
                 'order_id' => $orderId,
                 'gross_amount' => $verifiedGrossAmount,
             ],
             'customer_details' => [
-                'first_name' => $customer['first_name'] ?? '',
-                'email' => $customer['email'] ?? '',
-                'phone' => $customer['phone'] ?? '',
+                'first_name' => $user->name ?? ($customer['first_name'] ?? ''),
+                'email' => $user->email ?? ($customer['email'] ?? ''),
+                'phone' => $user->phone ?? ($customer['phone'] ?? ''),
             ],
             'item_details' => $itemDetails,
+            'callbacks' => [
+                'finish' => $finishUrl,
+                'unfinish' => $finishUrl,
+                'error' => $finishUrl,
+            ],
         ];
 
         try {

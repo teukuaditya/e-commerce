@@ -97,16 +97,14 @@
                         <span>butuh kaos yang benar-benar awet</span>
                     </h2>
                     <p class="about-story__text">
-                        {{ $name }} lahir di Purwokerto dari pengalaman banyak orang: mudah
-                        menemukan pakaian, sulit temu yang benar-benar berkualitas dengan harga masuk akal.
-                        Kami memulai dengan satu kategori yang paling krusial — pakaian esensial — lalu
-                        membangun proses produksi di sekitarnya.
+                        {{ $name }} lahir dari pengalaman banyak orang: mudah menemukan pakaian, sulit menemukan yang benar-benar berkualitas dengan harga masuk akal. Kami memulai dari kategori paling krusial — pakaian esensial — lalu membangun proses produksi di sekitarnya.
                     </p>
                     <p class="about-story__text">
-                        Setiap item melewati tahap riset bahan, prototipe, produksi, dan
-                        quality control sebelum masuk ke etalase. Hasilnya: potongan minimalis
-                        dengan detail yang berfungsi nyata, bukan sekadar gaya.
+                        Setiap item melewati tahap riset bahan, prototipe, produksi, dan quality control sebelum masuk ke etalase. Hasilnya: potongan minimalis dengan detail yang berfungsi nyata, bukan sekadar gaya.
                     </p>
+                    @if(!empty($company['about_text']))
+                        <p class="about-story__text">{!! nl2br(e($company['about_text'])) !!}</p>
+                    @endif
 
                     <div class="row about-mv">
                         <div class="col-sm-6">
@@ -208,6 +206,39 @@
                         </div>
                     </div>
                 </div>
+                @if(!empty($company['phone']))
+                <div class="col-lg-6">
+                    <div class="about-contact__item">
+                        <div class="about-contact__icon"><i class="fas fa-phone" aria-hidden="true"></i></div>
+                        <div>
+                            <h3>Telepon</h3>
+                            <p>{{ $company['phone'] }}</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
+                @if(!empty($company['whatsapp']))
+                <div class="col-lg-6">
+                    <div class="about-contact__item">
+                        <div class="about-contact__icon"><i class="fab fa-whatsapp" aria-hidden="true"></i></div>
+                        <div>
+                            <h3>WhatsApp</h3>
+                            <a href="https://wa.me/{{ preg_replace('/\D/', '', $company['whatsapp']) }}" target="_blank" rel="noopener">{{ $company['whatsapp'] }}</a>
+                        </div>
+                    </div>
+                </div>
+                @endif
+                @if(!empty($company['operating_hours']))
+                <div class="col-lg-6">
+                    <div class="about-contact__item">
+                        <div class="about-contact__icon"><i class="fas fa-clock" aria-hidden="true"></i></div>
+                        <div>
+                            <h3>Jam Operasional</h3>
+                            <p>{{ $company['operating_hours'] }}</p>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
 
             <div class="text-center about-sign about-reveal">
@@ -358,19 +389,20 @@
     .about-cta__inner p { opacity: .8; margin: 0; }
 
     /* ---- contact ---- */
-    .about-contact { padding: 20px 0 90px; background: #fff; }
+    .about-contact { padding: 56px 0 90px; background: #fff; }
+    .about-contact .row { row-gap: 24px; }
     .about-contact__item {
         display: flex; gap: 18px; align-items: flex-start;
         background: #fafafc; border: 1px solid var(--line);
-        border-radius: var(--radius); padding: 26px; height: 100%;
+        border-radius: var(--radius); padding: 28px; height: 100%;
     }
     .about-contact__icon {
         width: 46px; height: 46px; flex: 0 0 46px; border-radius: 12px;
         background: var(--ink); color: #fff;
-        display: flex; align-items: center; justify-content: center;
+        display: flex; align-items: center; justify-content: center; margin-top: 2px;
     }
-    .about-contact__item h3 { font-size: 14px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); margin-bottom: 6px; }
-    .about-contact__item p, .about-contact__item a { color: var(--ink); text-decoration: none; margin: 0; }
+    .about-contact__item h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); margin-bottom: 8px; }
+    .about-contact__item p, .about-contact__item a { color: var(--ink); text-decoration: none; margin: 0; line-height: 1.7; word-break: break-word; }
     .about-contact__item a:hover { color: var(--accent); }
 
     .about-sign { margin-top: 60px; }

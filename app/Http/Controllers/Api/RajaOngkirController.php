@@ -3,8 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cart;
+use App\Models\Setting;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -192,29 +195,75 @@ class RajaOngkirController extends Controller
                 'courier' => 'required|string',
                 'destination' => 'required|string',
                 'weight' => 'required|integer',
+                'cart_items' => 'nullable|string',
             ]);
 
             $apiKey = config('rajaongkir.api_key');
             $origin = config('rajaongkir.origin', 17549);
+            $courier = strtolower(trim((string) $request->courier));
 
-            if (empty($apiKey)) {
-                return response()->json(['services' => [
-                    ['service' => 'REG', 'description' => 'Layanan Reguler', 'cost' => number_format(15000, 0, ',', '.'), 'etd' => '2-3 hari'],
-                    ['service' => 'YES', 'description' => 'Yakin Esok Sampai', 'cost' => number_format(25000, 0, ',', '.'), 'etd' => '1 hari'],
-                ]]);
+            // Hitung berat dari cart user bila ada (server-side), fallback ke request.
+            $weight = max(1, (int) $request->weight);
+            $user = $request->user() ?? Auth::user();
+            $cartSignature = null;
+            if ($user) {
+                $cartQuery = Cart::where('user_id', $user->id)->with('product');
+                $cartIds = array_filter(explode(',', (string) $request->input('cart_items', '')));
+                if (! empty($cartIds)) {
+                    $cartQuery->whereIn('id', $cartIds);
+                }
+                $cartItems = $cartQuery->get();
+                if ($cartItems->isNotEmpty()) {
+                    $weight = max(1, (int) $cartItems->sum(fn ($i) => ((int) ($i->product->weight ?? 0)) * ((int) $i->quantity)));
+                    $cartSignature = sha1($cartItems->map(fn ($i) => $i->product_id.':'.$i->quantity)->sort()->implode('|'));
+                }
             }
 
-            $cacheKey = 'rajaongkir.cost.'.md5(implode('|', [$origin, $request->destination, $request->weight, strtolower($request->courier)]));
+            $buildServices = function (array $services) use ($origin, $request, $weight, $courier, $cartSignature) {
+                $normalized = [];
+                foreach ($services as $service) {
+                    $rawCost = (int) ($service['cost_raw'] ?? preg_replace('/\D/', '', (string) ($service['cost'] ?? 0)));
+                    $normalized[] = [
+                        'service' => $service['service'],
+                        'description' => $service['description'] ?? '',
+                        'cost' => number_format($rawCost, 0, ',', '.'),
+                        'cost_raw' => $rawCost,
+                        'etd' => $service['etd'] ?? '',
+                    ];
+                }
+                session(['checkout_shipping_quote' => [
+                    'origin' => (string) $origin,
+                    'destination' => (string) $request->destination,
+                    'weight' => (int) $weight,
+                    'courier' => $courier,
+                    'cart_signature' => $cartSignature,
+                    'services' => collect($normalized)->mapWithKeys(fn ($s) => [strtolower($s['service']) => $s])->all(),
+                    'created_at' => now()->timestamp,
+                ]]);
+                return $normalized;
+            };
+
+            if (empty($apiKey)) {
+                $fallback = max(0, (int) Setting::getValue('default_shipping_fallback', 15000));
+                $services = $buildServices([
+                    ['service' => 'REG', 'description' => 'Layanan Reguler', 'cost_raw' => $fallback > 0 ? $fallback : 15000, 'etd' => '2-3 hari'],
+                    ['service' => 'YES', 'description' => 'Yakin Esok Sampai', 'cost_raw' => $fallback > 0 ? $fallback + 10000 : 25000, 'etd' => '1 hari'],
+                ]);
+                return response()->json(['services' => $services]);
+            }
+
+            $cacheKey = 'rajaongkir.cost.'.md5(implode('|', [$origin, $request->destination, $weight, $courier]));
             $cached = Cache::get($cacheKey);
             if ($cached !== null) {
-                return response()->json(['services' => $cached]);
+                $services = $buildServices($cached);
+                return response()->json(['services' => $services]);
             }
 
             $response = $this->send('post', self::COST_URL, [
                 'origin' => $origin,
                 'destination' => $request->destination,
-                'weight' => $request->weight,
-                'courier' => $request->courier,
+                'weight' => $weight,
+                'courier' => $courier,
             ], true);
 
             if (! $response->successful()) {
@@ -234,11 +283,13 @@ class RajaOngkirController extends Controller
                     'service' => $service['service'],
                     'description' => $service['description'],
                     'cost' => number_format($service['cost'], 0, ',', '.'),
+                    'cost_raw' => (int) $service['cost'],
                     'etd' => $service['etd'],
                 ];
             }
 
             Cache::put($cacheKey, $services, now()->addHours(6));
+            $services = $buildServices($services);
 
             return response()->json(['services' => $services]);
         } catch (\Illuminate\Validation\ValidationException $e) {

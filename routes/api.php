@@ -17,8 +17,7 @@ use Illuminate\Support\Facades\Route;
 
 // Route untuk menghitung ongkos kirim dengan mengirimkan data ke RajaOngkir
 Route::get('/search-destinations', [RajaOngkirController::class, 'searchDestinations']);
-Route::post('cost', [RajaOngkirController::class, 'cekOngkir']);
 
 // Route untuk menangani callback dari Midtrans (setelah pembayaran)
-Route::post('/midtrans/snap', [MidtransController::class, 'getSnapToken']);
-Route::post('/midtrans/callback', [MidtransController::class, 'handleMidtransCallback']);
+// Snap token dipindah ke route web auth (throttle + session auth) untuk mencegah abuse publik.
+Route::post('/midtrans/callback', [MidtransController::class, 'handleMidtransCallback'])->middleware('throttle:60,1');

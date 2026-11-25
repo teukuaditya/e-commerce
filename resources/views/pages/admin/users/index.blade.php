@@ -5,66 +5,94 @@
 @section('content')
     <div class="container-fluid">
 
-        <!-- Page Heading -->
-        <h1 class="h3 mb-2 text-gray-800">Manage Users</h1>
-
-        <!-- Button to open the Create User modal -->
-        <button type="button" class="btn btn-primary mb-3" data-toggle="modal" data-target="#userModal">
-            Add User
-        </button>
+        <div class="adm-page-header">
+            <div>
+                <div class="adm-page-header__eyebrow"><i class="fas fa-users"></i> User Management</div>
+                <h1 class="adm-page-header__title">Manage Users</h1>
+                <p class="adm-page-header__sub">Kelola akun pengguna, peran, dan akses admin.</p>
+            </div>
+            <div class="adm-page-header__actions">
+                <button type="button" class="adm-btn adm-btn-primary" data-toggle="modal" data-target="#userModal">
+                    <i class="fas fa-plus"></i> Add User
+                </button>
+            </div>
+        </div>
 
         <x-flash-alert />
 
-        <!-- DataTales Example -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">User List</h6>
+        <div class="adm-table-card">
+            <div class="adm-table-card__header">
+                <h2 class="adm-table-card__title">
+                    <span class="adm-table-card__title-icon"><i class="fas fa-user-friends"></i></span>
+                    User List
+                </h2>
+                <span class="adm-table-card__meta">{{ $users->count() }} total users</span>
             </div>
-            <div class="card-body text-gray-900">
+            <div class="adm-table-card__body">
                 <div class="table-responsive">
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <table class="table adm-table" id="dataTable" width="100%" cellspacing="0">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Name</th>
+                                <th>User</th>
                                 <th>Email</th>
                                 <th>Phone</th>
                                 <th>Role</th>
-                                <th>Actions</th>
+                                <th style="width:110px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($users as $user)
+                                @php
+                                    $nameParts = preg_split('/\s+/', trim($user->name ?? 'U'));
+                                    $initials = strtoupper(substr($nameParts[0] ?? 'U', 0, 1) . substr($nameParts[1] ?? '', 0, 1));
+                                    $role = strtolower($user->role ?? 'user');
+                                @endphp
                                 <tr>
-                                    <td>{{ $user->id }}</td>
-                                    <td>{{ $user->name }}</td>
-                                    <td>{{ $user->email }}</td>
-                                    <td>{{ $user->phone ?? '-' }}</td>
-                                    <td>{{ $user->role }}</td>
+                                    <td class="adm-num adm-id">#{{ $user->id }}</td>
                                     <td>
-                                        <!-- Dropdown Button for Action -->
-                                        <div class="dropdown">
-                                            <button class="btn btn-primary btn-sm dropdown-toggle" type="button"
-                                                id="actionButton" data-toggle="dropdown" aria-haspopup="true"
-                                                aria-expanded="false">
-                                                Actions
+                                        <div class="adm-user-cell">
+                                            <span class="adm-avatar">{{ $initials }}</span>
+                                            <div>
+                                                <div class="adm-user-cell__name">{{ $user->name }}</div>
+                                                <div class="adm-user-cell__sub">ID #{{ $user->id }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ $user->email }}</td>
+                                    <td>
+                                        @if($user->phone)
+                                            <span class="adm-num">{{ $user->phone }}</span>
+                                        @else
+                                            <span class="adm-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($role === 'admin')
+                                            <span class="adm-badge adm-badge--primary">Admin</span>
+                                        @else
+                                            <span class="adm-badge adm-badge--gray">User</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <div class="dropdown adm-action-dropdown">
+                                            <button class="btn btn-adm-action dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                <i class="fas fa-ellipsis-h"></i> Actions
                                             </button>
-                                            <div class="dropdown-menu" aria-labelledby="actionButton">
-                                                <!-- Button to open the Edit modal -->
+                                            <div class="dropdown-menu dropdown-menu-right">
                                                 <a class="dropdown-item text-warning" data-toggle="modal"
                                                     data-target="#userModal" data-id="{{ $user->id }}"
                                                     data-name="{{ $user->name }}" data-email="{{ $user->email }}"
-                                                    data-phone="{{ $user->phone }}" data-role="{{ $user->role }}"><i
-                                                        class="fas fa-edit mr-2"></i> Edit
+                                                    data-phone="{{ $user->phone }}" data-role="{{ $user->role }}">
+                                                    <i class="fas fa-pen"></i> Edit
                                                 </a>
-                                                <!-- Button to delete user -->
                                                 <form action="{{ route('admin.users.destroy', $user->id) }}"
-                                                    method="POST" style="display:inline"
-                                                    onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                                    method="POST" class="m-0"
+                                                    data-confirm="Are you sure you want to delete this user?" data-confirm-title="Hapus User">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="dropdown-item text-danger">
-                                                        <i class="fas fa-trash mr-2"></i> Delete
+                                                    <button type="submit" class="dropdown-item text-danger w-100 text-left border-0 bg-transparent">
+                                                        <i class="fas fa-trash-alt"></i> Delete
                                                     </button>
                                                 </form>
                                             </div>
@@ -72,15 +100,17 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="7">
-                                    <div class="adm-empty">
-                                        <i class="fas fa-inbox"></i>
-                                        <strong>Belum ada data</strong>
-                                        <p>Data User akan tampil di sini begitu tersedia.</p>
-                                    </div>
-                                </td></tr>
+                                <tr>
+                                    <td colspan="6">
+                                        <div class="adm-empty">
+                                            <i class="fas fa-inbox"></i>
+                                            <strong>Belum ada data</strong>
+                                            <p>Data user akan tampil di sini begitu tersedia.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                             @endforelse
-</tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>

@@ -168,7 +168,7 @@
                                     <!-- Remove Button -->
                                     <div class="cart-item-remove"> 
                                         <form action="{{ route('user.cart.remove', $item->id) }}" method="POST"
-                                            onsubmit="return confirmDelete(event)">
+                                            data-confirm="Are you sure you want to remove this item?" data-confirm-title="Hapus Item" data-confirm-btn="Ya, hapus">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"
@@ -404,30 +404,30 @@
                     .map(checkbox => checkbox.value);
 
                 if (selectedIds.length === 0) {
-                    alert('No items selected to remove.');
+                    Swal.fire({ icon: 'info', title: 'Pilih item', text: 'Tidak ada item yang dipilih untuk dihapus.', confirmButtonColor: '#111827' });
                     return;
                 }
 
-                if (confirm('Are you sure you want to remove the selected items?')) {
+                window.swalConfirm({
+                    title: 'Hapus Item Terpilih',
+                    text: 'Yakin ingin menghapus item yang dipilih?',
+                    confirmText: 'Ya, hapus'
+                }).then(function (ok) {
+                    if (!ok) return;
                     fetch('{{ route('user.cart.index') }}/bulk-remove', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
                             },
-                            body: JSON.stringify({
-                                ids: selectedIds
-                            })
+                            body: JSON.stringify({ ids: selectedIds })
                         })
-                        .then(response => {
-                            if (response.ok) {
-                                location.reload();
-                            } else {
-                                alert('Failed to remove items.');
-                            }
+                        .then(function (response) {
+                            if (response.ok) { location.reload(); }
+                            else { Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal menghapus item.', confirmButtonColor: '#111827' }); }
                         })
-                        .catch(() => alert('Failed to remove items.'));
-                }
+                        .catch(function () { Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal menghapus item.', confirmButtonColor: '#111827' }); });
+                });
             });
 
             // Pastikan cart total di-update saat halaman dimuat
@@ -442,11 +442,7 @@
                 checkedEnabledCheckboxes.length < enabledCheckboxes.length;
         });
 
-        function confirmDelete(event) {
-            if (!confirm('Are you sure you want to remove the items?')) {
-                event.preventDefault(); // Batalkan form submit jika tidak setuju
-            }
-        }
+
     </script>
 @endpush
 

@@ -91,14 +91,16 @@ Route::prefix('user')->name('user.')->group(function () {
         Route::prefix('checkout')->name('checkout.')->group(function () {
             Route::get('/', [UserCheckoutController::class, 'index'])->name('index');
             Route::post('/', [UserCheckoutController::class, 'store'])->name('store');
-            Route::post('/createTransaction', [UserCheckoutController::class, 'createTransaction']);
+            Route::post('/shipping-cost', [\App\Http\Controllers\Api\RajaOngkirController::class, 'cekOngkir'])->middleware('throttle:20,1')->name('shipping-cost');
+            Route::post('/snap-token', [\App\Http\Controllers\Api\MidtransController::class, 'getSnapToken'])->middleware('throttle:10,1')->name('snap-token');
+            Route::post('/createTransaction', [UserCheckoutController::class, 'createTransaction'])->middleware('throttle:20,1');
         });
 
         // Orders
         Route::prefix('orders')->name('order.')->group(function () {
             Route::get('/order-history', [UserOrderController::class, 'index'])->name('index');
-            Route::get('/snap-token', [UserOrderController::class, 'SnapToken']);
-            Route::post('/payment-success', [UserOrderController::class, 'handlePaymentSuccess']);
+            Route::get('/snap-token', [UserOrderController::class, 'SnapToken'])->middleware('throttle:30,1');
+            Route::post('/payment-success', [UserOrderController::class, 'handlePaymentSuccess'])->middleware('throttle:30,1');
         });
 
         // Profile
@@ -133,6 +135,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('dashboard/telemetry', [DashboardController::class, 'telemetry'])->name('dashboard.telemetry');
     Route::get('dashboard/export', [DashboardController::class, 'export'])->name('dashboard.export');
     Route::get('quick-search', [DashboardController::class, 'quickSearch'])->name('quickSearch');
+
+    Route::get('settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+    Route::put('settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
     /* CRUD Category & Product memakai modal di halaman index —
        create/show/edit tidak dipakai (tidak ada view-nya) */

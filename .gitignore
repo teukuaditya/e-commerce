@@ -21,3 +21,9 @@ composer.phar
 *.zip
 error_log*
 symlink.php
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

@@ -5,63 +5,90 @@
 @section('content')
     <div class="container-fluid">
 
-        <!-- Page Heading -->
-        <h1 class="h3 mb-2 text-gray-800">Transactions</h1>
-
-        <!-- DataTales Example -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Transaction List</h6>
+        <div class="adm-page-header">
+            <div>
+                <div class="adm-page-header__eyebrow"><i class="fas fa-receipt"></i> Sales</div>
+                <h1 class="adm-page-header__title">Transactions</h1>
+                <p class="adm-page-header__sub">Pantau transaksi, pembayaran, dan status pesanan.</p>
             </div>
-            <div class="card-body text-gray-900">
+        </div>
+
+        <div class="adm-table-card">
+            <div class="adm-table-card__header">
+                <h2 class="adm-table-card__title">
+                    <span class="adm-table-card__title-icon"><i class="fas fa-file-invoice-dollar"></i></span>
+                    Transaction List
+                </h2>
+                <span class="adm-table-card__meta">{{ $transactions->count() }} transactions</span>
+            </div>
+            <div class="adm-table-card__body">
                 <div class="table-responsive">
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <table class="table adm-table" id="dataTable" width="100%" cellspacing="0">
                         <thead>
                             <tr>
                                 <th>ID</th>
-                                <th>Order ID</th>
-                                <th>Customer Name</th>
-                                <th>Gross Amount</th>
-                                <th>Courier</th>
-                                <th>Service</th>
-                                <th>Transaction Time</th>
-                                <th>Payment Type</th>
+                                <th>Order</th>
+                                <th>Customer</th>
+                                <th>Total</th>
+                                <th>Shipping</th>
+                                <th>Payment</th>
+                                <th>Time</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($transactions as $transaction)
+                                @php
+                                    $status = strtolower($transaction->transaction_status ?? '');
+                                    $statusClass = match (true) {
+                                        in_array($status, ['settlement', 'capture', 'paid', 'completed', 'success']) => 'adm-badge--success',
+                                        $status === 'pending' => 'adm-badge--warning',
+                                        in_array($status, ['expire', 'cancel', 'cancelled', 'failure', 'deny', 'denied']) => 'adm-badge--danger',
+                                        default => 'adm-badge--gray',
+                                    };
+                                @endphp
                                 <tr>
-                                    <td>{{ $transaction->id }}</td>
-                                    <td>{{ $transaction->order_id }}</td>
-                                    <td>{{ $transaction->customer_name }}</td>
-                                    <td>{{ number_format($transaction->gross_amount, 2) }}</td>
-                                    <td>{{ $transaction->courier }}</td>
-                                    <td>{{ $transaction->courier_service }}</td>
-                                    <td>{{ $transaction->transaction_time }}</td>
-                                    <td>{{ $transaction->payment_type }}</td>
+                                    <td class="adm-num adm-id">#{{ $transaction->id }}</td>
                                     <td>
-                                        @if($transaction->transaction_status === 'settlement')
-                                            <span class="badge badge-success px-2 py-1" style="font-size: 0.8rem; background-color: #10B981; color: #fff;">Settlement</span>
-                                        @elseif($transaction->transaction_status === 'pending')
-                                            <span class="badge badge-warning px-2 py-1" style="font-size: 0.8rem; background-color: #F59E0B; color: #fff;">Pending</span>
-                                        @elseif(in_array($transaction->transaction_status, ['expire', 'cancel', 'failure']))
-                                            <span class="badge badge-danger px-2 py-1" style="font-size: 0.8rem; background-color: #EF4444; color: #fff;">{{ ucfirst($transaction->transaction_status) }}</span>
+                                        <div class="adm-text-strong adm-num">{{ $transaction->order_id ?? '—' }}</div>
+                                        <div class="adm-text-sm">Invoice / Order</div>
+                                    </td>
+                                    <td>
+                                        <div class="adm-text-strong">{{ $transaction->customer_name ?? '—' }}</div>
+                                    </td>
+                                    <td class="adm-num adm-nowrap">Rp {{ number_format((float) ($transaction->gross_amount ?? 0), 0, ',', '.') }}</td>
+                                    <td>
+                                        @if($transaction->courier || $transaction->courier_service)
+                                            <div class="adm-text-strong">{{ strtoupper($transaction->courier ?? '-') }}</div>
+                                            <div class="adm-text-sm">{{ $transaction->courier_service ?? '—' }}</div>
                                         @else
-                                            <span class="badge badge-secondary px-2 py-1" style="font-size: 0.8rem;">{{ ucfirst($transaction->transaction_status ?? '-') }}</span>
+                                            <span class="adm-muted">—</span>
                                         @endif
+                                    </td>
+                                    <td>
+                                        @if($transaction->payment_type)
+                                            <span class="adm-badge adm-badge--info adm-badge--no-dot">{{ strtoupper(str_replace('_', ' ', $transaction->payment_type)) }}</span>
+                                        @else
+                                            <span class="adm-muted">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="adm-nowrap adm-text-sm">{{ $transaction->transaction_time ?? '—' }}</td>
+                                    <td>
+                                        <span class="adm-badge {{ $statusClass }}">{{ ucfirst($status ?: 'unknown') }}</span>
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="10">
-                                    <div class="adm-empty">
-                                        <i class="fas fa-inbox"></i>
-                                        <strong>Belum ada data</strong>
-                                        <p>Data Transaction akan tampil di sini begitu tersedia.</p>
-                                    </div>
-                                </td></tr>
+                                <tr>
+                                    <td colspan="8">
+                                        <div class="adm-empty">
+                                            <i class="fas fa-inbox"></i>
+                                            <strong>Belum ada data</strong>
+                                            <p>Data transaksi akan tampil di sini begitu tersedia.</p>
+                                        </div>
+                                    </td>
+                                </tr>
                             @endforelse
-</tbody>
+                        </tbody>
                     </table>
                 </div>
             </div>

@@ -84,8 +84,7 @@
                                         @method('DELETE')
                                         <button type="submit" id="delete-address-btn"
                                             class="flex-c-m stext-102 cl0 size-127 bg10 bor14 hov-btn4 p-lr-15 trans-04 pointer"
-                                            style="font-size: 12px; min-width: 10%; height: 30px"
-                                            onclick="return confirm('Are you sure you want to delete this address?');">
+                                            style="font-size: 12px; min-width: 10%; height: 30px">
                                             Delete Address
                                         </button>
                                     </form>
@@ -271,14 +270,14 @@
     <style>
         /* Autocomplete destinasi harus tampil DI ATAS modal Bootstrap */
         .ui-autocomplete {
-            z-index: 2000 !important;
+            z-index: 10050 !important;
             max-height: 240px;
             overflow-y: auto;
             overflow-x: hidden;
         }
-        .modal { z-index: 1300 !important; }
-        .modal-backdrop { z-index: 1200 !important; }
-        .modal-dialog { margin-top: 80px; }
+        .modal { z-index: 9999 !important; }
+        .modal-backdrop { z-index: 9998 !important; }
+        .modal-dialog { margin-top: 80px; position: relative; z-index: 10000; }
     </style>
 @endpush
 
@@ -305,8 +304,11 @@
             // ancestor (navbar glass / animasi <main> punya transform & backdrop-filter).
             // Tanpa ini, backdrop tampil tapi modal tersembunyi di baliknya → layar gelap.
             $('#addAddressModal, #editAddressModal').appendTo('body');
+            $('#addAddressModal, #editAddressModal').on('show.bs.modal', function () {
+                $(this).appendTo('body');
+            });
 
-            const origin = 17549; // ID Kota Jakarta
+            const origin = {{ (int) config('rajaongkir.origin', 17549) }}; // ID kota asal toko (config/rajaongkir.php)
             const userCityId = $('#destination_id').val(); // ID Kota pengguna
             let totalWeight = 0;
 
@@ -509,23 +511,26 @@
                     .prop('disabled', true).trigger('change');
 
                 $.ajax({
-                    url: '/api/cost',
+                    url: '{{ route("user.checkout.shipping-cost") }}',
                     type: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}',
-                        origin: 17549,
+                        origin: {{ (int) config('rajaongkir.origin', 17549) }},
                         destination: destinationId,
                         weight: totalWeight,
-                        courier: courier
+                        courier: courier,
+                        cart_items: '{{ request("cartItems") }}'
                     },
                     success: function(data) {
                         let servicesOptions = '<option value="">Select Service</option>';
 
                         if (data.services && data.services.length > 0) {
                             data.services.forEach(function(service) {
+                                const rawCost = service.cost_raw ?? String(service.cost || '').replace(/\D/g, '');
                                 servicesOptions += `<option
                             value="${service.service}"
                             data-cost="${service.cost}"
+                            data-cost-raw="${rawCost}"
                             data-etd="${service.etd}">
                             ${service.service} - Rp ${service.cost} - Est ${service.etd}
                         </option>`;
@@ -556,27 +561,28 @@
             }
 
             // Hapus alamat yang tersimpan
-            $('#delete-address-btn').on('click', function() {
-                if (confirm('Are you sure you want to delete this address?')) {
+            $('#delete-address-btn').on('click', function(e) {
+                e.preventDefault();
+                window.swalConfirm({
+                    title: 'Hapus Alamat',
+                    text: 'Yakin ingin menghapus alamat ini?',
+                    confirmText: 'Ya, hapus'
+                }).then(function(ok) {
+                    if (!ok) return;
                     $.ajax({
                         url: '/user/address/delete',
                         type: 'DELETE',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
+                        data: { _token: '{{ csrf_token() }}' },
                         success: function(response) {
-                            if (response.success) {
-                                location.reload(); // Refresh the page after deleting address
-                            } else {
-                                alert('An error occurred while deleting the address.');
-                            }
+                            if (response.success) { location.reload(); }
+                            else { Swal.fire({ icon: 'error', title: 'Gagal', text: 'Terjadi kesalahan saat menghapus alamat.', confirmButtonColor: '#111827' }); }
                         },
                         error: function(xhr) {
                             console.error(xhr.responseText);
-                            alert('Failed to delete address. Please try again.');
+                            Swal.fire({ icon: 'error', title: 'Gagal', text: 'Gagal menghapus alamat. Coba lagi.', confirmButtonColor: '#111827' });
                         }
                     });
-                }
+                });
             });
         });
 
@@ -646,7 +652,8 @@
 
         // Ketika Klik Checkout
         $('#checkout-btn').on('click', function() {
-            const orderId = "order-" + Math.random().toString(36).substr(2, 9); // ID Order unik
+            const orderPrefix = @json(\App\Models\Setting::getValue('order_id_prefix', 'DRV'));
+            const orderId = (orderPrefix || 'DRV') + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
             const grossAmount = parseInt("{{ $cartTotal }}".replace(/\./g, '').replace(',',
                 '.')); // Total dari keranjang
             const customerDetails = {
@@ -671,12 +678,12 @@
 
             // Shipping details
             const selectedShippingOption = $('#shipping-service option:selected');
-            let shippingCost = selectedShippingOption.data('cost');
-            if (shippingCost) {
-                shippingCost = parseFloat(shippingCost.replace(/\./g, '').replace(',', '.'));
-            } else {
-                shippingCost = 0;
+            let shippingCost = selectedShippingOption.data('cost-raw');
+            if (shippingCost === undefined || shippingCost === null || shippingCost === '') {
+                const raw = selectedShippingOption.data('cost');
+                shippingCost = raw ? parseFloat(String(raw).replace(/\D/g, '')) : 0;
             }
+            shippingCost = parseInt(shippingCost || 0, 10);
 
             const etd = selectedShippingOption.data('etd'); // Estimasi waktu pengiriman
             const courier = $('#courier').val().toUpperCase(); // Courier (e.g., JNE)
@@ -704,9 +711,9 @@
 
             console.log('Request data:', requestData);
 
-            // Panggil API untuk mendapatkan Snap Token
+            // Panggil endpoint web auth untuk mendapatkan Snap Token
             $.ajax({
-                url: '/api/midtrans/snap', // Endpoint untuk mendapatkan Snap Token
+                url: '{{ route("user.checkout.snap-token") }}',
                 type: 'POST',
                 data: requestData,
                 success: function(response) {

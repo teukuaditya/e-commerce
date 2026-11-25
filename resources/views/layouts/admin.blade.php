@@ -12,7 +12,7 @@
 
     <title>DRVN &bull; Admin Command Center</title>
 
-    <link rel="icon" type="image/png" href="{{ asset('images/drvn-logo.png') }}" />
+    <link rel="icon" type="image/png" href="{{ !empty($company['favicon']) ? asset('storage/'.$company['favicon']) : asset('images/drvn-logo.png') }}" />
 
     <!-- Google Fonts & Clash Grotesk CDN -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,12 +74,26 @@
 </head>
 
 <body id="page-top" class="font-jakarta">
+    <script>
+        (function () {
+            try {
+                if (window.innerWidth >= 768 && localStorage.getItem('adm_sidebar_collapsed') === '1') {
+                    document.body.classList.add('adm-sidebar-collapsed');
+                }
+            } catch (e) {}
+        })();
+    </script>
 
     <!-- Page Wrapper -->
     <div id="wrapper">
 
         <!-- Fixed Dark Sidebar (w-64, bg-[#1A1C29]) -->
         @include('layouts.partials.admin-nav')
+
+        <!-- Desktop Sidebar Toggle (in sidebar notch) -->
+        <button id="adminDesktopToggle" class="adm-sidebar-edge-toggle d-none d-md-flex" aria-label="Toggle Sidebar" type="button">
+            <iconify-icon icon="lucide:chevron-left" id="adminDesktopToggleIcon" width="18" height="18"></iconify-icon>
+        </button>
 
         <!-- Content Area -->
         <div id="content-wrapper" class="adm-modern-content d-flex flex-column">
@@ -96,7 +110,6 @@
             <footer class="py-3 px-4 text-center border-top" style="background: #FFFFFF; border-color: rgba(226, 232, 240, 0.8) !important;">
                 <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between text-muted font-jakarta" style="font-size: 0.78rem;">
                     <span>&copy; {{ date('Y') }} DRVN Store &bull; Admin Developer Suite</span>
-                    <span class="font-mono-code text-indigo-600 font-weight-bold">DRVN-CORE v2.4.0 [PRODUCTION TELEMETRY]</span>
                 </div>
             </footer>
 
@@ -107,9 +120,27 @@
     <!-- End of Page Wrapper -->
 
     <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded-circle d-flex align-items-center justify-content-center text-white text-decoration-none shadow" href="#page-top" style="width: 44px; height: 44px; background: #6366F1; z-index: 1000;">
+    <a class="scroll-to-top rounded-circle d-flex align-items-center justify-content-center text-white text-decoration-none shadow" href="#page-top" style="width: 44px; height: 44px; background: #6366F1; z-index: 1000; opacity:0; visibility:hidden; transition: opacity .25s ease, visibility .25s ease, transform .25s ease; transform: translateY(8px);">
         <iconify-icon icon="lucide:arrow-up" width="20" height="20"></iconify-icon>
     </a>
+    <script>
+        (function () {
+            var btn = document.querySelector('.scroll-to-top');
+            if (!btn) return;
+            function toggle() {
+                var show = window.scrollY > 200;
+                btn.style.opacity = show ? '1' : '0';
+                btn.style.visibility = show ? 'visible' : 'hidden';
+                btn.style.transform = show ? 'translateY(0)' : 'translateY(8px)';
+            }
+            window.addEventListener('scroll', toggle, { passive: true });
+            toggle();
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        })();
+    </script>
 
     <!-- Overlay drawer mobile + container toast & live alert cards -->
     <div class="adm-drawer-backdrop" id="admOverlay" aria-hidden="true"></div>
@@ -124,34 +155,116 @@
     <script src="{{ asset('libs/datatables/jquery.dataTables.min.js') }}"></script>
     <script src="{{ asset('libs/datatables/dataTables.bootstrap4.min.js') }}"></script>
     <script src="{{ asset('js/demo/datatables-demo.js') }}"></script>
+    <script src="{{ asset('vendor/sweetalert2/sweetalert2.all.min.js') }}"></script>
 
     <script>
         /* ==== MODERN ADMIN DASHBOARD INTERACTIVITY ==== */
         (function () {
-            // Global Toast Notification
+            // Global SweetAlert2 Toast
             window.admin = window.admin || {};
-            window.admin.toast = function (msg, type) {
-                var wrap = document.getElementById('adm-toasts');
-                if (!wrap) return;
-                var el = document.createElement('div');
-                var isErr = type === 'err';
-                el.style.cssText = 'background: ' + (isErr ? '#EF4444' : '#10B981') + '; color: #fff; padding: 12px 18px; border-radius: 14px; font-size: 0.85rem; font-family: var(--font-body); font-weight: 600; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.2); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(20px); opacity: 0;';
-                el.innerHTML = '<iconify-icon icon="' + (isErr ? 'lucide:alert-circle' : 'lucide:check-circle-2') + '" width="20" height="20"></iconify-icon><span>' + msg + '</span>';
-                wrap.appendChild(el);
+            var admSwalToast = (window.Swal ? Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3200,
+                timerProgressBar: true,
+                showCloseButton: true,
+                customClass: { popup: 'adm-swal-toast' },
+                didOpen: function (t) {
+                    t.addEventListener('mouseenter', Swal.stopTimer);
+                    t.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            }) : null);
 
-                // Animate in
-                requestAnimationFrame(function () {
-                    el.style.transform = 'translateY(0)';
-                    el.style.opacity = '1';
-                });
-
-                // Auto dismiss (error lebih lama supaya jelas terbaca)
-                setTimeout(function () {
-                    el.style.transform = 'translateX(20px)';
-                    el.style.opacity = '0';
-                    setTimeout(function () { el.remove(); }, 320);
-                }, isErr ? 6000 : 3200);
+            // Override native alert -> SweetAlert2
+            window.alert = function (msg) {
+                if (window.Swal) {
+                    Swal.fire({
+                        text: String(msg == null ? '' : msg),
+                        icon: 'info',
+                        confirmButtonText: 'OK',
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'adm-swal-popup',
+                            title: 'adm-swal-title',
+                            htmlContainer: 'adm-swal-text',
+                            confirmButton: 'adm-swal-btn adm-swal-btn-primary',
+                            actions: 'adm-swal-actions'
+                        }
+                    });
+                }
             };
+
+            window.admin.toast = function (msg, type) {
+                var isErr = type === 'err';
+                if (admSwalToast) {
+                    admSwalToast.fire({
+                        icon: isErr ? 'error' : 'success',
+                        title: msg,
+                        timer: isErr ? 5000 : 3200
+                    });
+                    return;
+                }
+                // Fallback
+                alert(msg);
+            };
+
+            // Modern confirm helper
+            window.admin.confirm = function (opts) {
+                opts = opts || {};
+                if (!window.Swal) return Promise.resolve(confirm(opts.text || 'Yakin?'));
+                return Swal.fire({
+                    title: opts.title || 'Konfirmasi',
+                    text: opts.text || '',
+                    icon: opts.icon || 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: opts.confirmText || 'Ya, lanjutkan',
+                    cancelButtonText: opts.cancelText || 'Batal',
+                    reverseButtons: true,
+                    focusCancel: true,
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: 'adm-swal-popup',
+                        title: 'adm-swal-title',
+                        htmlContainer: 'adm-swal-text',
+                        confirmButton: opts.confirmClass || 'adm-swal-btn adm-swal-btn-danger',
+                        cancelButton: 'adm-swal-btn adm-swal-btn-cancel',
+                        actions: 'adm-swal-actions'
+                    }
+                }).then(function (r) { return r.isConfirmed; });
+            };
+
+            window.confirmLogout = function (formId) {
+                var id = formId || 'logout-form';
+                var form = document.getElementById(id);
+                if (!form) return;
+                window.admin.confirm({
+                    title: 'Sign Out',
+                    text: 'Apakah kamu yakin ingin keluar dari akun ini?',
+                    icon: 'question',
+                    confirmText: 'Ya, keluar',
+                    confirmClass: 'adm-swal-btn adm-swal-btn-danger'
+                }).then(function (ok) {
+                    if (ok) form.submit();
+                });
+            };
+
+            // Global confirm handler for forms with data-confirm
+            document.addEventListener('submit', function (e) {
+                var form = e.target;
+                if (!form || !form.dataset || !form.dataset.confirm) return;
+                if (form.dataset.confirmed === '1') { form.dataset.confirmed = '0'; return; }
+                e.preventDefault();
+                window.admin.confirm({
+                    title: form.dataset.confirmTitle || 'Konfirmasi',
+                    text: form.dataset.confirm,
+                    icon: form.dataset.confirmIcon || 'warning',
+                    confirmText: form.dataset.confirmBtn || 'Ya, hapus',
+                    confirmClass: form.dataset.confirmClass || 'adm-swal-btn adm-swal-btn-danger'
+                }).then(function (ok) {
+                    if (ok) { form.dataset.confirmed = '1'; form.submit(); }
+                });
+            });
 
             // Session flash alerts
             @if (session('success'))
@@ -184,31 +297,54 @@
                 if (window.innerWidth >= 768) closeDrawer();
             });
 
-            // Refresh Button Spin Animation & Live Telemetry Fetch
+            // Desktop Sidebar Collapse Toggle
+            var desktopToggle = document.getElementById('adminDesktopToggle');
+            var desktopToggleIcon = document.getElementById('adminDesktopToggleIcon');
+            function syncDesktopSidebarIcon() {
+                if (!desktopToggleIcon) return;
+                var collapsed = document.body.classList.contains('adm-sidebar-collapsed');
+                desktopToggleIcon.setAttribute('icon', collapsed ? 'lucide:chevron-right' : 'lucide:chevron-left');
+                if (desktopToggle) desktopToggle.setAttribute('aria-label', collapsed ? 'Show Sidebar' : 'Hide Sidebar');
+            }
+            syncDesktopSidebarIcon();
+            if (desktopToggle) {
+                desktopToggle.addEventListener('click', function () {
+                    if (window.innerWidth < 768) return;
+                    var collapsed = document.body.classList.toggle('adm-sidebar-collapsed');
+                    try { localStorage.setItem('adm_sidebar_collapsed', collapsed ? '1' : '0'); } catch (e) {}
+                    syncDesktopSidebarIcon();
+                });
+            }
+
+            // Refresh Button - refresh halaman aktif
             var btnRefresh = document.getElementById('btnRefreshDashboard');
             var refreshIcon = document.getElementById('refreshIcon');
             if (btnRefresh && refreshIcon) {
                 btnRefresh.addEventListener('click', function () {
                     refreshIcon.classList.add('spin-1s');
-                    
-                    fetch('{{ route("admin.dashboard.telemetry") }}')
-                        .then(function (res) { return res.json(); })
-                        .then(function (payload) {
-                            if (payload.status === 'ok' && typeof window.updateDashboardTelemetry === 'function') {
-                                window.updateDashboardTelemetry(payload.data);
-                            }
-                            window.admin.toast('Dashboard data refreshed successfully', 'ok');
-                        })
-                        .catch(function () {
-                            window.admin.toast('Dashboard reloaded', 'ok');
-                        })
-                        .finally(function () {
-                            setTimeout(function () {
-                                refreshIcon.classList.remove('spin-1s');
-                            }, 1000);
-                        });
+                    btnRefresh.disabled = true;
+                    setTimeout(function () {
+                        window.location.reload();
+                    }, 350);
                 });
             }
+
+            // Modern file picker filename
+            document.addEventListener('change', function (e) {
+                var input = e.target;
+                if (!input || !input.classList || !input.classList.contains('adm-file-input')) return;
+                var name = (input.files && input.files[0]) ? input.files[0].name : 'No file chosen';
+                var label = document.querySelector('[data-file-name-for="' + input.id + '"]');
+                if (label) label.textContent = name;
+            });
+            $(document).on('show.bs.modal', '.modal', function () {
+                $(this).find('.adm-file-input').each(function () { this.value = ''; });
+                $(this).find('[data-file-name-for]').each(function () {
+                    var $el = $(this);
+                    if (!$el.data('default-text')) $el.data('default-text', $.trim($el.text()) || 'No file chosen');
+                    $el.text($el.data('default-text'));
+                });
+            });
 
             // Keyboard shortcut (Ctrl+K or Cmd+K) for search
             window.addEventListener('keydown', function (e) {
@@ -440,12 +576,25 @@
                     var listContainer = document.getElementById('notifListContainer');
 
                     var count = notifications ? notifications.length : 0;
+                    var sig = (notifications || []).map(function (n) { return (n.id || '') + ':' + (n.status || ''); }).join('|');
+                    window.__admNotifTotal = count;
+                    window.__admNotifSig = sig;
+                    var seenSig = window.__admNotifSeenSig || localStorage.getItem('adm_notif_seen_sig') || '';
+                    var seenSet = seenSig ? seenSig.split('|') : [];
+                    var newCount = 0;
+                    (notifications || []).forEach(function (n) {
+                        var t = (n.id || '') + ':' + (n.status || '');
+                        if (seenSet.indexOf(t) === -1) newCount++;
+                    });
+                    var hasNew = newCount > 0;
 
+                    var dropdownOpen = !!(document.querySelector('#notificationsDropdown') && document.querySelector('#notificationsDropdown').getAttribute('aria-expanded') === 'true');
                     if (badgeEl) {
-                        badgeEl.textContent = count + ' Baru';
+                        badgeEl.textContent = (dropdownOpen ? 0 : newCount) + ' Baru';
                     }
                     if (pulseEl) {
-                        if (count > 0) {
+                        pulseEl.textContent = newCount > 99 ? '99+' : String(newCount);
+                        if (hasNew && !dropdownOpen) {
                             pulseEl.classList.remove('d-none');
                         } else {
                             pulseEl.classList.add('d-none');
@@ -456,7 +605,9 @@
                         if (count > 0) {
                             var html = '';
                             notifications.forEach(function (notif) {
-                                html += '<a href="' + notif.url + '" class="list-group-item list-group-item-action p-3 border-bottom text-decoration-none">' +
+                                var token = (notif.id || '') + ':' + (notif.status || '');
+                                var isNew = seenSet.indexOf(token) === -1;
+                                html += '<a href="' + notif.url + '" data-notif-token="' + token + '" class="list-group-item list-group-item-action p-3 border-bottom text-decoration-none adm-notif-item ' + (isNew ? 'is-new' : '') + '">' +
                                     '<div class="d-flex align-items-start gap-2">' +
                                         '<span class="p-1.5 rounded-circle text-white d-flex align-items-center justify-content-center flex-shrink-0" style="background: ' + notif.icon_bg + '; width: 28px; height: 28px;">' +
                                             '<iconify-icon icon="' + notif.icon + '" width="14" height="14"></iconify-icon>' +
@@ -465,6 +616,7 @@
                                             '<p class="mb-0 font-weight-bold text-slate-800" style="font-size: 0.8rem;">' + notif.title + '</p>' +
                                             '<span class="text-muted font-mono-code" style="font-size: 0.7rem;">' + notif.desc + ' &bull; ' + notif.time_ago + '</span>' +
                                         '</div>' +
+                                        '<span class="adm-notif-new-dot ' + (isNew ? '' : 'd-none') + '" style="width:8px;height:8px;border-radius:9999px;background:#6366F1;flex-shrink:0;margin-top:6px;"></span>' +
                                     '</div>' +
                                 '</a>';
                             });

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProductRequest;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -76,11 +77,13 @@ class ProductController extends Controller
     {
         $query = trim((string) $request->input('query', ''));
 
+        $showOos = Setting::getValue('show_out_of_stock', '1') === '1';
         $productsQuery = Product::where(function ($q) use ($query) {
             $q->where('title', 'LIKE', "%{$query}%")
                 ->orWhere('brand', 'LIKE', "%{$query}%")
                 ->orWhere('description', 'LIKE', "%{$query}%");
         })
+            ->when(! $showOos, fn ($q) => $q->where('stock', '>', 0))
             ->when($this->schemaHasColumn('products', 'status'), function ($q) {
                 $q->where('status', 'active');
             });

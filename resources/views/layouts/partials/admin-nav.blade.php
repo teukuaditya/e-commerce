@@ -7,12 +7,11 @@
             <img src="{{ asset('images/drvn-logo.png') }}" alt="DRVN Logo" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
         <div>
-            <div class="font-clash text-white" style="font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; line-height: 1.2;">
-                DRVN<span style="color: #818CF8;">.</span>STORE
+            <div class="font-clash" style="font-weight: 800; font-size: 1.2rem; letter-spacing: -0.03em; line-height: 1; color: #F8FAFC;">
+                DRVN<span style="color: #818CF8;">.</span><span style="background: linear-gradient(135deg, #A5B4FC 0%, #6366F1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">STORE</span>
             </div>
-            <div class="d-flex align-items-center gap-1 font-mono-code" style="font-size: 0.65rem; color: #94A3B8; letter-spacing: 0.1em; font-weight: 600; text-transform: uppercase;">
-                <span class="d-inline-block rounded-circle" style="width: 6px; height: 6px; background-color: #10B981; box-shadow: 0 0 8px #10B981;"></span>
-                <span>v2.4 &bull; LIVE</span>
+            <div class="font-mono-code" style="font-size: 0.62rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #64748B; margin-top: 4px;">
+                Admin Panel
             </div>
         </div>
     </a>
@@ -64,6 +63,13 @@
             <span>Cart</span>
         </a>
 
+        <div class="adm-nav-heading mt-2">SISTEM</div>
+
+        <a href="{{ route('admin.settings.index') }}" class="adm-nav-link {{ Request::is('admin/settings*') ? 'active' : '' }}">
+            <iconify-icon icon="lucide:settings"></iconify-icon>
+            <span>Settings</span>
+        </a>
+
     </nav>
 
     <!-- Bottom Developer Environment Widget -->
@@ -75,9 +81,7 @@
                 <span>99.9%</span>
             </span>
         </div>
-        <div class="font-mono-code" style="font-size: 0.7rem; color: #CBD5E1;">
-            PHP 8.2 &bull; Latency 12ms
-        </div>
+
         <a href="{{ route('user.home') }}" class="d-flex align-items-center justify-content-center gap-1 text-decoration-none mt-2 py-1 px-2 rounded-2" style="font-size: 0.72rem; color: #818CF8; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); transition: all 0.2s ease;">
             <iconify-icon icon="lucide:external-link" width="13" height="13"></iconify-icon>
             <span>Lihat Storefront</span>

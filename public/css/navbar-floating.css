@@ -141,6 +141,23 @@ body.page-home header.header-v4 .nav-greeting {
     text-shadow: none !important;
 }
 
+/* Hover/active harus tetap sama seperti halaman lain.
+   Rule ini perlu specificity >= base home (0,3,3) dan scrolled home (0,4,3). */
+body.page-home header.header-v4 .main-menu > li > a:hover,
+body.page-home header.header-v4 .main-menu > li.active-menu > a,
+body.page-home header.header-v4.scrolled .main-menu > li > a:hover,
+body.page-home header.header-v4.scrolled .main-menu > li.active-menu > a {
+    color: var(--tu-ink) !important;
+    text-shadow: none !important;
+}
+
+body.page-home header.header-v4 .icon-header-item:hover,
+body.page-home header.header-v4.scrolled .icon-header-item:hover,
+body.page-home header.header-v4 a:hover .icon-header-item,
+body.page-home header.header-v4.scrolled a:hover .icon-header-item {
+    color: var(--tu-accent) !important;
+}
+
 /* Logo ikut var tema (wordmark DRVN.) */
 header.header-v4 .logo > span {
     color: var(--tu-ink, #222) !important;

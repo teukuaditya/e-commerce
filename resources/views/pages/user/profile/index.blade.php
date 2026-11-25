@@ -1,86 +1,70 @@
 @extends('layouts.main')
 
 @section('content')
-<section class="bg0 m-t-45 p-b-60 profile-hero">
+<section class="bg0 p-b-60 account-page">
     <div class="container">
-
-        <x-flash-alert class="stext-102" />
-
+        <x-flash-alert class="stext-102 mb-4" />
         <div class="row">
-            <!-- Sidebar -->
-            <div class="col-lg-4 col-md-4">
+            <div class="col-lg-4 col-md-4 mb-4 mb-lg-0">
                 @include('layouts.partials.user-nav')
             </div>
 
-            <!-- Edit User Form -->
             <div class="col-lg-8 col-md-8">
-                <div class="mtext-109 cl2 p-b-30 bor10 p-lr-40 p-t-30 p-b-30 m-lr-0-xl p-lr-15-sm mb-4">
-                    Profile
-                </div>
-
-                <!-- Tampilkan Data Pengguna -->
-                <div class="bor10 p-lr-40 p-t-30 p-b-30 m-lr-0-xl p-lr-15-sm">
-                    <div id="user-info">
-                        <div class="stext-102 cl2 form-group mb-4">
-                            <label class="mtext-102" for="name">Name</label>
-                            <p>{{ auth()->user()->name }}</p>
-                        </div>
-
-                        <div class="stext-102 cl2 form-group mb-4">
-                            <label class="mtext-102" for="phone">Phone</label>
-                            <p>{{ auth()->user()->phone ?? '-' }}</p>
-                        </div>
-
-                        <div class="stext-102 cl2 form-group mb-4">
-                            <label class="mtext-102" for="email">Email</label>
-                            <p>{{ auth()->user()->email }}</p>
-                        </div>
-
-                        <!-- Tombol Edit -->
-                        <button type="button"
-                            class="flex-c-m stext-102 cl0 size-127 bg1 mt-3 bor14 hov-btn5 p-lr-15 trans-04 pointer"
-                            style="font-size: 12px; min-width: 10%; height: 30px" id="edit-button">Edit Profile</button>
+                <div class="account-card">
+                    <div class="account-card__header">
+                        <span class="account-card__eyebrow">Account</span>
+                        <h2 class="account-card__title">My Profile</h2>
+                        <p style="margin:10px 0 0;color:#6B7280;font-size:14px;">Kelola informasi pribadi kamu agar pengalaman belanja lebih nyaman.</p>
                     </div>
-
-                    <!-- Form untuk mengedit data user (tersembunyi) -->
-                    <div id="edit-form" style="display: none;">
-                        <form action="{{ route('user.profile.update') }}" method="POST">
-                            @csrf
-                            @method('PUT')
-
-                            <!-- Name -->
-                            <div class="stext-102 cl2 form-group mb-4">
-                                <label class="mtext-102" for="name">Name</label>
-                                <input type="text" id="name" name="name" class="form-control"
-                                    value="{{ auth()->user()->name }}" required>
+                    <div class="account-card__body">
+                        <div id="user-info">
+                            <div class="account-info-grid">
+                                <div class="account-info-item">
+                                    <span class="account-info-label">Name</span>
+                                    <p class="account-info-value">{{ auth()->user()->name }}</p>
+                                </div>
+                                <div class="account-info-item">
+                                    <span class="account-info-label">Phone</span>
+                                    <p class="account-info-value">{{ auth()->user()->phone ?? '-' }}</p>
+                                </div>
+                                <div class="account-info-item account-info-item--full">
+                                    <span class="account-info-label">Email</span>
+                                    <p class="account-info-value">{{ auth()->user()->email }}</p>
+                                </div>
                             </div>
+                            <div class="mt-4">
+                                <button type="button" class="account-btn account-btn-primary" id="edit-button">
+                                    <i class="fas fa-pen" style="font-size:12px;"></i> Edit Profile
+                                </button>
+                            </div>
+                        </div>
 
-                            <!-- Phone -->
-                            <div class="stext-102 cl2 form-group mb-4">
-                                <label class="mtext-102" for="phone">Phone</label>
-                                <input type="text" id="phone" name="phone" class="form-control"
-                                    value="{{ auth()->user()->phone }}">
-                            </div>
-
-                            <!-- Email -->
-                            <div class="stext-102 cl2 form-group mb-4">
-                                <label class="mtext-102" for="email">Email</label>
-                                <input type="email" id="email" name="email" class="form-control"
-                                    value="{{ auth()->user()->email }}" required>
-                            </div>
-                            <div class="d-flex justify-content-start gap-2">
-                                <button type="button"
-                                    class="flex-c-m stext-102 cl0 size-127 bg10 mt-3 bor14 hov-btn4 p-lr-15 trans-04 pointer mr-2"
-                                    style="font-size: 12px; min-width: 10%; height: 30px"
-                                    id="cancel-button">Cancel</button>
-                                <button type="submit"
-                                    class="flex-c-m stext-102 cl0 size-127 bg1 mt-3 bor14 hov-btn5 p-lr-15 trans-04 pointer"
-                                    style="font-size: 12px; min-width: 10%; height: 30px">Update Profile</button>
-                            </div>
-                        </form>
+                        <div id="edit-form" style="display:none;">
+                            <form action="{{ route('user.profile.update') }}" method="POST" class="account-form">
+                                @csrf
+                                @method('PUT')
+                                <div class="row">
+                                    <div class="col-md-6 form-group mb-4">
+                                        <label for="name">Name</label>
+                                        <input type="text" id="name" name="name" class="form-control" value="{{ auth()->user()->name }}" required>
+                                    </div>
+                                    <div class="col-md-6 form-group mb-4">
+                                        <label for="phone">Phone</label>
+                                        <input type="text" id="phone" name="phone" class="form-control" value="{{ auth()->user()->phone }}">
+                                    </div>
+                                    <div class="col-12 form-group mb-4">
+                                        <label for="email">Email</label>
+                                        <input type="email" id="email" name="email" class="form-control" value="{{ auth()->user()->email }}" required>
+                                    </div>
+                                </div>
+                                <div class="d-flex flex-wrap" style="gap:10px;">
+                                    <button type="button" class="account-btn account-btn-secondary" id="cancel-button">Cancel</button>
+                                    <button type="submit" class="account-btn account-btn-primary">Update Profile</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -89,9 +73,7 @@
 
 @push('styles')
 <style>
-    .profile-hero {
-        margin-top: 24px;
-    }
+    .account-page { padding-top: 24px; }
 </style>
 @endpush
 

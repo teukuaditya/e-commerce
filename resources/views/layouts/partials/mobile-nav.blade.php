@@ -5,7 +5,7 @@
         @guest
             <!-- Logo moblie -->
             <a href="{{ route('user.home') }}" class="logo-mobile">
-                <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
+                <span style="font-size: 22px; font-weight: 800; color: #111827; letter-spacing: 1px; font-family: Poppins, sans-serif;">DRVN</span>
             </a>
             <!-- Jika user belum login -->
             <a href="{{ route('login') }}"
@@ -20,7 +20,7 @@
             </a> --}}
         @else
             <a href="{{ route('user.home') }}" class="logo-mobile">
-                <span style="font-size: 20px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
+                <span style="font-size: 22px; font-weight: 800; color: #111827; letter-spacing: 1px; font-family: Poppins, sans-serif;">DRVN</span>
             </a>
             <!-- Icon header -->
             <div class="wrap-icon-header flex-w flex-r-m">
@@ -74,7 +74,7 @@
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="{{ route('logout') }}"
                             onclick="event.preventDefault();
-       document.getElementById('logout-form-m').submit();">
+       window.confirmLogout ? window.confirmLogout('logout-form-m') : document.getElementById('logout-form-m').submit();">
                             <i class="fas fa-sign-out-alt fa-fw mr-2 text-gray-400"></i>
                             Sign Out
                         </a>

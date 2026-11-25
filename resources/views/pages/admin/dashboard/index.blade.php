@@ -12,24 +12,16 @@
                 <h1 class="font-clash text-slate-900 mb-0" style="font-size: 1.85rem; font-weight: 800; letter-spacing: -0.02em;">
                     Admin Command Center
                 </h1>
-                <span class="badge font-mono-code" style="background: rgba(99, 102, 241, 0.1); color: #6366F1; border: 1px solid rgba(99, 102, 241, 0.25); border-radius: 8px; font-size: 0.72rem; padding: 4px 8px;">
-                    v2.4 &bull; LIVE TELEMETRY
-                </span>
+
             </div>
             <p class="text-slate-500 font-jakarta mb-0 mt-1" style="font-size: 0.9rem;">
-                Real-time store metrics, financial telemetry, and live order activities.
+                Ringkasan metrik toko, performa penjualan, dan aktivitas pesanan terbaru.
             </p>
         </div>
 
         <!-- Real-time Status Chip & Date -->
         <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white rounded-2xl border border-slate-200 shadow-sm" style="border-radius: 14px;">
-                <span class="position-relative d-inline-flex" style="width: 8px; height: 8px;">
-                    <span class="pulse-badge position-absolute" style="width: 100%; height: 100%; border-radius: 9999px; background: #10B981; opacity: 0.75;"></span>
-                    <span style="position: relative; width: 8px; height: 8px; border-radius: 9999px; background: #10B981;"></span>
-                </span>
-                <span class="font-mono-code text-slate-700" style="font-size: 0.75rem; font-weight: 600;">SYS_HEALTH: OPTIMAL</span>
-            </div>
+
             <div class="d-none d-lg-flex align-items-center gap-2 px-3 py-2 bg-white rounded-2xl border border-slate-200 shadow-sm text-slate-600 font-mono-code" style="border-radius: 14px; font-size: 0.75rem;">
                 <iconify-icon icon="lucide:clock" width="14" height="14" class="text-indigo-500"></iconify-icon>
                 <span>{{ now()->format('D, d M Y') }}</span>
@@ -105,13 +97,13 @@
             </div>
         </div>
 
-        <!-- Card 3 - Blue: Monthly Target -->
+        <!-- Card 3 - Yellow: Monthly Target -->
         <div class="col-12 col-sm-6 col-xl-3">
-            <div class="adm-stat-card adm-stat-blue group h-100">
+            <div class="adm-stat-card adm-stat-yellow group h-100">
                 <div class="adm-card-blob"></div>
                 <div class="d-flex justify-content-between align-items-start position-relative">
                     <div>
-                        <span class="adm-label text-blue-700 d-block mb-1" style="color: #0369A1 !important;">
+                        <span class="adm-label d-block mb-1" style="color: #B45309 !important;">
                             MONTHLY TARGET
                         </span>
                         <div class="font-clash text-slate-900 my-1" id="kpiTargetPct" style="font-size: 1.65rem; font-weight: 800; letter-spacing: -0.02em;">
@@ -120,20 +112,20 @@
                     </div>
                     <!-- Icon container with scale-110 hover effect -->
                     <div class="d-flex align-items-center justify-content-center smooth-all group-hover:scale-110 shadow-xs"
-                         style="width: 48px; height: 48px; border-radius: 16px; background: rgba(14, 165, 233, 0.15); color: #0369A1; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                         style="width: 48px; height: 48px; border-radius: 16px; background: rgba(245, 158, 11, 0.15); color: #B45309; transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
                         <iconify-icon icon="lucide:target" width="24" height="24"></iconify-icon>
                     </div>
                 </div>
                 <!-- Target Progress Bar -->
                 <div class="mt-3 pt-1 position-relative">
-                    <div class="w-100 rounded-pill overflow-hidden" style="height: 7px; background: rgba(14, 165, 233, 0.18);">
+                    <div class="w-100 rounded-pill overflow-hidden" style="height: 7px; background: rgba(245, 158, 11, 0.18);">
                         <div class="h-100 rounded-pill smooth-all"
                              id="kpiTargetBar"
-                             style="width: {{ min(100, $earningsPercentage) }}%; background: linear-gradient(90deg, #0284C7 0%, #6366F1 100%);"></div>
+                             style="width: {{ min(100, $earningsPercentage) }}%; background: linear-gradient(90deg, #F59E0B 0%, #FBBF24 100%);"></div>
                     </div>
                     <div class="d-flex justify-content-between align-items-center mt-2 text-slate-500 font-mono-code" style="font-size: 0.7rem;">
-                        <span>Target: Rp 50.000.000</span>
-                        <span class="text-blue-700 font-weight-bold" id="kpiTargetSubtext">{{ number_format($earningsPercentage, 1) }}% tercapai</span>
+                        <span>Target: Rp {{ number_format($monthlyTarget ?? 50000000, 0, ',', '.') }}</span>
+                        <span class="font-weight-bold" id="kpiTargetSubtext" style="color: #B45309;">{{ number_format($earningsPercentage, 1) }}% tercapai</span>
                     </div>
                 </div>
             </div>
@@ -479,7 +471,7 @@
 
             <!-- Action 4: System Config (Rose) -->
             <div class="col-6 col-lg-3">
-                <div role="button" data-toggle="modal" data-target="#systemConfigModal" class="adm-action-card adm-action-rose group h-100">
+                <a href="{{ route('admin.settings.index') }}" class="adm-action-card adm-action-rose group h-100 text-decoration-none">
                     <div class="d-flex align-items-center justify-content-center smooth-all group-hover:scale-110 shadow-xs flex-shrink-0"
                          style="width: 46px; height: 46px; border-radius: 16px; background: rgba(244, 63, 94, 0.12); color: #E11D48;">
                         <iconify-icon icon="lucide:settings-2" width="22" height="22"></iconify-icon>
@@ -489,10 +481,10 @@
                             System Config
                         </div>
                         <span class="text-slate-500 font-jakarta d-block mt-0.5" style="font-size: 0.75rem;">
-                            API &amp; Environment
+                            Pengaturan Toko
                         </span>
                     </div>
-                </div>
+                </a>
             </div>
 
         </div>
@@ -512,11 +504,7 @@
                             <h2 class="font-clash text-slate-900 mb-0" style="font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em;">
                                 Live Activity
                             </h2>
-                            <span class="d-flex align-items-center gap-1.5 px-2.5 py-1 rounded-pill font-mono-code"
-                                  style="font-size: 0.7rem; font-weight: 700; background: rgba(16, 185, 129, 0.12); color: #047857; border: 1px solid rgba(16, 185, 129, 0.25);">
-                                <span class="d-inline-block rounded-circle" style="width: 6px; height: 6px; background-color: #10B981; box-shadow: 0 0 6px #10B981;"></span>
-                                LIVE FEED
-                            </span>
+
                         </div>
                         <p class="text-slate-500 font-jakarta mb-0 mt-1" style="font-size: 0.82rem;">
                             Notifikasi pesanan, pembayaran, dan pendaftaran pengguna terkini dari database
@@ -569,56 +557,7 @@
 
 </div>
 
-<!-- System Config Modal (Quick Action 4) -->
-<div class="modal fade" id="systemConfigModal" tabindex="-1" role="dialog" aria-labelledby="systemConfigModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content" style="border-radius: 20px; border: 1px solid #E2E8F0; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-            <div class="modal-header px-4 pt-4 pb-2 border-0">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="d-flex align-items-center justify-content-center rounded-2xl" style="width: 40px; height: 40px; background: rgba(244, 63, 94, 0.12); color: #E11D48;">
-                        <iconify-icon icon="lucide:settings-2" width="22" height="22"></iconify-icon>
-                    </div>
-                    <div>
-                        <h5 class="modal-title font-clash font-weight-bold text-slate-900 mb-0" id="systemConfigModalLabel" style="font-size: 1.15rem;">System Configuration</h5>
-                        <span class="text-slate-400 font-mono-code" style="font-size: 0.72rem;">ENVIRONMENT: PRODUCTION &bull; DRVN v2.4</span>
-                    </div>
-                </div>
-                <button class="close" type="button" data-dismiss="modal" aria-label="Close" style="outline: none;">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body px-4 py-3 font-jakarta">
-                <div class="p-3 mb-3 rounded-xl border border-slate-200" style="background: #F8FAFC; border-radius: 12px;">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="font-weight-bold text-slate-700" style="font-size: 0.82rem;">Database Driver</span>
-                        <span class="badge font-mono-code" style="background: #E2E8F0; color: #334155;">{{ config('database.default') }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="font-weight-bold text-slate-700" style="font-size: 0.82rem;">Payment Gateway</span>
-                        <span class="badge font-mono-code" style="background: rgba(16, 185, 129, 0.15); color: #047857;">Midtrans Snap Active</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="font-weight-bold text-slate-700" style="font-size: 0.82rem;">Cache &amp; Session</span>
-                        <span class="badge font-mono-code" style="background: #E2E8F0; color: #334155;">File / Redis Ready</span>
-                    </div>
-                </div>
-                <div class="mb-3">
-                    <label class="adm-label text-slate-600 mb-1 d-block" style="font-size: 0.7rem;">STORE CURRENCY</label>
-                    <input type="text" class="form-control font-mono-code" value="IDR (Rp) - Indonesian Rupiah" readonly style="border-radius: 10px; font-size: 0.85rem; background: #F1F5F9;">
-                </div>
-                <div class="mb-2">
-                    <label class="adm-label text-slate-600 mb-1 d-block" style="font-size: 0.7rem;">MONTHLY REVENUE GOAL</label>
-                    <input type="text" class="form-control font-mono-code" value="Rp 50.000.000" readonly style="border-radius: 10px; font-size: 0.85rem; background: #F1F5F9;">
-                </div>
-            </div>
-            <div class="modal-footer px-4 pb-4 pt-2 border-0 d-flex gap-2 justify-content-end">
-                <button class="btn btn-primary px-4 py-2 font-jakarta font-weight-bold btn-press" type="button" data-dismiss="modal" style="border-radius: 12px; font-size: 0.85rem; background: #6366F1; border-color: #4F46E5;">
-                    Tutup
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+
 @endsection
 
 @push('scripts')

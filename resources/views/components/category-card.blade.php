@@ -11,7 +11,7 @@
       3. data-reveal    -> scroll reveal bertahap (IntersectionObserver)
       4. .fade-img      -> lazy load + fade-in gambar
 --}}
-@props(['category', 'position' => 0, 'showCount' => true])
+@props(['category', 'position' => 0, 'showCount' => true, 'showIndex' => true])
 
 @php
     $indexNo = str_pad(((int) $position) + 1, 2, '0', STR_PAD_LEFT);
@@ -43,10 +43,14 @@
 
     {{-- [BARU] Meta pojok kartu. pointer-events:none supaya hover tetap
          diteruskan ke link .block1-txt di bawahnya. --}}
-    <div class="cat-meta" aria-hidden="true">
-        <span class="cat-meta__idx">{{ $indexNo }}</span>
-        @if($showCount)
-            <span class="cat-meta__count">{{ $productCount }} Produk</span>
-        @endif
-    </div>
+    @if($showIndex || $showCount)
+        <div class="cat-meta" aria-hidden="true">
+            @if($showIndex)
+                <span class="cat-meta__idx">{{ $indexNo }}</span>
+            @endif
+            @if($showCount)
+                <span class="cat-meta__count">{{ $productCount }} Produk</span>
+            @endif
+        </div>
+    @endif
 </div>

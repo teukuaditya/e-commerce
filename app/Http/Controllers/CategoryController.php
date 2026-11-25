@@ -10,7 +10,7 @@ class CategoryController extends Controller
 {
     public function index(): \Illuminate\View\View
     {
-        $categories = Category::all();
+        $categories = Category::withCount('products')->get();
 
         return view('pages.admin.categories.index', compact('categories'));
     }

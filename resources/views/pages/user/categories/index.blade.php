@@ -160,8 +160,8 @@
     margin: 0;
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
-    font-size: clamp(2rem, 4.8vw, 3.5rem);
-    line-height: 1.05;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    line-height: 1.1;
     letter-spacing: 0.02em;
     text-transform: uppercase;
     color: var(--drvn-ink);

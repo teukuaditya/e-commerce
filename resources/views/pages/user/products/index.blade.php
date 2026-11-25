@@ -116,7 +116,7 @@
        ===================================================================== */
 
     var DEBOUNCE_MS = 300;   // jeda pencarian saat mengetik
-    var FADE_MS     = 250;   // durasi fade-out grid lama (lalu skeleton fade-in)
+    var FADE_MS     = 200;   // durasi fade-out grid lama (lalu skeleton fade-in)
     // Path saja (tanpa origin) -> selalu same-origin apa pun host yang dibuka
     var INDEX_URL   = '{{ parse_url(route('user.products.index'), PHP_URL_PATH) }}';
 
@@ -211,37 +211,26 @@
     }
 
     /* --------------------------- animasi grid ------------------------- */
-    function playEnter() { /* grid-level slide handles transition */ }
-
-    function enterGrid() {
-        if (reduceMotion) {
-            grid.classList.remove('is-leaving', 'is-enter-start');
-            return;
+    function playGridEnter() {
+        if (reduceMotion) return;
+        var cards = grid.querySelectorAll('.product-grid-item');
+        for (var i = 0; i < cards.length; i++) {
+            cards[i].classList.remove('grid-enter');
+            cards[i].style.animationDelay = Math.min(i * 30, 450) + 'ms';
+            // force reflow then add class
+            void cards[i].offsetWidth;
+            cards[i].classList.add('grid-enter');
         }
-        grid.classList.add('is-enter-start');
-        grid.classList.remove('is-leaving');
-        void grid.offsetWidth; // reflow: snap ke posisi kanan
-        grid.classList.remove('is-enter-start'); // transisi ke posisi normal
-    }
-
-    function showSkeleton() {
-        if (skeleton) grid.innerHTML = skeleton.innerHTML;
-        enterGrid();
-        grid.setAttribute('aria-busy', 'true');
     }
 
     function startLoading() {
-        clearTimeout(skeletonTimer);
+        grid.classList.add('is-loading');
         grid.setAttribute('aria-busy', 'true');
-        if (reduceMotion || !skeleton) { showSkeleton(); return; }
-        grid.classList.add('is-leaving');       // geser keluar ke kiri
-        grid.classList.remove('is-enter-start');
-        skeletonTimer = setTimeout(showSkeleton, FADE_MS);
     }
 
     /* --------------------------- fetch produk ------------------------- */
     function fetchProducts(url, push) {
-        if (controller) controller.abort();              // batalkan request lama
+        if (controller) controller.abort();
         controller = new AbortController();
         var mine = controller;
 
@@ -256,25 +245,24 @@
                 return res.json();
             })
             .then(function (data) {
-                if (mine !== controller) return;         // sudah ada request lebih baru
+                if (mine !== controller) return;
                 render(data);
                 pushUrl(url, push === true);
             })
             .catch(function (err) {
-                if (err && err.name === 'AbortError') return;   // dibatalkan -> diam
+                if (err && err.name === 'AbortError') return;
                 if (mine !== controller) return;
-                clearTimeout(skeletonTimer);
-                grid.classList.remove('is-leaving', 'is-enter-start');
+                grid.classList.remove('is-loading');
                 grid.setAttribute('aria-busy', 'false');
                 console.error('Gagal memuat produk:', err);
             });
     }
 
     function render(data) {
-        clearTimeout(skeletonTimer);
         grid.innerHTML = data.html || '';
-        enterGrid();
+        grid.classList.remove('is-loading');
         grid.setAttribute('aria-busy', 'false');
+        playGridEnter();
 
         pagination.innerHTML = data.pagination || '';
 
@@ -406,21 +394,22 @@
     margin-top: 24px;
   }
 
-  /* ============ GRID: transisi fade + cegah layout shift ============ */
+  /* ============ GRID: loading + staggered card enter ============ */
   #productGrid {
     min-height: 420px;
-    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: opacity, transform;
+    transition: opacity .28s ease, transform .28s ease;
   }
-  #productGrid.is-leaving {
-    opacity: 0;
-    transform: translateX(-20px);
+  #productGrid.is-loading {
+    opacity: .35;
     pointer-events: none;
+    transform: scale(.99);
   }
-  #productGrid.is-enter-start {
-    transition: none !important;
-    opacity: 0;
-    transform: translateX(20px);
+  .product-grid-item.grid-enter {
+    animation: productGridEnter .6s cubic-bezier(.16,.84,.44,1) both;
+  }
+  @keyframes productGridEnter {
+    from { opacity: 0; transform: translateY(22px) scale(.97); }
+    to   { opacity: 1; transform: none; }
   }
 
   /* ============ EMPTY STATE: fade-up halus ============ */
@@ -564,8 +553,8 @@
   .product-page-title {
     margin: 0;
     font-family: Poppins-SemiBold, Poppins, sans-serif;
-    font-size: clamp(2rem, 4.5vw, 3.25rem);
-    line-height: 1.05;
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
+    line-height: 1.1;
     letter-spacing: 0.02em;
     text-transform: uppercase;
     color: #111827;
@@ -700,8 +689,8 @@
   /* ============ HORMATI prefers-reduced-motion ====================== */
   @media (prefers-reduced-motion: reduce) {
     #productGrid { transition: none !important; }
-    #productGrid.is-leaving,
-    #productGrid.is-enter-start { opacity: 1 !important; transform: none !important; transition: none !important; }
+    #productGrid.is-loading { opacity: 1 !important; transform: none !important; }
+    .product-grid-item.grid-enter { animation: none !important; opacity: 1 !important; transform: none !important; }
     .empty-products-state { animation: none !important; }
     .shimmer::after { animation: none !important; }
     #paginationBlock .page-item .page-link { transition: none; }

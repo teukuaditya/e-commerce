@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
@@ -155,7 +156,7 @@ class DashboardController extends Controller
                 ->orWhereNull('transaction_status');
         })->count();
 
-        $monthlyTarget = 50000000; // Rp 50.000.000
+        $monthlyTarget = (int) Setting::getValue('monthly_revenue_goal', 50000000);
         $earningsPercentage = $monthlyTarget > 0 ? ($earningsThisMonth / $monthlyTarget) * 100 : 0;
 
         // 2. Weekly Telemetry (Mon - Sun of current week)
@@ -310,19 +311,27 @@ class DashboardController extends Controller
             return $item;
         }, $activityFeed);
 
-        // 6. Real Notifications
-        $notifications = Transaction::latest('id')->limit(5)->get()->map(function ($nt) {
+        // 6. Real Notifications - include status changes (pending->settlement etc.)
+        $notifications = Transaction::latest('updated_at')->latest('id')->limit(8)->get()->map(function ($nt) {
             $isPaid = $nt->transaction_status === 'settlement';
-            $time = $nt->transaction_time ?? $nt->created_at;
+            $isPending = $nt->transaction_status === 'pending' || $nt->transaction_status === null;
+            $time = $nt->updated_at ?? $nt->transaction_time ?? $nt->created_at;
+            $statusLabel = $isPaid ? 'Settlement' : ($isPending ? 'Pending' : ucfirst((string) $nt->transaction_status));
             return [
-                'title' => $isPaid ? 'Pembayaran #' . $nt->order_id : 'Pesanan Baru #' . $nt->order_id,
+                'id' => $nt->id,
+                'status' => $nt->transaction_status ?? 'pending',
+                'title' => $isPaid ? 'Pembayaran #' . $nt->order_id : 'Pesanan #' . $nt->order_id . ' (' . $statusLabel . ')',
                 'desc' => 'Rp ' . number_format($nt->gross_amount, 0, ',', '.') . ' • ' . ($nt->customer_name ?? 'Customer'),
                 'time_ago' => $time ? Carbon::parse($time)->diffForHumans() : 'baru saja',
-                'icon' => $isPaid ? 'lucide:check-circle-2' : 'lucide:shopping-bag',
-                'icon_bg' => $isPaid ? '#6366F1' : '#10B981',
+                'icon' => $isPaid ? 'lucide:check-circle-2' : ($isPending ? 'lucide:clock-3' : 'lucide:shopping-bag'),
+                'icon_bg' => $isPaid ? '#6366F1' : ($isPending ? '#F59E0B' : '#10B981'),
                 'url' => route('admin.transactions.index'),
             ];
-        });
+        })->values();
+
+        $notificationSignature = $notifications->map(function ($n) {
+            return $n['id'] . ':' . $n['status'];
+        })->implode('|');
 
         // Backward compatibility for existing Blade references
         $earningsPerMonth = collect($monthlyTelemetry)->map(function ($item, $idx) {
@@ -356,6 +365,7 @@ class DashboardController extends Controller
             'categoryList',
             'activityFeed',
             'notifications',
+            'notificationSignature',
             'earningsPerMonth',
             'productCountsByCategory',
             'latestTransaction',

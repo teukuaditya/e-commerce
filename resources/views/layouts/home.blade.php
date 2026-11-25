@@ -67,8 +67,7 @@
 
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                                 <a class="dropdown-item" href="{{ route('logout') }}"
-                                    onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
+                                    onclick="event.preventDefault(); if(window.confirmLogout){window.confirmLogout('logout-form');}else if(confirm('Apakah kamu yakin ingin keluar dari akun ini?')){document.getElementById('logout-form').submit();}">
                                     {{ __('Logout') }}
                                 </a>
 

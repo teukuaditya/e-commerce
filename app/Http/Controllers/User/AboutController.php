@@ -6,17 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\Setting;
 use App\Models\Transaction;
 
 class AboutController extends Controller
 {
     public function index()
     {
+        $s = Setting::allCached();
         $company = [
-            'name' => 'Drive Venture',
-            'tagline' => 'all about essentials',
-            'email' => 'driveventure719@gmail.com',
-            'address' => 'Jl. Farida, Purwokerto, Jawa Tengah, Indonesia',
+            'name' => $s['store_name'] ?? 'DRVN',
+            'tagline' => $s['store_tagline'] ?? 'all about essentials',
+            'email' => $s['store_email'] ?? '',
+            'phone' => $s['store_phone'] ?? '',
+            'whatsapp' => $s['store_whatsapp'] ?? '',
+            'address' => $s['store_address'] ?? '',
+            'operating_hours' => $s['operating_hours'] ?? '',
+            'about_text' => $s['about_text'] ?? '',
         ];
 
         // Statistik nyata dari database untuk band angka (bukan angka hard-code)

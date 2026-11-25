@@ -67,36 +67,138 @@
 </section>
 
 <script>document.documentElement.classList.add('js-reveal');</script>
+
 <!-- Category Banner -->
-<div class="sec-banner bg0 p-t-80 p-b-50 home-section" id="home-categories">
+@if(isset($bestSellers) && $bestSellers->isNotEmpty())
+<section class="home-section home-bestseller-section p-t-80 p-b-50" data-reveal>
     <div class="container">
-        <div class="home-sec-head p-b-30" data-reveal>
-            <span class="home-sec-eyebrow">Curated For You</span>
-            <h3 class="ltext-103 cl5 home-sec-title">
-                CATEGORIES
-            </h3>
-            <span class="home-sec-accent" aria-hidden="true"></span>
+        <div class="d-flex align-items-end justify-content-between flex-wrap" style="gap:16px; margin-bottom: 36px;">
+            <div>
+                <span class="home-sec-eyebrow">Paling Diminati</span>
+                <h2 class="home-sec-title" style="margin:0; font-size: clamp(28px, 4vw, 42px); line-height:1.1; color:#111827;">Best Sellers</h2>
+                <p style="margin:10px 0 0; color:#64748B; max-width:560px;">Produk favorit yang paling banyak dipilih. Pilihan aman buat kamu yang mau tampil on-point.</p>
+            </div>
+            <a href="{{ route('user.products.index') }}" class="home-newarrivals-link stext-101 cl2 hov-cl1 trans-04 m-tb-10">
+                Lihat Semua Produk <i class="zmdi zmdi-arrow-right m-l-4"></i>
+            </a>
         </div>
+
         <div class="row">
-            @foreach ($categories as $category)
-            <div class="col-md-6 col-xl-4 p-b-30 m-lr-auto" data-reveal style="--rv-delay: {{ $loop->index * 90 }}ms">
-                <x-category-card :category="$category" :position="$loop->index" :show-count="false" />
+            @foreach($bestSellers as $product)
+            @php
+                $img = is_array($product->image) ? ($product->image[0] ?? '') : $product->image;
+                $catName = optional($product->category)->category_name ?? '';
+                $isOutOfStock = (int) ($product->stock ?? 0) <= 0;
+                $sold = (int) ($product->sold_count ?? 0);
+                $rank = $loop->iteration;
+            @endphp
+            <div class="col-6 col-md-3 p-b-35 product-item {{ strtolower($catName) }}" data-reveal style="--rv-delay: {{ ($loop->index % 4) * 70 }}ms">
+                <div class="block2 home-product-card" style="position:relative;">
+                    <div class="block2-pic hov-img0 home-prod-pic">
+                        <span style="position:absolute;top:12px;left:12px;z-index:4;background:{{ $rank === 1 ? 'linear-gradient(135deg,#F59E0B,#F97316)' : ($rank === 2 ? 'linear-gradient(135deg,#64748B,#475569)' : ($rank === 3 ? 'linear-gradient(135deg,#B45309,#92400E)' : '#111827')) }};color:#fff;font-size:11px;font-weight:800;padding:6px 10px;border-radius:999px;box-shadow:0 8px 20px rgba(15,23,42,.18);">#{{ $rank }} Best Seller</span>
+                        <a href="{{ route('user.products.show', $product->id) }}">
+                            <img src="{{ asset('storage/products/' . $img) }}" alt="{{ $product->title }}" loading="lazy" class="home-prod-img">
+                        </a>
+                        <div class="home-prod-actions" aria-label="Aksi cepat">
+                            @auth
+                                @php $isWished = in_array($product->id, $wishlistedIds ?? []); @endphp
+                                <button type="button"
+                                    class="home-prod-action-btn js-wishlist-toggle {{ $isWished ? 'is-wishlisted' : '' }}"
+                                    data-url="{{ route('user.wishlist.toggle', $product->id) }}"
+                                    data-wishlisted="{{ $isWished ? '1' : '0' }}"
+                                    title="{{ $isWished ? 'Hapus dari Wishlist' : 'Tambah ke Wishlist' }}"
+                                    aria-label="{{ $isWished ? 'Hapus' : 'Simpan' }} {{ $product->title }} dari wishlist"
+                                    aria-pressed="{{ $isWished ? 'true' : 'false' }}">
+                                    <i class="zmdi {{ $isWished ? 'zmdi-favorite' : 'zmdi-favorite-outline' }}"></i>
+                                </button>
+                            @else
+                                <a href="{{ route('login') }}" class="home-prod-action-btn" title="Login untuk Wishlist" aria-label="Login untuk menyimpan {{ $product->title }}">
+                                    <i class="zmdi zmdi-favorite-outline"></i>
+                                </a>
+                            @endauth
+                            @auth
+                                <form action="{{ route('user.cart.add', $product->id) }}" method="POST" class="home-prod-action-form">
+                                    @csrf
+                                    <input type="hidden" name="quantity" value="1">
+                                    <button type="submit" class="home-prod-action-btn" title="Quick Add" aria-label="Tambah {{ $product->title }} ke keranjang">
+                                        <i class="zmdi zmdi-shopping-cart"></i>
+                                    </button>
+                                </form>
+                            @else
+                                <a href="{{ route('user.products.show', $product->id) }}" class="home-prod-action-btn" title="Quick Add" aria-label="Lihat {{ $product->title }}">
+                                    <i class="zmdi zmdi-shopping-cart"></i>
+                                </a>
+                            @endauth
+                        </div>
+                        <a href="{{ route('user.products.show', $product->id) }}" class="block2-btn flex-c-m stext-103 cl2 size-102 bg0 bor2 hov-btn1 p-lr-15 trans-04 home-prod-quickview">Quick View</a>
+                    </div>
+                    <div class="block2-txt flex-w flex-t p-t-14">
+                        <div class="block2-txt-child1 flex-col-l" style="width:100%;">
+                            @if($catName)
+                                <span class="stext-106 cl6 trans-04 m-b-3 home-prod-cat">{{ strtoupper($catName) }}</span>
+                            @endif
+                            <a href="{{ route('user.products.show', $product->id) }}" class="stext-104 cl4 hov-cl1 trans-04 js-name-b2 p-b-6 home-prod-title">{{ $product->title }}</a>
+                            <div class="d-flex align-items-center justify-content-between" style="gap:8px;width:100%;">
+                                <a href="{{ route('user.products.show', $product->id) }}" class="stext-105 cl5 hov-cl1 trans-04 home-prod-price" style="font-weight:700;color:#111827;">Rp {{ number_format($product->price, 0, ',', '.') }}</a>
+                                <span class="stext-106 cl6" style="font-size:12px;white-space:nowrap;text-align:right;">{{ $sold }} terjual</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             @endforeach
         </div>
     </div>
-</div>
+</section>
+@endif
 
-<!-- Promo Marquee -->
-<div class="promo-bar" data-reveal>
-    <div class="promo-track">
-        @for ($i = 0; $i < 6; $i++)
-            <span class="promo-item">
-                New Drop <span class="promo-dot">&bull;</span> Free Ongkir Min. Belanja Rp 300.000 <span class="promo-dot">&bull;</span> Streetwear &amp; Sportswear
-            </span>
-        @endfor
+<!-- Promo Banners Slider -->
+<section class="home-promo-banners" data-reveal>
+    <div class="container">
+        <div class="hpb-slider" id="hpbSlider" aria-roledescription="carousel">
+            <div class="hpb-track">
+                <article class="hpb-slide is-active">
+                    <div class="hpb-slide__bg" style="background-image:url('{{ asset('images/banner-04.jpg') }}');"></div>
+                    <div class="hpb-slide__overlay"></div>
+                    <div class="hpb-slide__content">
+                        <span class="hpb-kicker">Limited Vibe</span>
+                        <h2 class="hpb-title">STREET READY.<br>EVERY DAY.</h2>
+                        <p class="hpb-desc">Outfit simpel dengan impact kuat buat gerak harian lo.</p>
+                        <a href="{{ route('user.products.index') }}" class="hpb-btn">Shop Now</a>
+                    </div>
+                </article>
+                <article class="hpb-slide">
+                    <div class="hpb-slide__bg" style="background-image:url('{{ asset('images/banner-05.jpg') }}');"></div>
+                    <div class="hpb-slide__overlay hpb-slide__overlay--right"></div>
+                    <div class="hpb-slide__content hpb-slide__content--right">
+                        <span class="hpb-kicker">Move Freely</span>
+                        <h2 class="hpb-title">BUILT FOR<br>THE MOTION.</h2>
+                        <p class="hpb-desc">Sportswear nyaman yang tetap clean dari gym sampai hangout.</p>
+                        <a href="{{ route('user.categories.index') }}" class="hpb-btn">Explore Categories</a>
+                    </div>
+                </article>
+                <article class="hpb-slide">
+                    <div class="hpb-slide__bg" style="background-image:url('{{ asset('images/banner-06.jpg') }}');"></div>
+                    <div class="hpb-slide__overlay"></div>
+                    <div class="hpb-slide__content">
+                        <span class="hpb-kicker">Fresh Drop</span>
+                        <h2 class="hpb-title">NEW LOOK.<br>SAME DRIVE.</h2>
+                        <p class="hpb-desc">Upgrade gaya lo dengan koleksi terbaru dari DRVN.</p>
+                        <a href="{{ route('user.products.index') }}" class="hpb-btn">See Collection</a>
+                    </div>
+                </article>
+            </div>
+            <button class="hpb-nav hpb-nav--prev" type="button" aria-label="Banner sebelumnya"><i class="zmdi zmdi-chevron-left"></i></button>
+            <button class="hpb-nav hpb-nav--next" type="button" aria-label="Banner berikutnya"><i class="zmdi zmdi-chevron-right"></i></button>
+            <div class="hpb-dots" aria-label="Navigasi banner">
+                <button class="hpb-dot is-active" type="button" aria-label="Banner 1"></button>
+                <button class="hpb-dot" type="button" aria-label="Banner 2"></button>
+                <button class="hpb-dot" type="button" aria-label="Banner 3"></button>
+            </div>
+        </div>
     </div>
-</div>
+</section>
+
 
 <!-- New Arrivals -->
 <div class="bg0 m-t-23 p-b-80 home-section" id="home-new-arrivals">
@@ -120,6 +222,7 @@
             @php
                 $img = is_array($product->image) ? ($product->image[0] ?? '') : $product->image;
                 $catName = optional($product->category)->category_name ?? '';
+                $isOutOfStock = (int) ($product->stock ?? 0) <= 0;
             @endphp
             <div class="col-6 col-md-3 p-b-35 product-item {{ strtolower($catName) }}" data-reveal style="--rv-delay: {{ ($loop->index % 4) * 70 }}ms">
                 <div class="block2 home-product-card">
@@ -183,10 +286,13 @@
                                 {{ $product->title }}
                             </a>
 
-                            <a href="{{ route('user.products.show', $product->id) }}"
-                                class="stext-105 cl5 hov-cl1 trans-04 home-prod-price">
-                                Rp {{ number_format($product->price, 0, ',', '.') }}
-                            </a>
+                            <div class="d-flex align-items-center justify-content-between" style="gap:8px;width:100%;">
+                                <a href="{{ route('user.products.show', $product->id) }}"
+                                    class="stext-105 cl5 hov-cl1 trans-04 home-prod-price" style="font-weight:700; color:#111827;">
+                                    Rp {{ number_format($product->price, 0, ',', '.') }}
+                                </a>
+                                <span class="stext-106 cl6" style="font-size:12px;white-space:nowrap;text-align:right;">{{ (int) ($product->sold_count ?? 0) }} terjual</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -209,7 +315,7 @@
                 <p class="home-editorial__desc">Dari jalanan ke arena, temukan gear yang siap menemani setiap langkah dan gaya lo.</p>
                 <div class="home-editorial__actions">
                     <a href="{{ route('user.products.index') }}" class="home-editorial__btn home-editorial__btn--primary">Explore Collection</a>
-                    <a href="#home-categories" class="home-editorial__btn home-editorial__btn--ghost">Lihat Kategori</a>
+                    <a href="{{ route('user.categories.index') }}" class="home-editorial__btn home-editorial__btn--ghost">Lihat Kategori</a>
                 </div>
             </div>
         </div>
@@ -251,10 +357,114 @@
         </div>
     </div>
 </section>
+<!-- Promo Marquee -->
+<div class="promo-bar" data-reveal>
+    <div class="promo-track">
+        @for ($i = 0; $i < 6; $i++)
+            <span class="promo-item">
+                New Drop <span class="promo-dot">&bull;</span> Free Ongkir Min. Belanja Rp 300.000 <span class="promo-dot">&bull;</span> Streetwear &amp; Sportswear
+            </span>
+        @endfor
+    </div>
+</div>
+
 {{-- style navbar & grid ada di theme-upgrade.css dan main.css --}}
 
 @push('styles')
 <style>
+  /* ===== Promo Banners Slider ===== */
+  .home-promo-banners { padding: 16px 0 56px; }
+  .hpb-slider {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #111827;
+    box-shadow: 0 20px 50px rgba(15,23,42,.12);
+  }
+  .hpb-track { position: relative; min-height: 420px; }
+  .hpb-slide {
+    position: absolute; inset: 0;
+    opacity: 0; visibility: hidden;
+    transition: opacity .7s ease, visibility .7s ease;
+  }
+  .hpb-slide.is-active { opacity: 1; visibility: visible; z-index: 1; }
+  .hpb-slide__bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transform: scale(1.03);
+    transition: transform 6s ease;
+  }
+  .hpb-slide.is-active .hpb-slide__bg { transform: scale(1.08); }
+  .hpb-slide__overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(100deg, rgba(17,24,39,.78) 0%, rgba(17,24,39,.52) 45%, rgba(17,24,39,.18) 100%);
+  }
+  .hpb-slide__overlay--right {
+    background: linear-gradient(260deg, rgba(17,24,39,.78) 0%, rgba(17,24,39,.52) 45%, rgba(17,24,39,.18) 100%);
+  }
+  .hpb-slide__content {
+    position: relative; z-index: 2;
+    max-width: 620px; padding: 64px;
+    color: #fff;
+  }
+  .hpb-slide__content--right { margin-left: auto; text-align: right; }
+  .hpb-slide__content--right .hpb-desc { margin-left: auto; }
+  .hpb-slide__content--right .hpb-btn { margin-left: auto; }
+  .hpb-kicker {
+    display: inline-block;
+    font-family: Poppins-Medium, Poppins, sans-serif;
+    font-size: 11px; letter-spacing: .24em; text-transform: uppercase;
+    color: rgba(255,255,255,.72); margin-bottom: 12px;
+  }
+  .hpb-title {
+    margin: 0 0 14px;
+    font-family: Poppins-Bold, Poppins, sans-serif;
+    font-size: clamp(2rem, 4.8vw, 3.4rem);
+    line-height: 1.05; letter-spacing: -.02em; color: #fff;
+  }
+  .hpb-desc {
+    margin: 0 0 28px; max-width: 460px;
+    font-size: .98rem; line-height: 1.7; color: rgba(255,255,255,.84);
+  }
+  .hpb-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-height: 46px; padding: 0 24px; border-radius: 999px;
+    background: #fff; color: #111827; font-weight: 600; font-size: .88rem;
+    text-decoration: none !important; transition: transform .25s ease, box-shadow .25s ease, background-color .25s ease, color .25s ease;
+    box-shadow: 0 10px 24px rgba(0,0,0,.18);
+  }
+  .hpb-btn:hover { transform: translateY(-2px); background: #eef2ff; color: #3730a3; }
+  .hpb-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%; border: 0;
+    background: rgba(255,255,255,.16); color: #fff; z-index: 3;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background .2s ease, transform .2s ease;
+    backdrop-filter: blur(4px);
+  }
+  .hpb-nav:hover { background: rgba(255,255,255,.28); transform: translateY(-50%) scale(1.04); }
+  .hpb-nav--prev { left: 18px; }
+  .hpb-nav--next { right: 18px; }
+  .hpb-nav i { font-size: 24px; line-height: 1; }
+  .hpb-dots {
+    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+    display: flex; gap: 8px; z-index: 3;
+  }
+  .hpb-dot {
+    width: 28px; height: 4px; border-radius: 999px; border: 0;
+    background: rgba(255,255,255,.35); cursor: pointer; padding: 0;
+    transition: all .25s ease;
+  }
+  .hpb-dot.is-active { background: #fff; width: 40px; }
+  @media (max-width: 767px) {
+    .home-promo-banners { padding: 36px 0 0; }
+    .hpb-track { min-height: 360px; }
+    .hpb-slide__content, .hpb-slide__content--right { padding: 40px 20px 64px; text-align: left; margin-left: 0; }
+    .hpb-slide__content--right .hpb-desc, .hpb-slide__content--right .hpb-btn { margin-left: 0; }
+    .hpb-nav { display: none; }
+    .hpb-slide__overlay, .hpb-slide__overlay--right { background: linear-gradient(180deg, rgba(17,24,39,.35) 0%, rgba(17,24,39,.78) 100%); }
+  }
+
   /* ===== Hero slider mandiri (crossfade 2 gambar, tanpa slick) =====
      Geometry mengikuti .section-slide yang sudah 100vh di navbar-floating.css,
      media <=991px mengikuti aturan main.css (100vh - 70px utk navbar mobile). */
@@ -737,6 +947,8 @@
     .js-reveal [data-reveal] { opacity: 1 !important; }
     .promo-track { animation: none !important; }
     .home-editorial:hover .home-editorial__bg { transform: none !important; }
+    .hpb-slide, .hpb-slide__bg, .hpb-btn, .hpb-nav, .hpb-dot { transition: none !important; }
+    .hpb-slide.is-active .hpb-slide__bg { transform: scale(1.03) !important; }
   }
 </style>
 @endpush
@@ -825,6 +1037,46 @@
             heroGo(heroCurrent - 1);
             restartAuto();
         });
+
+        // Promo Banners auto slider
+        (function () {
+            var slider = document.getElementById('hpbSlider');
+            if (!slider) return;
+            var slides = slider.querySelectorAll('.hpb-slide');
+            var dots = slider.querySelectorAll('.hpb-dot');
+            var prev = slider.querySelector('.hpb-nav--prev');
+            var next = slider.querySelector('.hpb-nav--next');
+            var idx = 0, timer = null;
+            var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            function go(n) {
+                idx = (n + slides.length) % slides.length;
+                for (var i = 0; i < slides.length; i++) {
+                    slides[i].classList.toggle('is-active', i === idx);
+                    if (dots[i]) dots[i].classList.toggle('is-active', i === idx);
+                }
+            }
+            function start() {
+                if (reduce) return;
+                stop();
+                timer = setInterval(function () { go(idx + 1); }, 4500);
+            }
+            function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+            if (next) next.addEventListener('click', function () { go(idx + 1); start(); });
+            if (prev) prev.addEventListener('click', function () { go(idx - 1); start(); });
+            for (var d = 0; d < dots.length; d++) {
+                (function (di) {
+                    dots[di].addEventListener('click', function () { go(di); start(); });
+                })(d);
+            }
+            slider.addEventListener('mouseenter', stop);
+            slider.addEventListener('mouseleave', start);
+            slider.addEventListener('focusin', stop);
+            slider.addEventListener('focusout', start);
+            go(0);
+            start();
+        })();
 
         // Grid produk home (New Arrivals) — tidak ada filter kategori
 

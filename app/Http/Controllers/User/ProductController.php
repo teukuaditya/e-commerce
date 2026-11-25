@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\Wishlist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +19,12 @@ class ProductController extends Controller
         $categoryFilter = $request->input('category');
         $categoryFilter = is_string($categoryFilter) ? trim($categoryFilter) : null;
 
+        $showOos = Setting::getValue('show_out_of_stock', '1') === '1';
         $productsQuery = Product::with('category')
+            ->when(! $showOos, fn ($q) => $q->where('stock', '>', 0))
+            ->withSum(['transactionDetails as sold_count' => function ($q) {
+                $q->whereHas('transaction', fn ($t) => $t->where('transaction_status', 'settlement'));
+            }], 'quantity')
             ->when($query !== '', function ($q) use ($query) {
                 $q->where(function ($sub) use ($query) {
                     $sub->where('title', 'LIKE', "%{$query}%")

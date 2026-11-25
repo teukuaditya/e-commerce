@@ -94,38 +94,50 @@
                                 </div>
                                 <div class="size-204 respon6-next">
                                     <div class="stock-display" style="padding-left: 20px;">
-                                        <span id="stock">{{ $product->stock }}</span>
+                                        @if((int) $product->stock <= 0)
+                                            <span id="stock" data-stock="0" style="display:none;">0</span>
+                                            <span class="badge" style="background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:700;">Out of Stock</span>
+                                        @else
+                                            <span id="stock" data-stock="{{ (int) $product->stock }}">{{ $product->stock }}</span>
+                                        @endif
                                     </div>
                                 </div>
                             </div>
                             <!-- Quantity and Add to Cart -->
                             <div class="flex-w flex-r-m p-b-10">
                                 <div class="size-204 flex-w flex-m respon6-next">
-                                    <!-- Wrap both input quantity and button into a flex container -->
-                                    <div class="d-flex align-items-center">
-                                        <!-- Quantity input -->
-                                        <div class="wrap-num-product flex-w m-r-20 m-tb-10">
-                                            <div class="btn-num-product-down cl8 hov-btn3 trans-04 flex-c-m"
-                                                onclick="decreaseQuantity()">
-                                                <i class="fs-16 zmdi zmdi-minus"></i>
-                                            </div>
+                                    @if((int) $product->stock <= 0)
+                                        <button type="button" disabled
+                                            class="flex-c-m stext-101 cl0 size-101 bor1 p-lr-15 trans-04 mt-2"
+                                            style="background:#CBD5E1;border-color:#CBD5E1;cursor:not-allowed;opacity:.9;">
+                                            <i class="zmdi zmdi-block mr-2"></i> Out of Stock
+                                        </button>
+                                    @else
+                                        <div class="d-flex align-items-center">
+                                            <!-- Quantity input -->
+                                            <div class="wrap-num-product flex-w m-r-20 m-tb-10">
+                                                <div class="btn-num-product-down cl8 hov-btn3 trans-04 flex-c-m"
+                                                    onclick="decreaseQuantity()">
+                                                    <i class="fs-16 zmdi zmdi-minus"></i>
+                                                </div>
 
-                                            <input class="mtext-104 cl3 txt-center num-product" type="number"
-                                                name="quantity" id="quantity" value="1" min="1"
-                                                onchange="updateQuantity()">
+                                                <input class="mtext-104 cl3 txt-center num-product" type="number"
+                                                    name="quantity" id="quantity" value="1" min="1"
+                                                    onchange="updateQuantity()">
 
-                                            <div class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m"
-                                                onclick="increaseQuantity()">
-                                                <i class="fs-16 zmdi zmdi-plus"></i>
+                                                <div class="btn-num-product-up cl8 hov-btn3 trans-04 flex-c-m"
+                                                    onclick="increaseQuantity()">
+                                                    <i class="fs-16 zmdi zmdi-plus"></i>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Add to Cart Button -->
-                                    <button type="submit"
-                                        class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 mt-2">
-                                        Add to cart
-                                    </button>
+                                        <!-- Add to Cart Button -->
+                                        <button type="submit"
+                                            class="flex-c-m stext-101 cl0 size-101 bg1 bor1 hov-btn1 p-lr-15 trans-04 mt-2">
+                                            Add to cart
+                                        </button>
+                                    @endif
                         </form>
                     </div>
                 </div>
@@ -149,8 +161,12 @@
                                 <small class="cl6 stext-103">/ 5</small>
                             </div>
                             <div class="pdp-stars">
+                                @php $avg = $rating['avg'] !== null ? round($rating['avg'] * 2) / 2 : 0; @endphp
                                 @for ($i = 1; $i <= 5; $i++)
-                                    <i class="fa fa-star{{ ($rating['avg'] !== null && $i <= round($rating['avg'])) ? ' pdp-star--on' : '' }}"></i>
+                                    @php
+                                        $starClass = $avg >= $i ? ' pdp-star--on' : ($avg >= $i - 0.5 ? ' pdp-star--half' : '');
+                                    @endphp
+                                    <i class="fa fa-star{{ $starClass }}"></i>
                                 @endfor
                             </div>
                             <p class="stext-107 cl6 p-t-8">
@@ -182,10 +198,10 @@
                                     <div class="p-t-10">
                                         <small class="stext-101 cl6">
                                             <button type="button" class="btn btn-link btn-sm pl-0 js-edit-review">Edit review saya</button>
-                                            <form action="{{ route('user.reviews.destroy', $rv->id) }}" method="POST" class="d-inline">
+                                            <form action="{{ route('user.reviews.destroy', $rv->id) }}" method="POST" class="d-inline" data-confirm="Hapus review Anda?" data-confirm-title="Hapus Review">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-link btn-sm text-danger" onclick="return confirm('Hapus review Anda?')">Hapus</button>
+                                                <button type="submit" class="btn btn-link btn-sm text-danger">Hapus</button>
                                             </form>
                                         </small>
                                     </div>
@@ -255,6 +271,13 @@
     /* ==== Review (scoped ke elemen .pdp-*) ==== */
     .pdp-stars .fa-star { color: #d8d8dc; margin-right: 3px; transition: color .15s; }
     .pdp-stars .pdp-star--on { color: #f8b64b; }
+    .pdp-stars .pdp-star--half {
+        background: linear-gradient(90deg, #f8b64b 50%, #d8d8dc 50%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        color: transparent;
+    }
 
     .pdp-rsummary__avg { font-size: 34px; line-height: 1; }
 

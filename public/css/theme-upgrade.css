@@ -980,6 +980,20 @@ body:has(.app-auth) {
     border-radius: 12px;
 }
 
+/* SweetAlert2 toast: geser ke bawah agar tidak tertutup navbar floating */
+.swal2-container.swal2-top-end,
+.swal2-container.swal2-top-right,
+.swal2-container.swal2-top {
+    top: 88px !important;
+}
+@media (max-width: 991.98px) {
+    .swal2-container.swal2-top-end,
+    .swal2-container.swal2-top-right,
+    .swal2-container.swal2-top {
+        top: 76px !important;
+    }
+}
+
 /* ============================================================
    TOAST MINI (pengganti sweetalert — wishlist dari TAHAP V)
    ============================================================ */

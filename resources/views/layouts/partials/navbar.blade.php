@@ -8,7 +8,7 @@
 
                 <!-- Logo desktop -->
                 <a href="{{ route('user.home') }}" class="logo">
-                    <span style="font-size: 25px; font-weight: bold; color: #000; letter-spacing: 2px;">DRVN</span>
+                    <span style="font-size: 26px; font-weight: 800; color: #111827; letter-spacing: 1px; font-family: Poppins, sans-serif;">DRVN</span>
                 </a>
 
 
@@ -112,7 +112,7 @@
                             <div class="dropdown-divider"></div>
                             <!-- Sign Out: submit POST logout-form langsung (punya @csrf) -->
                             <a class="dropdown-item" href="{{ route('logout') }}"
-                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                onclick="event.preventDefault(); window.confirmLogout ? window.confirmLogout('logout-form') : document.getElementById('logout-form').submit();">
                                 <i class="fas fa-sign-out-alt fa-fw mr-2 text-gray-400"></i>
                                 Sign Out
                             </a>

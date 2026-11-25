@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Cart;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\Wishlist;
 use Illuminate\Support\Facades\Auth;
@@ -62,19 +63,31 @@ class AppServiceProvider extends ServiceProvider
          */
         view()->composer('layouts.partials.admin-topbar', function ($view) {
             if (! $view->offsetExists('notifications')) {
-                $notifications = Transaction::latest('id')->limit(5)->get()->map(function ($nt) {
+                $notifications = Transaction::latest('updated_at')->latest('id')->limit(8)->get()->map(function ($nt) {
                     $isPaid = $nt->transaction_status === 'settlement';
-                    $time = $nt->transaction_time ?? $nt->created_at;
+                    $isPending = $nt->transaction_status === 'pending' || $nt->transaction_status === null;
+                    $time = $nt->updated_at ?? $nt->transaction_time ?? $nt->created_at;
+                    $statusLabel = $isPaid ? 'Settlement' : ($isPending ? 'Pending' : ucfirst((string) $nt->transaction_status));
                     return [
-                        'title' => $isPaid ? 'Pembayaran #' . $nt->order_id : 'Pesanan Baru #' . $nt->order_id,
+                        'id' => $nt->id,
+                        'status' => $nt->transaction_status ?? 'pending',
+                        'title' => $isPaid ? 'Pembayaran #' . $nt->order_id : 'Pesanan #' . $nt->order_id . ' (' . $statusLabel . ')',
                         'desc' => 'Rp ' . number_format($nt->gross_amount, 0, ',', '.') . ' • ' . ($nt->customer_name ?? 'Customer'),
                         'time_ago' => $time ? \Carbon\Carbon::parse($time)->diffForHumans() : 'baru saja',
-                        'icon' => $isPaid ? 'lucide:check-circle-2' : 'lucide:shopping-bag',
-                        'icon_bg' => $isPaid ? '#6366F1' : '#10B981',
+                        'icon' => $isPaid ? 'lucide:check-circle-2' : ($isPending ? 'lucide:clock-3' : 'lucide:shopping-bag'),
+                        'icon_bg' => $isPaid ? '#6366F1' : ($isPending ? '#F59E0B' : '#10B981'),
                         'url' => route('admin.transactions.index'),
                     ];
-                });
+                })->values();
                 $view->with('notifications', $notifications);
+            }
+
+            if (! $view->offsetExists('notificationSignature')) {
+                $notifications = $view->offsetExists('notifications') ? $view->getData()['notifications'] : collect();
+                $signature = collect($notifications)->map(function ($n) {
+                    return ($n['id'] ?? '') . ':' . ($n['status'] ?? '');
+                })->implode('|');
+                $view->with('notificationSignature', $signature);
             }
         });
 
@@ -97,13 +110,80 @@ class AppServiceProvider extends ServiceProvider
         Category::saved(fn () => Cache::forget('shares.categories'));
         Category::deleted(fn () => Cache::forget('shares.categories'));
 
+        // Company/store settings shared to all views (About, footer, etc.)
+        view()->composer('*', function ($view) {
+            if ($view->offsetExists('company')) return;
+            $company = Cache::rememberForever('shares.company', function () {
+                if (! Schema::hasTable('settings')) {
+                    return $this->defaultCompany();
+                }
+                $s = Setting::allCached();
+                return [
+                    'name' => $s['store_name'] ?? 'DRVN',
+                    'tagline' => $s['store_tagline'] ?? 'all about essentials',
+                    'email' => $s['store_email'] ?? '',
+                    'phone' => $s['store_phone'] ?? '',
+                    'whatsapp' => $s['store_whatsapp'] ?? '',
+                    'address' => $s['store_address'] ?? '',
+                    'operating_hours' => $s['operating_hours'] ?? '',
+                    'about_text' => $s['about_text'] ?? '',
+                    'footer_text' => $s['footer_text'] ?? '',
+                    'instagram' => $s['social_instagram'] ?? '',
+                    'facebook' => $s['social_facebook'] ?? '',
+                    'tiktok' => $s['social_tiktok'] ?? '',
+                    'logo' => $s['store_logo'] ?? '',
+                    'favicon' => $s['store_favicon'] ?? '',
+                ];
+            });
+            $view->with('company', $company);
+        });
+
+        $forgetHome = function () {
+            foreach (['home.products', 'home.products.v2', 'home.products.v2.1', 'home.products.v2.0', 'home.best_sellers', 'home.best_sellers.1', 'home.best_sellers.0'] as $k) {
+                Cache::forget($k);
+            }
+        };
+        Setting::saved(function () use ($forgetHome) {
+            Cache::forget('shares.company');
+            $forgetHome();
+        });
+        Setting::deleted(function () use ($forgetHome) {
+            Cache::forget('shares.company');
+            $forgetHome();
+        });
+
         /*
          * `$products` global-share (dipakai halaman home) dihapus — sekarang
          * query hanya dari HomeController, ter-cache sampai ada produk yang
          * berubah. Membuang load full table products dari setiap request
          * (termasuk admin).
          */
-        Product::saved(fn () => Cache::forget('home.products'));
-        Product::deleted(fn () => Cache::forget('home.products'));
+        $forgetHomeProducts = function () {
+            foreach (['home.products', 'home.products.v2', 'home.products.v2.1', 'home.products.v2.0', 'home.best_sellers', 'home.best_sellers.1', 'home.best_sellers.0'] as $k) {
+                Cache::forget($k);
+            }
+        };
+        Product::saved($forgetHomeProducts);
+        Product::deleted($forgetHomeProducts);
+    }
+
+    private function defaultCompany(): array
+    {
+        return [
+            'name' => 'DRVN',
+            'tagline' => 'all about essentials',
+            'email' => 'driveventure719@gmail.com',
+            'phone' => '',
+            'whatsapp' => '',
+            'address' => 'Jl. Farida, Purwokerto, Jawa Tengah, Indonesia',
+            'operating_hours' => '',
+            'about_text' => '',
+            'footer_text' => 'Pakaian esensial yang bertahan. Produksi lokal, bahan pilihan, harga jujur — semuanya untuk lemari harian Anda.',
+            'instagram' => '',
+            'facebook' => '',
+            'tiktok' => '',
+            'logo' => '',
+            'favicon' => '',
+        ];
     }
 }

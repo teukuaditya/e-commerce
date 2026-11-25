@@ -7,6 +7,8 @@
             <iconify-icon icon="lucide:menu" width="20" height="20"></iconify-icon>
         </button>
 
+
+
         <!-- Search Bar with Live Autocomplete & Developer Shortcut -->
         <div class="position-relative d-none d-sm-flex align-items-center">
             <span class="position-absolute" style="left: 14px; color: #94A3B8; pointer-events: none; display: flex;">
@@ -15,7 +17,7 @@
             <input type="text"
                    id="admGlobalSearch"
                    class="form-control"
-                   placeholder="Search products, orders, customers... (Ctrl + K)"
+                   placeholder="Search... (Ctrl + K)"
                    aria-label="Global Search"
                    autocomplete="off"
                    style="padding-left: 42px; padding-right: 16px; height: 42px; width: 340px; background: #F1F5F9; border: 1px solid transparent; border-radius: 14px; font-size: 0.85rem; font-family: var(--font-body); color: #1E293B; transition: all 0.3s ease;">
@@ -39,7 +41,7 @@
                 id="btnRefreshDashboard"
                 class="btn p-2 d-flex align-items-center justify-content-center text-slate-600 bg-white border border-slate-200 btn-press smooth-all"
                 style="width: 42px; height: 42px; border-radius: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);"
-                title="Refresh Metrics (Live Telemetry)"
+                title="Refresh Metrics"
                 aria-label="Refresh Dashboard">
             <iconify-icon icon="lucide:rotate-cw" id="refreshIcon" width="18" height="18"></iconify-icon>
         </button>
@@ -57,12 +59,11 @@
                 <iconify-icon icon="lucide:bell" width="18" height="18"></iconify-icon>
                 @php
                     $notifCount = isset($notifications) ? count($notifications) : 0;
+                    $notifSignature = $notificationSignature ?? collect($notifications ?? [])->map(fn($n) => ($n['id'] ?? '').':'.($n['status'] ?? ''))->implode('|');
                 @endphp
-                <!-- Pulse Badge (hanya muncul bila ada notifikasi) -->
-                <span id="notifPulseWrapper" class="position-absolute {{ $notifCount > 0 ? '' : 'd-none' }}" style="top: 8px; right: 8px; width: 8px; height: 8px; display: inline-flex;">
-                    <span class="pulse-badge position-absolute" style="width: 100%; height: 100%; border-radius: 9999px; background: #6366F1; opacity: 0.75;"></span>
-                    <span style="position: relative; width: 8px; height: 8px; border-radius: 9999px; background: #4F46E5;"></span>
-                </span>
+                <!-- Numeric Badge (muncul bila ada notifikasi baru / status berubah) -->
+                <span id="notifPulseWrapper" class="position-absolute {{ $notifCount > 0 ? '' : 'd-none' }}" style="top: 4px; right: 4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9999px; background: #4F46E5; color: #fff; font-size: 0.65rem; font-weight: 700; line-height: 18px; text-align: center; box-shadow: 0 0 0 2px #fff;">{{ $notifCount }}</span>
+                <script>(function(){try{var seen=localStorage.getItem('adm_notif_seen_sig')||'';var sig=@json($notifSignature);var seenSet=seen?seen.split('|').filter(Boolean):[];var tokens=sig?String(sig).split('|').filter(Boolean):[];var n=0;tokens.forEach(function(t){if(seenSet.indexOf(t)===-1)n++;});var el=document.getElementById('notifPulseWrapper');var b=document.getElementById('notifBadgeCount');if(n>0){if(el){el.textContent=n>99?'99+':String(n);el.classList.remove('d-none');}if(b)b.textContent=n+' Baru';}else{if(el)el.classList.add('d-none');if(b)b.textContent='0 Baru';}}catch(e){}})();</script>
             </button>
             <div class="dropdown-menu dropdown-menu-right shadow-lg p-0" aria-labelledby="notificationsDropdown" style="width: 320px; border-radius: 18px; border: 1px solid #E2E8F0; overflow: hidden;">
                 <div class="px-3 py-2.5 border-bottom d-flex align-items-center justify-content-between" style="background: #F8FAFC;">
@@ -74,7 +75,8 @@
                 <div class="list-group list-group-flush" id="notifListContainer" style="max-height: 280px; overflow-y: auto;">
                     @if($notifCount > 0)
                         @foreach($notifications as $notif)
-                            <a href="{{ $notif['url'] }}" class="list-group-item list-group-item-action p-3 border-bottom text-decoration-none">
+                            @php $notifToken = ($notif['id'] ?? '') . ':' . ($notif['status'] ?? ''); @endphp
+                            <a href="{{ $notif['url'] }}" data-notif-token="{{ $notifToken }}" class="list-group-item list-group-item-action p-3 border-bottom text-decoration-none adm-notif-item">
                                 <div class="d-flex align-items-start gap-2">
                                     <span class="p-1.5 rounded-circle text-white d-flex align-items-center justify-content-center flex-shrink-0" style="background: {{ $notif['icon_bg'] }}; width: 28px; height: 28px;">
                                         <iconify-icon icon="{{ $notif['icon'] }}" width="14" height="14"></iconify-icon>
@@ -83,6 +85,7 @@
                                         <p class="mb-0 font-weight-bold text-slate-800" style="font-size: 0.8rem;">{{ $notif['title'] }}</p>
                                         <span class="text-muted font-mono-code" style="font-size: 0.7rem;">{{ $notif['desc'] }} &bull; {{ $notif['time_ago'] }}</span>
                                     </div>
+                                    <span class="adm-notif-new-dot d-none" style="width:8px;height:8px;border-radius:9999px;background:#6366F1;flex-shrink:0;margin-top:6px;"></span>
                                 </div>
                             </a>
                         @endforeach
@@ -184,7 +187,7 @@
                 <button class="btn btn-light px-3 py-2 font-jakarta font-weight-bold" type="button" data-dismiss="modal" style="border-radius: 12px; font-size: 0.85rem; border: 1px solid #E2E8F0;">Batal</button>
                 <a class="btn px-4 py-2 font-jakarta font-weight-bold text-white btn-press"
                    href="{{ route('logout') }}"
-                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                   onclick="event.preventDefault(); window.confirmLogout ? window.confirmLogout('logout-form') : document.getElementById('logout-form').submit();"
                    style="border-radius: 12px; font-size: 0.85rem; background: #EF4444; border: 1px solid #DC2626;">
                     Ya, Logout
                 </a>
@@ -195,3 +198,64 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+    (function () {
+        var storageKey = 'adm_notif_seen_sig';
+        var initialCount = {{ isset($notifications) ? count($notifications) : 0 }};
+        var initialSig = @json($notificationSignature ?? '');
+        window.__admNotifSeenSig = localStorage.getItem(storageKey) || '';
+        window.__admNotifTotal = initialCount;
+        window.__admNotifSig = initialSig;
+
+        function getNewCount(sig) {
+            var seenSig = window.__admNotifSeenSig || localStorage.getItem(storageKey) || '';
+            if (!sig) return 0;
+            var seenSet = seenSig ? seenSig.split('|').filter(Boolean) : [];
+            var tokens = sig.split('|').filter(Boolean);
+            var n = 0;
+            tokens.forEach(function (t) { if (seenSet.indexOf(t) === -1) n++; });
+            return n;
+        }
+
+        function markNotifItems() {
+            var seenSig = window.__admNotifSeenSig || localStorage.getItem(storageKey) || '';
+            var seenSet = seenSig ? seenSig.split('|').filter(Boolean) : [];
+            document.querySelectorAll('#notifListContainer .adm-notif-item').forEach(function (el) {
+                var token = el.getAttribute('data-notif-token') || '';
+                var isNew = token && seenSet.indexOf(token) === -1;
+                el.classList.toggle('is-new', !!isNew);
+                var dot = el.querySelector('.adm-notif-new-dot');
+                if (dot) dot.classList.toggle('d-none', !isNew);
+            });
+        }
+
+        var initialNew = getNewCount(initialSig);
+        var pulseEl = document.getElementById('notifPulseWrapper');
+        var badgeElInit = document.getElementById('notifBadgeCount');
+        if (initialNew > 0) {
+            if (pulseEl) { pulseEl.textContent = initialNew > 99 ? '99+' : String(initialNew); pulseEl.classList.remove('d-none'); }
+            if (badgeElInit) badgeElInit.textContent = initialNew + ' Baru';
+        } else {
+            if (pulseEl) pulseEl.classList.add('d-none');
+            if (badgeElInit) badgeElInit.textContent = '0 Baru';
+        }
+        markNotifItems();
+
+        var $dropdown = $('#notificationsDropdown').closest('.dropdown');
+        $dropdown.on('show.bs.dropdown', function () {
+            var p = document.getElementById('notifPulseWrapper');
+            if (p) p.classList.add('d-none');
+            var badgeEl = document.getElementById('notifBadgeCount');
+            if (badgeEl) badgeEl.textContent = '0 Baru';
+        });
+        $dropdown.on('hidden.bs.dropdown', function () {
+            var sig = window.__admNotifSig || initialSig || '';
+            window.__admNotifSeenSig = sig;
+            localStorage.setItem(storageKey, sig);
+            markNotifItems();
+        });
+    })();
+</script>
+@endpush

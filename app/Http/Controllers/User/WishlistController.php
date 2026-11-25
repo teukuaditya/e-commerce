@@ -11,7 +11,11 @@ class WishlistController extends Controller
 {
     public function index(Request $request)
     {
-        $wishlists = Wishlist::with(['product.category'])
+        $wishlists = Wishlist::with(['product' => function ($q) {
+                $q->with('category')->withSum(['transactionDetails as sold_count' => function ($sq) {
+                    $sq->whereHas('transaction', fn ($t) => $t->where('transaction_status', 'settlement'));
+                }], 'quantity');
+            }])
             ->where('user_id', $request->user()->id)
             ->latest()
             ->get();
